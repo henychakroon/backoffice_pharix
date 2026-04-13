@@ -1,0 +1,159 @@
+<div class="animate-fadeInUp">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-subtitle">Welcome back, Admin — here's what's happening today</div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center">
+      <div class="input-wrap input-no-icon" style="width:160px">
+        <input type="date" style="padding-left:12px">
+      </div>
+      <button class="btn btn-primary btn-sm">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- ── KPI Cards ── -->
+  <div class="stats-grid">
+    <div class="stat-card" *ngFor="let s of stats; let i = index" [style.animation-delay]="(i * 0.07) + 's'" style="animation: fadeInUp .4s both">
+      <div class="stat-icon" [style.background]="s.bg" [style.color]="s.color">
+        <!-- bag -->
+        <svg *ngIf="s.icon==='bag'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <!-- users -->
+        <svg *ngIf="s.icon==='users'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <!-- pharma (cross) -->
+        <svg *ngIf="s.icon==='pharma'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <!-- truck -->
+        <svg *ngIf="s.icon==='truck'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        <!-- money -->
+        <svg *ngIf="s.icon==='money'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        <!-- clock -->
+        <svg *ngIf="s.icon==='clock'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="stat-body">
+        <div class="stat-value">{{ s.value }}</div>
+        <div class="stat-label">{{ s.label }}</div>
+        <div class="stat-delta" [class.up]="s.up" [class.down]="!s.up">
+          <svg *ngIf="s.up" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          <svg *ngIf="!s.up" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          {{ s.delta }} vs last month
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom Row ── -->
+  <div class="dashboard-grid">
+
+    <!-- Recent Orders -->
+    <div class="card dashboard-orders">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Recent Orders</div>
+          <div class="card-sub">Last 24 hours activity</div>
+        </div>
+        <a routerLink="/orders" class="btn btn-ghost btn-sm">
+          View all
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+      <div class="table-wrapper">
+        <table class="pharix-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Client</th>
+              <th class="hide-mobile">Pharmacy</th>
+              <th class="hide-mobile">Agent</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of recentOrders">
+              <td><span class="fw-600 text-primary">{{ o.id }}</span><br><span class="text-xs text-muted">{{ o.time }}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="avatar avatar-sm">{{ o.client[0] }}</div>
+                  <span class="hide-mobile">{{ o.client }}</span>
+                </div>
+              </td>
+              <td class="hide-mobile text-muted">{{ o.pharmacy }}</td>
+              <td class="hide-mobile text-muted">{{ o.agent }}</td>
+              <td class="fw-600">{{ o.total }}</td>
+              <td><span class="badge" [ngClass]="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="dashboard-right">
+
+      <!-- Order Status Breakdown -->
+      <div class="card status-card">
+        <div class="card-header">
+          <div class="card-title">Order Status</div>
+          <span class="badge badge-gray">Today</span>
+        </div>
+        <div class="status-list">
+          <div class="status-row">
+            <div class="status-dot" style="background:var(--success)"></div>
+            <span>Delivered</span>
+            <div class="status-bar-wrap"><div class="status-bar" style="width:68%;background:var(--success-light)"><div style="width:68%;background:var(--success)"></div></div></div>
+            <span class="fw-600">68%</span>
+          </div>
+          <div class="status-row">
+            <div class="status-dot" style="background:var(--info)"></div>
+            <span>In Transit</span>
+            <div class="status-bar-wrap"><div class="status-bar" style="width:15%;background:var(--info-light)"><div style="width:100%;background:var(--info)"></div></div></div>
+            <span class="fw-600">15%</span>
+          </div>
+          <div class="status-row">
+            <div class="status-dot" style="background:var(--warning)"></div>
+            <span>Pending</span>
+            <div class="status-bar-wrap"><div class="status-bar" style="width:10%;background:var(--warning-light)"><div style="width:100%;background:var(--warning)"></div></div></div>
+            <span class="fw-600">10%</span>
+          </div>
+          <div class="status-row">
+            <div class="status-dot" style="background:var(--danger)"></div>
+            <span>Cancelled</span>
+            <div class="status-bar-wrap"><div class="status-bar" style="width:7%;background:var(--danger-light)"><div style="width:100%;background:var(--danger)"></div></div></div>
+            <span class="fw-600">7%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Pharmacies -->
+      <div class="card top-pharma-card">
+        <div class="card-header">
+          <div class="card-title">Top Pharmacies</div>
+          <a routerLink="/pharmacies" class="btn btn-ghost btn-sm" style="font-size:12px">See all</a>
+        </div>
+        <div class="pharma-list">
+          <div class="pharma-row" *ngFor="let p of topPharmacies; let i = index">
+            <div class="pharma-rank">{{ i+1 }}</div>
+            <div class="avatar avatar-sm" style="background:var(--primary-light);color:var(--primary);font-weight:700">{{ p.name[0] }}</div>
+            <div class="pharma-info">
+              <div class="pharma-name">{{ p.name }}</div>
+              <div class="text-xs text-muted">{{ p.city }}</div>
+            </div>
+            <div class="pharma-bar-wrap">
+              <div class="pharma-bar">
+                <div [style.width]="barWidth(p.orders)" style="background:var(--primary);height:100%;border-radius:4px;transition:width .6s ease"></div>
+              </div>
+              <div class="text-xs text-muted" style="margin-top:2px;text-align:right">{{ p.orders }} orders</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

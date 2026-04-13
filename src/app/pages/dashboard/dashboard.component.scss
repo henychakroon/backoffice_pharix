@@ -1,0 +1,107 @@
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  align-items: start;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Card header */
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.card-title {
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.card-sub {
+  font-size: var(--font-xs);
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+
+/* Status */
+.status-list {
+  padding: 14px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-sm);
+  color: var(--gray-600);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-bar-wrap {
+  flex: 1;
+}
+.status-bar {
+  height: 6px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--gray-100);
+  transition: width .6s ease;
+}
+
+/* Top pharmacies */
+.pharma-list {
+  padding: 12px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.pharma-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pharma-rank {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: var(--gray-400);
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.pharma-info { flex: 0 0 auto; min-width: 100px; }
+.pharma-name {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--gray-700);
+}
+.pharma-bar-wrap { flex: 1; }
+.pharma-bar {
+  height: 6px;
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}

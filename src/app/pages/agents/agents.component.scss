@@ -1,0 +1,158 @@
+/* Live bar */
+.live-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-xs);
+  flex-wrap: wrap;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgba(45,206,137,.25);
+  animation: pulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.live-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.live-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-sm);
+  color: var(--gray-600);
+
+  &.success .chip-count { background: var(--success-light); color: var(--success); }
+  &.info    .chip-count { background: var(--info-light);    color: var(--info);    }
+  &.gray    .chip-count { background: var(--gray-100);      color: var(--gray-500);}
+  &.danger  .chip-count { background: var(--danger-light);  color: var(--danger);  }
+}
+
+.chip-count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+}
+
+/* Agent Cards Grid */
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.agent-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+  }
+}
+
+.agent-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.agent-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(79,110,247,.3);
+}
+
+.agent-info { flex: 1; min-width: 0; }
+.agent-name {
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+/* Active order banner */
+.active-order {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--info-light);
+  color: var(--info);
+  font-size: var(--font-xs);
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(17,205,239,.15);
+}
+
+/* Stats row */
+.agent-stats {
+  display: flex;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.agent-stat {
+  flex: 1;
+  padding: 10px 8px;
+  text-align: center;
+  & + & { border-left: 1px solid var(--gray-100); }
+}
+
+.agent-stat-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.agent-stat-lbl {
+  font-size: 10px;
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+
+/* Footer */
+.agent-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+/* Pulse dot on badge */
+.pulse-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.8s ease-in-out infinite;
+  margin-right: 2px;
+}
