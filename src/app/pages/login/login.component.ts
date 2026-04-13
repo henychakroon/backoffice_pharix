@@ -26,16 +26,21 @@ export class LoginComponent {
       return;
     }
     this.loading = true;
-    // Simulate async
-    setTimeout(() => {
-      const ok = this.auth.login(this.email, this.password);
-      this.loading = false;
-      if (ok) {
+
+    this.auth.login(this.email, this.password).subscribe({
+      next: () => {
+        this.loading = false;
         this.router.navigate(['/dashboard']);
-      } else {
-        this.errorMessage = 'Invalid email or password. Please try again.';
+      },
+      error: (err) => {
+        this.loading = false;
+        if (err.status === 401 || err.status === 403) {
+          this.errorMessage = err.error?.error ?? 'Invalid credentials. Access denied.';
+        } else {
+          this.errorMessage = 'Server error. Please try again later.';
+        }
       }
-    }, 800);
+    });
   }
 
   fillDemo(): void {
