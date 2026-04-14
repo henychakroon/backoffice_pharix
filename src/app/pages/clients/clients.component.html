@@ -15,18 +15,8 @@
   <div class="summary-row">
     <div class="summary-chip">
       <span class="summary-dot" style="background:var(--success)"></span>
-      <span class="fw-600">{{ clients | filterStatus:'active' }}</span>
-      <span class="text-muted text-sm">Active</span>
-    </div>
-    <div class="summary-chip">
-      <span class="summary-dot" style="background:var(--danger)"></span>
-      <span class="fw-600">{{ clients | filterStatus:'suspended' }}</span>
-      <span class="text-muted text-sm">Suspended</span>
-    </div>
-    <div class="summary-chip">
-      <span class="summary-dot" style="background:var(--gray-400)"></span>
-      <span class="fw-600">{{ clients | filterStatus:'inactive' }}</span>
-      <span class="text-muted text-sm">Inactive</span>
+      <span class="fw-600">{{ clients.length }}</span>
+      <span class="text-muted text-sm">Total Clients</span>
     </div>
   </div>
 
@@ -73,22 +63,22 @@
           <tr *ngFor="let c of filtered; let i = index">
             <td>
               <div style="display:flex;align-items:center;gap:10px">
-                <div class="avatar avatar-md" [style.background]="avatarBg(i)" [style.color]="avatarColor(i)">{{ initials(c.name) }}</div>
+                <div class="avatar avatar-md" [style.background]="avatarBg(i)" [style.color]="avatarColor(i)">{{ initials(c.fullName) }}</div>
                 <div>
-                  <div class="fw-600" style="font-size:13px">{{ c.name }}</div>
+                  <div class="fw-600" style="font-size:13px">{{ c.fullName }}</div>
                   <div class="text-xs text-muted">{{ c.id }}</div>
                 </div>
               </div>
             </td>
             <td class="hide-mobile">
-              <div style="font-size:13px">{{ c.email }}</div>
-              <div class="text-xs text-muted">{{ c.phone }}</div>
+              <div style="font-size:13px">{{ c.user?.email }}</div>
+              <div class="text-xs text-muted">{{ c.user?.phone }}</div>
             </td>
-            <td class="hide-mobile text-muted" style="font-size:13px">{{ c.city }}</td>
-            <td class="fw-600">{{ c.orders }}</td>
-            <td class="hide-mobile fw-600 text-primary">{{ c.spent }}</td>
-            <td class="hide-mobile text-muted" style="font-size:13px">{{ c.joined }}</td>
-            <td><span class="badge" [ngClass]="statusBadge(c.status)">{{ c.status }}</span></td>
+            <td class="hide-mobile text-muted" style="font-size:13px">—</td>
+            <td class="fw-600">—</td>
+            <td class="hide-mobile fw-600 text-primary">—</td>
+            <td class="hide-mobile text-muted" style="font-size:13px">—</td>
+            <td><span class="badge badge-success">Active</span></td>
             <td>
               <div style="display:flex;gap:4px">
                 <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="View profile">

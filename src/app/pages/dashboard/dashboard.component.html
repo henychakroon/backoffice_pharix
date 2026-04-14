@@ -75,15 +75,15 @@
           </thead>
           <tbody>
             <tr *ngFor="let o of recentOrders">
-              <td><span class="fw-600 text-primary">{{ o.id }}</span><br><span class="text-xs text-muted">{{ o.time }}</span></td>
+              <td><span class="fw-600 text-primary">#{{ o.id }}</span><br><span class="text-xs text-muted">{{ o.description }}</span></td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <div class="avatar avatar-sm">{{ o.client[0] }}</div>
-                  <span class="hide-mobile">{{ o.client }}</span>
+                  <div class="avatar avatar-sm">C</div>
+                  <span class="hide-mobile">Client #{{ o.clientId }}</span>
                 </div>
               </td>
-              <td class="hide-mobile text-muted">{{ o.pharmacy }}</td>
-              <td class="hide-mobile text-muted">{{ o.agent }}</td>
+              <td class="hide-mobile text-muted">Pharmacy #{{ o.vendorId }}</td>
+              <td class="hide-mobile text-muted">{{ o.liv ?? '—' }}</td>
               <td class="fw-600">{{ o.total }}</td>
               <td><span class="badge" [ngClass]="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
             </tr>
@@ -138,16 +138,16 @@
         <div class="pharma-list">
           <div class="pharma-row" *ngFor="let p of topPharmacies; let i = index">
             <div class="pharma-rank">{{ i+1 }}</div>
-            <div class="avatar avatar-sm" style="background:var(--primary-light);color:var(--primary);font-weight:700">{{ p.name[0] }}</div>
+            <div class="avatar avatar-sm" style="background:var(--primary-light);color:var(--primary);font-weight:700">{{ (p.pharmacyName || '?')[0] }}</div>
             <div class="pharma-info">
-              <div class="pharma-name">{{ p.name }}</div>
-              <div class="text-xs text-muted">{{ p.city }}</div>
+              <div class="pharma-name">{{ p.pharmacyName }}</div>
+              <div class="text-xs text-muted">{{ p.ownerName }}</div>
             </div>
             <div class="pharma-bar-wrap">
               <div class="pharma-bar">
-                <div [style.width]="barWidth(p.orders)" style="background:var(--primary);height:100%;border-radius:4px;transition:width .6s ease"></div>
+                <div [style.width]="'60%'" style="background:var(--primary);height:100%;border-radius:4px;transition:width .6s ease"></div>
               </div>
-              <div class="text-xs text-muted" style="margin-top:2px;text-align:right">{{ p.orders }} orders</div>
+              <div class="text-xs text-muted" style="margin-top:2px;text-align:right">{{ p.active ? 'Active' : 'Inactive' }}</div>
             </div>
           </div>
         </div>
