@@ -1,0 +1,505 @@
+<div class="catalog-page animate-fadeInUp">
+
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Catalogue médicaments</div>
+      <div class="page-subtitle">Importez, gérez et exportez le catalogue de référence</div>
+    </div>
+    <div class="header-actions">
+      <button class="tab-btn" [class.active]="activeTab === 'import'" (click)="setTab('import')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import CSV
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'medications'" (click)="setTab('medications')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        Médicaments
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Toast ──────────────────────────────────────────────────────────────── -->
+  <div class="toast-container" *ngIf="toast">
+    <div class="toast" [class.toast-success]="toast.type === 'success'" [class.toast-error]="toast.type === 'error'">
+      <span class="toast-icon">
+        <ng-container *ngIf="toast.type === 'success'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </ng-container>
+        <ng-container *ngIf="toast.type === 'error'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </ng-container>
+      </span>
+      <span class="toast-msg">{{ toast.message }}</span>
+      <button class="toast-close" (click)="dismissToast()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════  IMPORT TAB  ════════════════════════════════════════ -->
+  <div *ngIf="activeTab === 'import'" class="tab-panel">
+
+    <!-- File drop zone -->
+    <div class="import-card card" *ngIf="!importPreview && !importLoading && !mappingData">
+      <div class="import-card-body">
+        <div class="dropzone">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p class="dz-title">Importer un fichier Excel du Ministère de la Santé</p>
+          <p class="dz-sub">Format : fichier Excel (.xls ou .xlsx), colonnes Ministère</p>
+          <label class="btn btn-primary btn-sm" for="csvFileInput">
+            Choisir un fichier Excel (.xls / .xlsx)
+          </label>
+          <input id="csvFileInput" type="file" accept=".xls,.xlsx" (change)="onFileSelected($event)" style="display:none">
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading spinner -->
+    <div class="loading-card card" *ngIf="importLoading">
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+        <p>Analyse du fichier en cours…</p>
+      </div>
+    </div>
+
+    <!-- Column mapping card -->
+    <div class="mapping-card card" *ngIf="mappingData && !importLoading">
+      <div class="mapping-alert">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <div>
+          <strong>Les noms de colonnes ne correspondent pas</strong>
+          <p>Le fichier contient des noms de colonnes différents des colonnes attendues (problème d’encodage des caractères). Mappez chaque colonne ci-dessous avant de continuer.</p>
+        </div>
+      </div>
+
+      <div class="mapping-progress">
+        <span class="mapping-count">{{ mappedCount }} / {{ mappingData.expectedColumns.length }} colonnes mappées</span>
+        <div class="mapping-bar"><div class="mapping-bar-fill" [style.width.%]="(mappedCount / mappingData.expectedColumns.length) * 100"></div></div>
+      </div>
+
+      <table class="mapping-table">
+        <thead>
+          <tr>
+            <th>Colonne attendue</th>
+            <th>Colonne dans le fichier</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let col of mappingData.expectedColumns"
+              [class.row-mapped]="!!columnMapping[col]"
+              [class.row-unmapped]="!columnMapping[col]">
+            <td class="expected-col">{{ col }}</td>
+            <td>
+              <select class="filter-select mapping-select" [(ngModel)]="columnMapping[col]">
+                <option value="">— Non mappé —</option>
+                <option *ngFor="let found of mappingData.foundColumns" [value]="found">{{ found }}</option>
+              </select>
+            </td>
+            <td>
+              <span class="badge badge-mapped" *ngIf="columnMapping[col]">Mappé</span>
+              <span class="badge badge-missing" *ngIf="!columnMapping[col]">Manquant</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="mapping-actions">
+        <button class="btn btn-ghost" (click)="cancelImport()" [disabled]="mappingLoading">Annuler</button>
+        <button class="btn btn-primary" (click)="onRemapSubmit()" [disabled]="mappingLoading || !allRequiredMapped">
+          <span *ngIf="!mappingLoading">Valider le mapping et analyser</span>
+          <span *ngIf="mappingLoading" class="btn-spinner">
+            <div class="spinner spinner-sm"></div> Analyse…
+          </span>
+        </button>
+      </div>
+    </div>
+    <div class="preview-card card" *ngIf="importPreview">
+
+      <!-- Warnings banner -->
+      <div class="warnings-banner" *ngIf="importPreview.warnings?.length">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div class="warnings-list">
+          <div *ngFor="let w of importPreview.warnings">{{ w }}</div>
+        </div>
+      </div>
+
+      <div class="preview-header">
+        <h3 class="preview-title">Aperçu de l'import</h3>
+        <span class="preview-badge">{{ importPreview.totalParsed | number }} lignes lues</span>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="stats-grid">
+        <div class="stat-card stat-green">
+          <div class="stat-value">{{ importPreview.toInsert | number }}</div>
+          <div class="stat-label">À insérer</div>
+        </div>
+        <div class="stat-card stat-blue">
+          <div class="stat-value">{{ importPreview.toUpdate | number }}</div>
+          <div class="stat-label">À mettre à jour</div>
+        </div>
+        <div class="stat-card stat-gray">
+          <div class="stat-value">{{ importPreview.toSkip | number }}</div>
+          <div class="stat-label">Inchangés</div>
+        </div>
+        <div class="stat-card stat-orange">
+          <div class="stat-value">{{ importPreview.skipped | number }}</div>
+          <div class="stat-label">Ignorés (AMM vide)</div>
+        </div>
+        <div class="stat-card" [class.stat-red]="importPreview.missingFromFile > 0" [class.stat-gray]="importPreview.missingFromFile === 0">
+          <div class="stat-value">{{ importPreview.missingFromFile | number }}</div>
+          <div class="stat-label">Absents du fichier</div>
+        </div>
+      </div>
+
+      <!-- Missing AMMs collapsible -->
+      <div class="missing-section" *ngIf="importPreview.missingAmms?.length">
+        <button class="missing-toggle" (click)="missingAmmsExpanded = !missingAmmsExpanded">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               [style.transform]="missingAmmsExpanded ? 'rotate(90deg)' : 'rotate(0)'">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          {{ importPreview.missingAmms.length }} AMM{{ importPreview.missingAmms.length > 1 ? 's' : '' }} absents du fichier (produits existants non modifiés)
+        </button>
+        <div class="missing-list" *ngIf="missingAmmsExpanded">
+          <span class="amm-chip" *ngFor="let amm of importPreview.missingAmms">{{ amm }}</span>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="preview-actions">
+        <button class="btn btn-ghost" (click)="cancelImport()" [disabled]="confirmLoading">
+          Annuler
+        </button>
+        <button class="btn btn-primary" (click)="confirmImport()" [disabled]="confirmLoading">
+          <span *ngIf="!confirmLoading">Confirmer l'import</span>
+          <span *ngIf="confirmLoading" class="btn-spinner">
+            <div class="spinner spinner-sm"></div> Enregistrement…
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════  MEDICATIONS TAB  ══════════════════════════════════════ -->
+  <div *ngIf="activeTab === 'medications'" class="tab-panel">
+
+    <!-- Toolbar -->
+    <div class="toolbar card">
+      <div class="toolbar-left">
+        <!-- Search -->
+        <div class="input-wrap search-input">
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Rechercher par Nom ou DCI…"
+            [value]="searchTerm" (input)="onSearchChange($any($event.target).value)">
+        </div>
+
+        <!-- Classe dropdown -->
+        <select class="filter-select" [(ngModel)]="selectedClasse" (change)="onDropdownChange()">
+          <option value="">Toutes les classes</option>
+          <option *ngFor="let c of classes" [value]="c">{{ c }}</option>
+        </select>
+
+        <!-- Sous-classe dropdown -->
+        <select class="filter-select" [(ngModel)]="selectedSousClasse" (change)="onDropdownChange()">
+          <option value="">Toutes les sous-classes</option>
+          <option *ngFor="let s of sousClasses" [value]="s">{{ s }}</option>
+        </select>
+
+        <!-- Laboratoire dropdown -->
+        <select class="filter-select" [(ngModel)]="selectedLaboratoire" (change)="onDropdownChange()">
+          <option value="">Tous les laboratoires</option>
+          <option *ngFor="let l of laboratoires" [value]="l">{{ l }}</option>
+        </select>
+
+        <!-- VEIC dropdown -->
+        <select class="filter-select" [(ngModel)]="selectedVeic" (change)="onDropdownChange()">
+          <option value="">VEIC (tous)</option>
+          <option *ngFor="let v of veics" [value]="v">{{ v }}</option>
+        </select>
+
+        <!-- Active toggle -->
+        <label class="toggle-label">
+          <input type="checkbox" [(ngModel)]="showInactive" (change)="onDropdownChange()">
+          Inclure inactifs
+        </label>
+
+        <!-- Clear filters -->
+        <button class="btn btn-ghost btn-xs" *ngIf="hasActiveFilters" (click)="clearFilters()">
+          &times; Réinitialiser
+        </button>
+      </div>
+
+      <div class="toolbar-right">
+        <span class="result-count">
+          {{ filteredMedications.length | number }} résultat{{ filteredMedications.length !== 1 ? 's' : '' }}
+          <ng-container *ngIf="selectedCount > 0"> · {{ selectedCount }} sélectionné{{ selectedCount > 1 ? 's' : '' }}</ng-container>
+        </span>
+        <button class="btn btn-secondary btn-sm" (click)="exportSelected()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter {{ selectedCount > 0 ? '(' + selectedCount + ')' : 'tout' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Table skeleton while loading -->
+    <div class="loading-card card" *ngIf="tableLoading">
+      <div class="spinner-wrap"><div class="spinner"></div><p>Chargement du catalogue…</p></div>
+    </div>
+
+    <!-- Medications table with virtual scroll -->
+    <div class="table-wrapper card" *ngIf="!tableLoading">
+
+      <!-- Sticky column header -->
+      <div class="table-head">
+        <div class="th-row">
+          <div class="th th-check">
+            <input type="checkbox" [checked]="selectAll" (change)="toggleSelectAll()"
+                   [indeterminate]="selectedCount > 0 && !selectAll">
+          </div>
+          <div class="th th-nom">Nom</div>
+          <div class="th th-dci">DCI</div>
+          <div class="th th-dosage">Dosage</div>
+          <div class="th th-forme">Forme</div>
+          <div class="th th-lab">Laboratoire</div>
+          <div class="th th-sc">Sous-classe</div>
+          <div class="th th-veic">VEIC</div>
+          <div class="th th-prix">Prix (TND)</div>
+          <div class="th th-actif">Actif</div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-table" *ngIf="filteredMedications.length === 0">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p>Aucun médicament trouvé pour ces critères.</p>
+        <button class="btn btn-ghost btn-sm" *ngIf="hasActiveFilters" (click)="clearFilters()">
+          Réinitialiser les filtres
+        </button>
+      </div>
+
+      <!-- Virtual scroll rows -->
+      <cdk-virtual-scroll-viewport
+        [itemSize]="ITEM_SIZE"
+        class="table-viewport"
+        *ngIf="filteredMedications.length > 0">
+        <div
+          class="tr"
+          *cdkVirtualFor="let med of filteredMedications; trackBy: trackByAmm"
+          [class.tr-selected]="selectedAmms.has(med.amm)"
+          [class.tr-inactive]="!med.isActive"
+          (click)="openDrawer(med)">
+
+          <div class="td td-check" (click)="$event.stopPropagation()">
+            <input type="checkbox"
+              [checked]="selectedAmms.has(med.amm)"
+              (change)="toggleRowSelection(med.amm, $event)">
+          </div>
+          <div class="td td-nom" [title]="med.name">{{ med.name }}</div>
+          <div class="td td-dci" [title]="med.dci">{{ med.dci }}</div>
+          <div class="td td-dosage">{{ med.dosage }}</div>
+          <div class="td td-forme">{{ med.forme }}</div>
+          <div class="td td-lab" [title]="med.laboratoire">{{ med.laboratoire }}</div>
+          <div class="td td-sc" [title]="med.subCategoryName">{{ med.subCategoryName }}</div>
+          <div class="td td-veic">{{ med.veic }}</div>
+          <div class="td td-prix">{{ med.referencePrice != null ? (med.referencePrice | number:'1.3-3') : '—' }}</div>
+          <div class="td td-actif" (click)="toggleActive(med, $event)">
+            <span class="badge" [class.badge-active]="med.isActive" [class.badge-inactive]="!med.isActive">
+              {{ med.isActive ? 'Actif' : 'Inactif' }}
+            </span>
+          </div>
+        </div>
+      </cdk-virtual-scroll-viewport>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════  DETAIL DRAWER  ════════════════════════════════════════ -->
+<div class="drawer-overlay" [class.open]="drawerOpen" (click)="closeDrawer()"></div>
+<aside class="drawer" [class.open]="drawerOpen" *ngIf="drawerMedication">
+  <div class="drawer-header">
+    <div class="drawer-title">{{ drawerEditMode ? 'Modifier' : '' }} {{ drawerMedication.name }}</div>
+    <div class="drawer-header-actions">
+      <button class="btn btn-secondary btn-sm" *ngIf="!drawerEditMode" (click)="startEdit()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Éditer
+      </button>
+      <button class="btn btn-ghost btn-icon" (click)="closeDrawer()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── VIEW MODE ── -->
+  <div class="drawer-body" *ngIf="!drawerEditMode">
+    <div class="detail-section">
+      <div class="detail-row">
+        <span class="detail-label">AMM</span>
+        <span class="detail-value amm-badge">{{ drawerMedication.amm }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">DCI</span>
+        <span class="detail-value">{{ drawerMedication.dci || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Dosage</span>
+        <span class="detail-value">{{ drawerMedication.dosage || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Forme</span>
+        <span class="detail-value">{{ drawerMedication.forme || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Présentation</span>
+        <span class="detail-value">{{ drawerMedication.presentation || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Laboratoire</span>
+        <span class="detail-value">{{ drawerMedication.laboratoire || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Classe</span>
+        <span class="detail-value">{{ drawerMedication.categoryName || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Sous-classe</span>
+        <span class="detail-value">{{ drawerMedication.subCategoryName || '—' }}</span>
+      </div>
+    </div>
+    <div class="detail-divider"></div>
+    <div class="detail-section">
+      <div class="detail-row">
+        <span class="detail-label">Date AMM</span>
+        <span class="detail-value">{{ drawerMedication.dateAmm || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Cond. primaire</span>
+        <span class="detail-value">{{ drawerMedication.conditionnement || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Spécification</span>
+        <span class="detail-value">{{ drawerMedication.specification || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Tableau</span>
+        <span class="detail-value">{{ drawerMedication.tableau || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Durée conservation</span>
+        <span class="detail-value">{{ drawerMedication.dureeConservation || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">G/P/B</span>
+        <span class="detail-value">{{ drawerMedication.gpb || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">VEIC</span>
+        <span class="detail-value">{{ drawerMedication.veic || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Prix réf. (TND)</span>
+        <span class="detail-value price-value">
+          {{ drawerMedication.referencePrice != null ? (drawerMedication.referencePrice | number:'1.3-3') + ' TND' : '—' }}
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Statut</span>
+        <span class="badge" [class.badge-active]="drawerMedication.isActive" [class.badge-inactive]="!drawerMedication.isActive">
+          {{ drawerMedication.isActive ? 'Actif' : 'Inactif' }}
+        </span>
+      </div>
+    </div>
+    <div class="detail-divider"></div>
+    <div class="indications-section">
+      <div class="detail-label">Indications</div>
+      <div class="indications-text" [class.expanded]="drawerIndicationsExpanded">
+        {{ drawerMedication.description || 'Aucune indication disponible.' }}
+      </div>
+      <button class="voir-plus" *ngIf="drawerMedication.description && drawerMedication.description.length > 200"
+              (click)="drawerIndicationsExpanded = !drawerIndicationsExpanded">
+        {{ drawerIndicationsExpanded ? 'Voir moins ▲' : 'Voir plus ▼' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── EDIT MODE ── -->
+  <div class="drawer-body edit-body" *ngIf="drawerEditMode">
+    <div class="edit-grid">
+      <div class="edit-field edit-field-full">
+        <label class="edit-label">Nom</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.name">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">DCI</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.dci">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Dosage</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.dosage">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Forme</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.forme">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Présentation</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.presentation">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Laboratoire</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.laboratoire">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Date AMM</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.dateAmm">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Conditionnement primaire</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.conditionnement">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Spécification</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.specification">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Tableau</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.tableau">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Durée de conservation</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.dureeConservation">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">G/P/B</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.gpb">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">VEIC</label>
+        <input class="edit-input" type="text" [(ngModel)]="editDraft.veic">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Prix réf. (TND)</label>
+        <input class="edit-input" type="number" step="0.001" [(ngModel)]="editDraft.referencePrice">
+      </div>
+      <div class="edit-field edit-field-full">
+        <label class="edit-label">Indications</label>
+        <textarea class="edit-input edit-textarea" rows="4" [(ngModel)]="editDraft.description"></textarea>
+      </div>
+    </div>
+
+    <div class="edit-actions">
+      <button class="btn btn-ghost" (click)="cancelEdit()" [disabled]="editSaving">Annuler</button>
+      <button class="btn btn-primary" (click)="saveEdit()" [disabled]="editSaving">
+        <span *ngIf="!editSaving">Enregistrer</span>
+        <span *ngIf="editSaving" class="btn-spinner">
+          <div class="spinner spinner-sm"></div> Enregistrement…
+        </span>
+      </button>
+    </div>
+  </div>
+</aside>

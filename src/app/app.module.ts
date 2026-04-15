@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 
 import { AppRoutingModule }    from './app-routing.module';
@@ -38,7 +39,9 @@ import { FilterStatusPipe }    from './shared/pipes/filter-status.pipe';
   imports: [
     BrowserModule,
     FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
+    ScrollingModule,
     AppRoutingModule
   ],
   providers: [
