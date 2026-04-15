@@ -243,6 +243,10 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Exporter {{ selectedCount > 0 ? '(' + selectedCount + ')' : 'tout' }}
         </button>
+        <button class="btn btn-danger btn-sm" (click)="showDeleteAllConfirm = true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Vider le catalogue
+        </button>
       </div>
     </div>
 
@@ -503,3 +507,20 @@
     </div>
   </div>
 </aside>
+
+<!-- ════════════════  DELETE ALL CONFIRM MODAL  ══════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showDeleteAllConfirm" (click)="showDeleteAllConfirm = false"></div>
+<div class="modal-dialog" *ngIf="showDeleteAllConfirm">
+  <div class="modal-icon danger">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+  </div>
+  <h3 class="modal-title">Vider le catalogue ?</h3>
+  <p class="modal-body">Cette action supprimera <strong>tous les médicaments</strong> de la base de données. Cette opération est irréversible.</p>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" (click)="showDeleteAllConfirm = false" [disabled]="deleteAllLoading">Annuler</button>
+    <button class="btn btn-danger" (click)="executeDeleteAll()" [disabled]="deleteAllLoading">
+      <span *ngIf="!deleteAllLoading">Confirmer la suppression</span>
+      <span *ngIf="deleteAllLoading" class="btn-spinner"><div class="spinner spinner-sm"></div> Suppression…</span>
+    </button>
+  </div>
+</div>

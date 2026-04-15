@@ -64,6 +64,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
   drawerIndicationsExpanded = false;  drawerEditMode = false;
   editDraft: MedicationUpdateRequest = {};
   editSaving = false;
+  // ── Delete all confirm ──────────────────────────────────────────────────────
+  showDeleteAllConfirm = false;
+  deleteAllLoading = false;
+
   // ── Toast notifications ─────────────────────────────────────────────────────
   toast: Toast | null = null;
   private toastTimer: any;
@@ -429,6 +433,30 @@ export class ProductsComponent implements OnInit, OnDestroy {
       },
       error: err => {
         this.editSaving = false;
+        const msg = err.error?.error || err.message || 'Erreur serveur.';
+        this.showToast('error', msg);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ── Delete all ────────────────────────────────────────────────────────────────
+
+  executeDeleteAll(): void {
+    if (this.deleteAllLoading) return;
+    this.deleteAllLoading = true;
+    this.catalogService.deleteAllMedications().subscribe({
+      next: () => {
+        this.deleteAllLoading = false;
+        this.showDeleteAllConfirm = false;
+        this.allMedications = [];
+        this.filteredMedications = [];
+        this.closeDrawer();
+        this.showToast('success', 'Catalogue supprimé avec succès.');
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        this.deleteAllLoading = false;
         const msg = err.error?.error || err.message || 'Erreur serveur.';
         this.showToast('error', msg);
         this.cdr.detectChanges();

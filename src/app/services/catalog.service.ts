@@ -158,4 +158,8 @@ export class CatalogService {
       dto
     );
   }
+
+  deleteAllMedications(): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.BASE}/medications`);
+  }
 }
