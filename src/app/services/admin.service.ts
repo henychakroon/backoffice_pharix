@@ -55,6 +55,20 @@ export interface DeliveryConfig {
   freeDeliveryThreshold: number;
 }
 
+export interface AdvertisementBanner {
+  id: number;
+  title: string;
+  description: string;
+  image: string | null; // base64
+  validated: boolean;
+  active: boolean;
+  pharmacienId: number;
+  pharmacyName: string;
+  ownerName: string;
+  zoneId: number | null;
+  zoneName: string | null;
+}
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -98,5 +112,26 @@ export class AdminService {
 
   saveDeliveryConfig(deliveryPrice: number, freeDeliveryThreshold: number): Observable<DeliveryConfig> {
     return this.http.post<DeliveryConfig>(`${this.BASE}/save_config`, { deliveryPrice, freeDeliveryThreshold });
+  }
+
+  // Advertisement Banners
+  getBanners(): Observable<AdvertisementBanner[]> {
+    return this.http.get<AdvertisementBanner[]>(`${this.BASE}/banners`);
+  }
+
+  getPendingBanners(): Observable<AdvertisementBanner[]> {
+    return this.http.get<AdvertisementBanner[]>(`${this.BASE}/banners/pending`);
+  }
+
+  validateBanner(id: number): Observable<void> {
+    return this.http.put<void>(`${this.BASE}/banner/${id}/validate`, {});
+  }
+
+  toggleBanner(id: number): Observable<void> {
+    return this.http.put<void>(`${this.BASE}/banner/${id}/toggle`, {});
+  }
+
+  rejectBanner(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.BASE}/banner/${id}`);
   }
 }

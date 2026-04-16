@@ -18,7 +18,9 @@ import { ProductsComponent }   from './pages/products/products.component';
 import { CategoriesComponent } from './pages/categories/categories.component';
 import { AnalyticsComponent }  from './pages/analytics/analytics.component';
 import { SettingsComponent }   from './pages/settings/settings.component';
+import { ZonesComponent }      from './pages/zones/zones.component';
 import { FilterStatusPipe }    from './shared/pipes/filter-status.pipe';
+import { AdBannersComponent }  from './pages/zones/ad-banners/ad-banners.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +36,9 @@ import { FilterStatusPipe }    from './shared/pipes/filter-status.pipe';
     CategoriesComponent,
     AnalyticsComponent,
     SettingsComponent,
+    ZonesComponent,
     FilterStatusPipe,
+    AdBannersComponent,
   ],
   imports: [
     BrowserModule,

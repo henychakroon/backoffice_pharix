@@ -11,6 +11,7 @@ import { ProductsComponent }   from './pages/products/products.component';
 import { CategoriesComponent } from './pages/categories/categories.component';
 import { AnalyticsComponent }  from './pages/analytics/analytics.component';
 import { SettingsComponent }   from './pages/settings/settings.component';
+import { ZonesComponent }      from './pages/zones/zones.component';
 import { AuthGuard }           from './guards/auth.guard';
 
 const routes: Routes = [
@@ -30,6 +31,7 @@ const routes: Routes = [
       { path: 'categories', component: CategoriesComponent },
       { path: 'analytics',  component: AnalyticsComponent  },
       { path: 'settings',   component: SettingsComponent   },
+      { path: 'zones',      component: ZonesComponent      },
     ]
   },
   { path: '**', redirectTo: 'dashboard' }

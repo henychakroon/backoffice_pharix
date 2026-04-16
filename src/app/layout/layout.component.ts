@@ -42,6 +42,12 @@ export class LayoutComponent {
         { label: 'Analytics',         icon: 'bar-chart-2', route: '/analytics'  },
         { label: 'Settings',          icon: 'settings',    route: '/settings'   },
       ]
+    },
+    {
+      group: 'Livraison',
+      items: [
+        { label: 'Zones de livraison', icon: 'map-pin',     route: '/zones'      },
+      ]
     }
   ];
 

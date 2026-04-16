@@ -41,7 +41,10 @@ export class DashboardComponent implements OnInit {
         this.topPharmacies = pharmacies.filter(p => p.active).slice(0, 5);
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: (error) => { this.loading = false;
+
+        console.error('Failed to load dashboard data', error);
+       }
     });
   }
 
