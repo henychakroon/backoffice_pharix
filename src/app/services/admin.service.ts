@@ -12,11 +12,10 @@ export interface PharmacienProfile {
   active: boolean;
   latitude: number;
   longitude: number;
-  user: {
-    id: number;
-    email: string;
-    phone: string;
-  };
+  email: string;
+  phone: string;
+  deliveryZoneName?: string;
+  pharmacyType?: 'PHARMACY' | 'PARAPHARMACIE';
 }
 
 export interface ClientProfile {

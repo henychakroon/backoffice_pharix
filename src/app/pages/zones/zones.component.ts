@@ -66,6 +66,10 @@ export class ZonesComponent implements OnInit, OnDestroy {
   // Tunisia center
   private readonly DEFAULT_CENTER = { lat: 33.8869, lng: 9.5375 };
 
+  // ── Pharmacy pin from query params ────────────────────────────────────────
+  private pharmacyMarker: any = null;
+  private targetPharmacy: { lat: number; lng: number; name: string } | null = null;
+
   constructor(
     private zoneService: DeliveryZoneService,
     private cdr: ChangeDetectorRef,
@@ -76,6 +80,12 @@ export class ZonesComponent implements OnInit, OnDestroy {
     this.route.queryParams.subscribe(params => {
       const id = params['zoneId'];
       if (id) { this.targetZoneId = +id; }
+      const lat = parseFloat(params['lat']);
+      const lng = parseFloat(params['lng']);
+      const name = params['pharmacyName'];
+      if (!isNaN(lat) && !isNaN(lng)) {
+        this.targetPharmacy = { lat, lng, name: name || 'Pharmacie' };
+      }
     });
     this.loadZones();
     this.initMap();
@@ -152,6 +162,7 @@ export class ZonesComponent implements OnInit, OnDestroy {
 
     this.renderAllPolygons();
     this.tryFlyToTarget();
+    this.tryDropPharmacyPin();
   }
 
   // ── Drawing ────────────────────────────────────────────────────────────────
@@ -282,6 +293,45 @@ export class ZonesComponent implements OnInit, OnDestroy {
     const bounds = new google.maps.LatLngBounds();
     zone.points.forEach(p => bounds.extend({ lat: p.latitude, lng: p.longitude }));
     this.map.fitBounds(bounds, 60);
+  }
+
+  private tryDropPharmacyPin(): void {
+    if (!this.targetPharmacy || !this.map) return;
+    const { lat, lng, name } = this.targetPharmacy;
+    this.targetPharmacy = null; // consume once
+
+    // Remove any previous pharmacy marker
+    if (this.pharmacyMarker) { this.pharmacyMarker.setMap(null); }
+
+    this.pharmacyMarker = new google.maps.Marker({
+      position: { lat, lng },
+      map: this.map,
+      title: name,
+      animation: google.maps.Animation.DROP,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: '#ef4444',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+      }
+    });
+
+    const infoWindow = new google.maps.InfoWindow({
+      content: `<div style="font-family:inherit;min-width:140px;padding:4px 2px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">🏪 ${name}</div>
+        <div style="font-size:11px;color:#555">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+      </div>`
+    });
+
+    this.pharmacyMarker.addListener('click', () => {
+      infoWindow.open(this.map, this.pharmacyMarker);
+    });
+
+    infoWindow.open(this.map, this.pharmacyMarker);
+    this.map.panTo({ lat, lng });
+    this.map.setZoom(15);
   }
 
   // ── Create form ────────────────────────────────────────────────────────────

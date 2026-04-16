@@ -3,10 +3,10 @@
   <div class="page-header">
     <div>
       <div class="page-title">Pharmacies</div>
-      <div class="page-subtitle">{{ pharmacies.length }} partner pharmacies — manage & monitor</div>
+      <div class="page-subtitle">{{ pharmacies.length }} établissements partenaires — gérer &amp; surveiller</div>
     </div>
     <div style="display:flex;gap:8px">
-      <!-- View toggle -->
+      <!-- Bascule de vue -->
       <div class="view-toggle">
         <button class="vt-btn" [class.active]="viewMode==='grid'" (click)="viewMode='grid'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -17,9 +17,23 @@
       </div>
       <button class="btn btn-primary btn-sm">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Add Pharmacy
+        Ajouter
       </button>
     </div>
+  </div>
+
+  <!-- ── ONGLETS TYPE ── -->
+  <div class="type-tabs">
+    <button class="type-tab" [class.active]="activeTab === 'pharmacie'" (click)="activeTab = 'pharmacie'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><line x1="12" y1="3" x2="12" y2="9"/><line x1="9" y1="6" x2="15" y2="6"/></svg>
+      Pharmacies
+      <span class="tab-count">{{ pharmaciesCount }}</span>
+    </button>
+    <button class="type-tab" [class.active]="activeTab === 'parapharmacie'" (click)="activeTab = 'parapharmacie'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      Parapharmacies
+      <span class="tab-count">{{ parapharmaciesCount }}</span>
+    </button>
   </div>
 
   <div class="filter-bar">
@@ -27,91 +41,105 @@
       <span class="input-icon">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </span>
-      <input type="text" placeholder="Search pharmacies…" [(ngModel)]="searchTerm">
+      <input type="text" [placeholder]="activeTab === 'pharmacie' ? 'Rechercher une pharmacie…' : 'Rechercher une parapharmacie…'" [(ngModel)]="searchTerm">
     </div>
-    <select>
-      <option>All Cities</option>
-      <option>Alger</option>
-      <option>Oran</option>
-      <option>Constantine</option>
+    <select [(ngModel)]="selectedZone">
+      <option value="">Toutes les zones</option>
+      <option value="__none__">Sans zone</option>
+      <option *ngFor="let z of zoneOptions" [value]="z">{{ z }}</option>
     </select>
-    <select>
-      <option>All Statuses</option>
-      <option>Active</option>
-      <option>Pending</option>
-      <option>Suspended</option>
+    <select [(ngModel)]="selectedStatus">
+      <option value="">Tous les statuts</option>
+      <option value="actif">Actif</option>
+      <option value="bloque">Bloqué</option>
     </select>
   </div>
 
-  <!-- loading -->
-  <div *ngIf="loading" style="padding:40px;text-align:center;color:var(--text-muted)">Loading pharmacies…</div>
+  <!-- chargement -->
+  <div *ngIf="loading" style="padding:40px;text-align:center;color:var(--text-muted)">Chargement…</div>
 
-  <!-- ── GRID VIEW ── -->
+  <!-- ── VUE GRILLE ── -->
   <div class="pharma-grid" *ngIf="viewMode === 'grid' && !loading">
+
+    <!-- état vide -->
+    <div class="empty-state" *ngIf="filtered.length === 0" style="grid-column:1/-1">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      <p>Aucune {{ activeTab === 'pharmacie' ? 'pharmacie' : 'parapharmacie' }} trouvée</p>
+    </div>
+
     <div class="pharma-card" *ngFor="let p of filtered">
       <div class="pharma-card-header">
-        <div class="pharma-avatar">{{ (p.pharmacyName || '?')[0] }}</div>
+        <div class="pharma-avatar" [class.para-avatar]="activeTab === 'parapharmacie'">{{ (p.pharmacyName || '?')[0] }}</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px">
             <div class="pharma-card-name truncate">{{ p.pharmacyName }}</div>
             <svg *ngIf="p.active" width="14" height="14" viewBox="0 0 24 24" fill="var(--primary)" stroke="none"><path d="M9 12l2 2 4-4M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/></svg>
           </div>
-          <div class="text-xs text-muted">{{ p.user?.email }}</div>
+          <div class="text-xs text-muted">{{ p.email }}</div>
         </div>
         <span class="badge" [ngClass]="statusBadge(p.active)">{{ statusLabel(p.active) }}</span>
       </div>
       <div class="pharma-card-meta">
         <div class="meta-item">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          {{ p.ownerName }}
+          {{ p.ownerName || '—' }}
         </div>
         <div class="meta-item">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91A16 16 0 0015.09 16.09l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-          {{ p.user?.phone }}
+          {{ p.phone || '—' }}
         </div>
       </div>
       <div class="pharma-stats">
         <div class="pharma-stat">
-          <div class="pharma-stat-value">{{ p.online ? 'Online' : 'Offline' }}</div>
-          <div class="pharma-stat-label">Status</div>
+          <div class="pharma-stat-value" [style.color]="p.online ? 'var(--success)' : 'var(--gray-400)'">{{ p.online ? 'En ligne' : 'Hors ligne' }}</div>
+          <div class="pharma-stat-label">Statut</div>
         </div>
         <div class="pharma-stat">
-          <div class="pharma-stat-value">{{ p.latitude | number:'1.2-4' }}</div>
+          <div class="pharma-stat-value">{{ p.latitude ? (p.latitude | number:'1.2-4') : '—' }}</div>
           <div class="pharma-stat-label">Latitude</div>
         </div>
         <div class="pharma-stat">
-          <div class="pharma-stat-value">{{ p.longitude | number:'1.2-4' }}</div>
+          <div class="pharma-stat-value">{{ p.longitude ? (p.longitude | number:'1.2-4') : '—' }}</div>
           <div class="pharma-stat-label">Longitude</div>
         </div>
       </div>
       <div class="pharma-card-footer">
-        <button class="btn btn-ghost btn-sm" style="flex:1" (click)="activate(p.id)" [disabled]="p.active">Activate</button>
-        <button class="btn btn-danger btn-sm" style="flex:1" (click)="block(p.id)" [disabled]="!p.active">Block</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" (click)="viewOnMap(p)" [disabled]="!p.latitude || !p.longitude">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Voir sur la carte
+        </button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" (click)="activate(p.id)" [disabled]="p.active">Activer</button>
+        <button class="btn btn-danger btn-sm" style="flex:1" (click)="block(p.id)" [disabled]="!p.active">Bloquer</button>
       </div>
     </div>
   </div>
 
-  <!-- ── TABLE VIEW ── -->
-  <div class="card" *ngIf="viewMode === 'table'">
+  <!-- ── VUE TABLEAU ── -->
+  <div class="card" *ngIf="viewMode === 'table' && !loading">
     <div class="table-wrapper">
       <table class="pharix-table">
         <thead>
           <tr>
-            <th>Pharmacy</th>
-            <th class="hide-mobile">Owner</th>
-            <th class="hide-mobile">City</th>
-            <th>Orders</th>
-            <th class="hide-mobile">Revenue</th>
-            <th class="hide-mobile">Rating</th>
-            <th>Status</th>
+            <th>{{ activeTab === 'pharmacie' ? 'Pharmacie' : 'Parapharmacie' }}</th>
+            <th class="hide-mobile">Propriétaire</th>
+            <th class="hide-mobile">E-mail</th>
+            <th>Disponibilité</th>
+            <th class="hide-mobile">Téléphone</th>
+            <th class="hide-mobile">Zone</th>
+            <th>Statut</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
+          <tr *ngIf="filtered.length === 0">
+            <td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted)">
+              Aucune {{ activeTab === 'pharmacie' ? 'pharmacie' : 'parapharmacie' }} trouvée
+            </td>
+          </tr>
           <tr *ngFor="let p of filtered">
             <td>
               <div style="display:flex;align-items:center;gap:10px">
-                <div class="pharma-avatar-sm">{{ (p.pharmacyName || '?')[0] }}</div>
+                <div class="pharma-avatar-sm" [class.para-avatar]="activeTab === 'parapharmacie'">{{ (p.pharmacyName || '?')[0] }}</div>
                 <div>
                   <div style="display:flex;align-items:center;gap:5px">
                     <span class="fw-600" style="font-size:13px">{{ p.pharmacyName }}</span>
@@ -120,20 +148,21 @@
                 </div>
               </div>
             </td>
-            <td class="hide-mobile text-muted" style="font-size:13px">{{ p.ownerName }}</td>
-            <td class="hide-mobile text-muted" style="font-size:13px">{{ p.user?.email }}</td>
-            <td class="fw-600">{{ p.online ? 'Online' : 'Offline' }}</td>
-            <td class="hide-mobile fw-600">{{ p.user?.phone }}</td>
-            <td class="hide-mobile">
-              <span style="color:var(--text-muted)">—</span>
-            </td>
+            <td class="hide-mobile text-muted" style="font-size:13px">{{ p.ownerName || '—' }}</td>
+            <td class="hide-mobile text-muted" style="font-size:13px">{{ p.email || '—' }}</td>
+            <td class="fw-600" [style.color]="p.online ? 'var(--success)' : 'var(--gray-400)'">{{ p.online ? 'En ligne' : 'Hors ligne' }}</td>
+            <td class="hide-mobile fw-600">{{ p.phone || '—' }}</td>
+            <td class="hide-mobile text-muted" style="font-size:12px">{{ p.deliveryZoneName || '—' }}</td>
             <td><span class="badge" [ngClass]="statusBadge(p.active)">{{ statusLabel(p.active) }}</span></td>
             <td>
               <div style="display:flex;gap:4px">
-                <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="Activate" (click)="activate(p.id)" [disabled]="p.active">
+                <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="Voir sur la carte" (click)="viewOnMap(p)" [disabled]="!p.latitude || !p.longitude">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </button>
+                <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="Activer" (click)="activate(p.id)" [disabled]="p.active">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </button>
-                <button class="btn btn-danger btn-icon btn-sm" data-tooltip="Block" (click)="block(p.id)" [disabled]="!p.active">
+                <button class="btn btn-danger btn-icon btn-sm" data-tooltip="Bloquer" (click)="block(p.id)" [disabled]="!p.active">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                 </button>
               </div>
