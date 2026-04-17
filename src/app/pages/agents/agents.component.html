@@ -2,123 +2,124 @@
 
   <div class="page-header">
     <div>
-      <div class="page-title">Delivery Agents</div>
-      <div class="page-subtitle">{{ agents.length }} agents â€” {{ countByStatus('available') }} available now</div>
+      <div class="page-title">Livreurs</div>
+      <div class="page-subtitle">{{ livreurs.length }} livreurs — {{ countOnline() }} en ligne</div>
     </div>
-    <button class="btn btn-primary btn-sm">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add Agent
-    </button>
   </div>
 
+  <div *ngIf="loading" style="text-align:center;padding:40px;color:var(--gray-400)">Chargement...</div>
+
   <!-- Live status bar -->
-  <div class="live-bar">
+  <div class="live-bar" *ngIf="!loading">
     <div class="live-dot"></div>
-    <span class="text-sm fw-600">Live status</span>
+    <span class="text-sm fw-600">Statut en temps reel</span>
     <div class="live-chips">
       <div class="live-chip success">
-        <span class="chip-count">{{ countByStatus('available') }}</span>
-        Available
-      </div>
-      <div class="live-chip info">
-        <span class="chip-count">{{ countByStatus('on_delivery') }}</span>
-        On Delivery
+        <span class="chip-count">{{ countOnline() }}</span>
+        En ligne
       </div>
       <div class="live-chip gray">
-        <span class="chip-count">{{ countByStatus('offline') }}</span>
-        Offline
-      </div>
-      <div class="live-chip danger">
-        <span class="chip-count">{{ countByStatus('suspended') }}</span>
-        Suspended
+        <span class="chip-count">{{ countOffline() }}</span>
+        Hors ligne
       </div>
     </div>
   </div>
 
   <!-- Filter bar -->
-  <div class="filter-bar">
+  <div class="filter-bar" *ngIf="!loading">
     <div class="input-wrap" style="flex:1;max-width:300px">
       <span class="input-icon">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </span>
-      <input type="text" placeholder="Search agentsâ€¦" [(ngModel)]="searchTerm">
+      <input type="text" placeholder="Rechercher livreurs..." [(ngModel)]="searchTerm">
     </div>
-    <select>
-      <option>All Cities</option>
-      <option>Alger</option>
-      <option>Oran</option>
-      <option>Annaba</option>
-    </select>
-    <select>
-      <option>All Statuses</option>
-      <option>Available</option>
-      <option>On Delivery</option>
-      <option>Offline</option>
-    </select>
-    <select>
-      <option>All Vehicles</option>
-      <option>Moto</option>
-      <option>Scooter</option>
-      <option>VÃ©lo</option>
+    <select [(ngModel)]="statusFilter">
+      <option value="all">Tous</option>
+      <option value="online">En ligne</option>
+      <option value="offline">Hors ligne</option>
     </select>
   </div>
 
   <!-- Agent cards -->
-  <div class="agents-grid">
+  <div class="agents-grid" *ngIf="!loading">
     <div class="agent-card" *ngFor="let a of filtered">
       <div class="agent-header">
-        <div class="agent-avatar">{{ initials(a.name) }}</div>
+        <div class="agent-avatar">{{ initials(a.email) }}</div>
         <div class="agent-info">
-          <div class="agent-name">{{ a.name }}</div>
-          <div class="text-xs text-muted">{{ a.id }} Â· {{ a.city }}</div>
+          <div class="agent-name">{{ a.email }}</div>
+          <div class="text-xs text-muted">ID {{ a.id }} · {{ a.zoneName || 'Aucune zone' }}</div>
         </div>
-        <span class="badge" [ngClass]="statusBadge(a.status)">
-          <span class="pulse-dot" *ngIf="a.status === 'available' || a.status === 'on_delivery'"></span>
-          {{ statusLabel(a.status) }}
+        <span class="badge" [ngClass]="a.online ? 'badge-success' : 'badge-gray'">
+          <span class="pulse-dot" *ngIf="a.online"></span>
+          {{ a.online ? 'En ligne' : 'Hors ligne' }}
         </span>
-      </div>
-
-      <!-- Active delivery banner -->
-      <div class="active-order" *ngIf="a.activeOrder">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-        <span>Delivering: <strong>{{ a.activeOrder }}</strong></span>
       </div>
 
       <div class="agent-stats">
         <div class="agent-stat">
-          <div class="agent-stat-val">{{ a.deliveries }}</div>
-          <div class="agent-stat-lbl">Deliveries</div>
+          <div class="agent-stat-val" style="font-size:12px">{{ a.phone || '—' }}</div>
+          <div class="agent-stat-lbl">Telephone</div>
         </div>
         <div class="agent-stat">
-          <div class="agent-stat-val" style="color:var(--warning)">â˜… {{ a.rating }}</div>
-          <div class="agent-stat-lbl">Rating</div>
+          <div class="agent-stat-val" style="font-size:12px">{{ a.vehicleType || '—' }}</div>
+          <div class="agent-stat-lbl">Vehicule</div>
         </div>
         <div class="agent-stat">
-          <div class="agent-stat-val" style="color:var(--success)">{{ a.onTime }}</div>
-          <div class="agent-stat-lbl">On Time</div>
-        </div>
-        <div class="agent-stat">
-          <div class="agent-stat-val" style="font-size:12px">{{ a.vehicle }}</div>
-          <div class="agent-stat-lbl">Vehicle</div>
+          <div class="agent-stat-val" style="font-size:12px">{{ a.zoneName || '—' }}</div>
+          <div class="agent-stat-lbl">Zone</div>
         </div>
       </div>
 
       <div class="agent-footer">
-        <div class="text-xs text-muted" style="flex:1">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Joined {{ a.joined }}
-        </div>
-        <button class="btn btn-ghost btn-sm">Call</button>
-        <button class="btn btn-primary btn-sm">Assign Order</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary btn-sm" (click)="openAssign(a)">Assigner commande</button>
       </div>
     </div>
   </div>
 
   <!-- Empty state -->
-  <div class="empty-state" *ngIf="filtered.length === 0">
-    <div class="empty-icon">ðŸš—</div>
-    <div class="empty-title">No agents found</div>
-    <div class="empty-sub">Try adjusting your search or filters</div>
+  <div class="empty-state" *ngIf="!loading && filtered.length === 0">
+    <div class="empty-icon">&#x1F697;</div>
+    <div class="empty-title">Aucun livreur</div>
+    <div class="empty-sub">Essayez de modifier votre recherche</div>
   </div>
 
+</div>
+
+<!-- ------ ASSIGN ORDER MODAL ------ -->
+<div class="modal-backdrop" *ngIf="assignTarget" (click)="closeAssign()"></div>
+<div class="modal" *ngIf="assignTarget">
+  <div class="modal-header">
+    <div class="modal-title">Assigner une commande</div>
+    <div class="text-sm text-muted">Livreur: {{ assignTarget.email }}</div>
+    <button class="btn btn-ghost btn-icon" (click)="closeAssign()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div *ngIf="assignableOrders.length === 0" class="text-muted" style="padding:16px 0;text-align:center">
+      Aucune commande en attente
+    </div>
+    <div class="livreur-list">
+      <div class="livreur-option"
+           *ngFor="let o of assignableOrders"
+           [class.selected]="selectedOrderId === o.id"
+           (click)="selectedOrderId = o.id">
+        <div class="livreur-avatar">{{ o.id }}</div>
+        <div class="livreur-info">
+          <div class="fw-600" style="font-size:13px">{{ o.clientName }} — {{ o.pharmacyName }}</div>
+          <div class="text-xs text-muted">{{ o.total | currency:'TND':'symbol':'1.2-2' }} · {{ o.createdAt | date:'dd MMM HH:mm' }}</div>
+        </div>
+        <div class="livreur-status">
+          <span class="badge badge-warning" style="font-size:10px">{{ o.status }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost btn-sm" (click)="closeAssign()">Annuler</button>
+    <button class="btn btn-primary btn-sm" [disabled]="!selectedOrderId || assignLoading" (click)="confirmAssign()">
+      {{ assignLoading ? 'En cours...' : 'Confirmer' }}
+    </button>
+  </div>
 </div>

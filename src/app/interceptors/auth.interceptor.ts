@@ -3,18 +3,32 @@ import {
   HttpInterceptor,
   HttpRequest,
   HttpHandler,
-  HttpEvent
+  HttpEvent,
+  HttpErrorResponse
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
+  constructor(private router: Router, private auth: AuthService) {}
+
   intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    // Attach credentials (HttpOnly cookie) to every API request.
-    // The JWT is never readable by JavaScript — the browser sends it automatically.
     if (req.url.startsWith('/api')) {
       req = req.clone({ withCredentials: true });
     }
-    return next.handle(req);
+
+    return next.handle(req).pipe(
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === 401) {
+          // Token expired or invalid — clear session and redirect
+          this.auth.clearSession();
+          this.router.navigate(['/login']);
+        }
+        return throwError(() => err);
+      })
+    );
   }
 }

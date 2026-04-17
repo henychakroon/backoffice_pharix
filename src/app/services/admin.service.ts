@@ -30,16 +30,40 @@ export interface ClientProfile {
   };
 }
 
-export interface Order {
+export interface OrderDTO {
   id: number;
-  description: string;
   status: string;
+  description?: string;
+
+  clientId: number;
+  clientName: string;
+  clientPhone?: string;
+
+  vendorId: number;
+  pharmacyName: string;
+  pharmacyPhone?: string;
+
+  livreurId?: number;
+  livreurName?: string;
+  livreurPhone?: string;
+
   subtotal: number;
   deliveryPrice: number;
   total: number;
-  clientId: { id: number; fullName: string };
-  vendorId: { id: number; pharmacyName: string };
-  liv?: { id: number };
+
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface LivreurAdmin {
+  id: number;
+  userId: number;
+  email: string;
+  phone?: string;
+  vehicleType?: string;
+  online: boolean;
+  zoneId?: number;
+  zoneName?: string;
 }
 
 export interface Category {
@@ -95,8 +119,16 @@ export class AdminService {
   }
 
   // Orders
-  getOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.BASE}/orders`);
+  getOrders(): Observable<OrderDTO[]> {
+    return this.http.get<OrderDTO[]>(`${this.BASE}/orders`);
+  }
+
+  getLivreurs(): Observable<LivreurAdmin[]> {
+    return this.http.get<LivreurAdmin[]>(`${this.BASE}/livreurs`);
+  }
+
+  assignLivreurToOrder(orderId: number, livreurId: number): Observable<OrderDTO> {
+    return this.http.put<OrderDTO>(`${this.BASE}/orders/${orderId}/assign/${livreurId}`, {});
   }
 
   // Categories

@@ -66,6 +66,14 @@ export class PharmaciesComponent implements OnInit {
     });
   }
 
+  get activeList(): PharmacienProfile[] {
+    return this.filtered.filter(p => p.active);
+  }
+
+  get blockedList(): PharmacienProfile[] {
+    return this.filtered.filter(p => !p.active);
+  }
+
   get zoneOptions(): string[] {
     const zones = this.pharmacies
       .map(p => p.deliveryZoneName)

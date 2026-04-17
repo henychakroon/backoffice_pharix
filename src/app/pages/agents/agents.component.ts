@@ -1,43 +1,85 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { AdminService, OrderDTO, LivreurAdmin } from '../../services/admin.service';
 
 @Component({
   selector: 'app-agents',
   templateUrl: './agents.component.html',
   styleUrls: ['./agents.component.scss']
 })
-export class AgentsComponent {
+export class AgentsComponent implements OnInit {
   searchTerm = '';
+  statusFilter = 'all';
 
-  agents = [
-    { id: 'AGT-001', name: 'Karim Dridi',      phone: '+216 20 100 201', city: 'Tunis',    deliveries: 312, rating: 4.9, onTime: '97%', status: 'available',   activeOrder: '#ORD-9911', vehicle: 'Moto',    joined: 'Sep 2024' },
-    { id: 'AGT-002', name: 'Farid Moulahi',   phone: '+216 25 100 202', city: 'Tunis',    deliveries: 289, rating: 4.8, onTime: '96%', status: 'on_delivery', activeOrder: '#ORD-9912', vehicle: 'Scooter', joined: 'Oct 2024' },
-    { id: 'AGT-003', name: 'Sofiane Rahimi',  phone: '+216 22 100 203', city: 'Sfax',     deliveries: 245, rating: 4.7, onTime: '94%', status: 'available',   activeOrder: null,        vehicle: 'Moto',    joined: 'Nov 2024' },
-    { id: 'AGT-004', name: 'Ali Bouaziz',     phone: '+216 50 100 204', city: 'Sousse',   deliveries: 198, rating: 4.6, onTime: '93%', status: 'on_delivery', activeOrder: '#ORD-9906', vehicle: 'Vélo',    joined: 'Jan 2025' },
-    { id: 'AGT-005', name: 'Mehdi Chaouachi', phone: '+216 55 100 205', city: 'Tunis',    deliveries: 176, rating: 4.5, onTime: '91%', status: 'offline',     activeOrder: null,        vehicle: 'Moto',    joined: 'Feb 2025' },
-    { id: 'AGT-006', name: 'Zied Hamdi',      phone: '+216 27 100 206', city: 'Tunis',    deliveries: 143, rating: 4.3, onTime: '89%', status: 'available',   activeOrder: null,        vehicle: 'Scooter', joined: 'Mar 2025' },
-    { id: 'AGT-007', name: 'Nabil Gharbi',    phone: '+216 98 100 207', city: 'Monastir', deliveries: 98,  rating: 4.2, onTime: '88%', status: 'suspended',   activeOrder: null,        vehicle: 'Moto',    joined: 'Apr 2025' },
-  ];
+  livreurs: LivreurAdmin[] = [];
+  allOrders: OrderDTO[] = [];
+  loading = false;
 
-  get filtered() {
-    return this.agents.filter(a =>
-      !this.searchTerm ||
-      a.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      a.city.toLowerCase().includes(this.searchTerm.toLowerCase())
+  // Assign modal
+  assignTarget: LivreurAdmin | null = null;
+  assignLoading = false;
+  selectedOrderId: number | null = null;
+
+  constructor(private adminService: AdminService) {}
+
+  ngOnInit(): void {
+    this.loading = true;
+    this.adminService.getLivreurs().subscribe({
+      next: livs => { this.livreurs = livs; this.loading = false; },
+      error: () => { this.loading = false; }
+    });
+    this.adminService.getOrders().subscribe({
+      next: orders => { this.allOrders = orders; }
+    });
+  }
+
+  get filtered(): LivreurAdmin[] {
+    return this.livreurs.filter(l => {
+      const term = this.searchTerm.toLowerCase();
+      const matchSearch = !this.searchTerm ||
+        l.email.toLowerCase().includes(term) ||
+        (l.phone ?? '').includes(term) ||
+        (l.zoneName ?? '').toLowerCase().includes(term);
+      const matchStatus = this.statusFilter === 'all' ||
+        (this.statusFilter === 'online' && l.online) ||
+        (this.statusFilter === 'offline' && !l.online);
+      return matchSearch && matchStatus;
+    });
+  }
+
+  get assignableOrders(): OrderDTO[] {
+    return this.allOrders.filter(o =>
+      o.status === 'PENDING' || o.status === 'READY_FOR_DELIVERY'
     );
   }
 
-  statusBadge(s: string) {
-    const m: Record<string,string> = { available:'badge-success', on_delivery:'badge-info', offline:'badge-gray', suspended:'badge-danger' };
-    return m[s] ?? 'badge-gray';
-  }
-  statusLabel(s: string) {
-    const l: Record<string,string> = { available:'Available', on_delivery:'On Delivery', offline:'Offline', suspended:'Suspended' };
-    return l[s] ?? s;
+  openAssign(l: LivreurAdmin) {
+    this.assignTarget = l;
+    this.selectedOrderId = null;
   }
 
-  initials(name: string) {
-    return name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+  closeAssign() {
+    this.assignTarget = null;
+    this.selectedOrderId = null;
   }
 
-  countByStatus(s: string) { return this.agents.filter(a => a.status === s).length; }
+  confirmAssign() {
+    if (!this.assignTarget || !this.selectedOrderId) return;
+    this.assignLoading = true;
+    this.adminService.assignLivreurToOrder(this.selectedOrderId, this.assignTarget.id).subscribe({
+      next: updated => {
+        const idx = this.allOrders.findIndex(o => o.id === updated.id);
+        if (idx !== -1) this.allOrders[idx] = updated;
+        this.assignLoading = false;
+        this.closeAssign();
+      },
+      error: () => { this.assignLoading = false; }
+    });
+  }
+
+  initials(email: string): string {
+    return (email || '?')[0].toUpperCase();
+  }
+
+  countOnline() { return this.livreurs.filter(l => l.online).length; }
+  countOffline() { return this.livreurs.filter(l => !l.online).length; }
 }

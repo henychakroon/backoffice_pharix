@@ -79,11 +79,11 @@
               <td>
                 <div style="display:flex;align-items:center;gap:8px">
                   <div class="avatar avatar-sm">C</div>
-                  <span class="hide-mobile">Client #{{ o.clientId }}</span>
+                  <span class="hide-mobile">{{ o.clientName }}</span>
                 </div>
               </td>
-              <td class="hide-mobile text-muted">Pharmacy #{{ o.vendorId }}</td>
-              <td class="hide-mobile text-muted">{{ o.liv ?? '—' }}</td>
+              <td class="hide-mobile text-muted">{{ o.pharmacyName }}</td>
+              <td class="hide-mobile text-muted">{{ o.livreurName ?? '—' }}</td>
               <td class="fw-600">{{ o.total }}</td>
               <td><span class="badge" [ngClass]="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
             </tr>

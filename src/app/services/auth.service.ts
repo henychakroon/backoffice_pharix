@@ -61,12 +61,16 @@ export class AuthService {
       .post(`${this.API}/logout_admin`, {}, { withCredentials: true })
       .subscribe({
         complete: () => {
-          this.clearCookie(this.ACCESS_TOKEN_KEY);
-          this.clearCookie(this.REFRESH_TOKEN_KEY);
-          this.clearCookie(this.SESSION_KEY);
+          this.clearSession();
           this.router.navigate(['/login']);
         }
       });
+  }
+
+  clearSession(): void {
+    this.clearCookie(this.ACCESS_TOKEN_KEY);
+    this.clearCookie(this.REFRESH_TOKEN_KEY);
+    this.clearCookie(this.SESSION_KEY);
   }
 
   getAccessToken(): string | null {
@@ -78,7 +82,20 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.getCookie(this.SESSION_KEY);
+    if (!this.getCookie(this.SESSION_KEY)) return false;
+    return !this.isTokenExpired();
+  }
+
+  isTokenExpired(): boolean {
+    const token = this.getAccessToken();
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // exp is in seconds, Date.now() is ms
+      return payload.exp * 1000 < Date.now();
+    } catch {
+      return true;
+    }
   }
 
   getCurrentUser(): { role: string; userId: number } | null {

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
-import { AdminService, Order, PharmacienProfile, ClientProfile } from '../../services/admin.service';
+import { AdminService, OrderDTO, PharmacienProfile, ClientProfile } from '../../services/admin.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,7 +15,7 @@ export class DashboardComponent implements OnInit {
     { label: 'Pending Orders',     value: '—', delta: '', up: false, icon: 'clock',  color: '#f5365c', bg: '#fde8ed' },
   ];
 
-  recentOrders: Order[] = [];
+  recentOrders: OrderDTO[] = [];
   topPharmacies: PharmacienProfile[] = [];
   loading = true;
 
