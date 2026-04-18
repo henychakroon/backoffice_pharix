@@ -30,6 +30,29 @@ export interface ClientProfile {
   };
 }
 
+export interface AdminUser {
+  id: number;
+  email: string;
+  phone?: string;
+  role: 'ADMIN' | 'CLIENT' | 'PHARMACIEN' | 'LIVREUR';
+  phoneVerified: boolean;
+  banned: boolean;
+  profileId?: number;
+  displayName?: string;
+  online?: boolean;
+  active?: boolean;
+  latitude?: number;
+  longitude?: number;
+  deliveryZoneId?: number;
+  deliveryZoneName?: string;
+  pharmacyName?: string;
+  ownerName?: string;
+  pharmacyType?: string;
+  clientFullName?: string;
+  livreurType?: string;
+  vehicleType?: string;
+}
+
 export interface OrderDTO {
   id: number;
   status: string;
@@ -116,6 +139,18 @@ export class AdminService {
   // Clients
   getClients(): Observable<ClientProfile[]> {
     return this.http.get<ClientProfile[]>(`${this.BASE}/clients`);
+  }
+
+  getUsers(): Observable<AdminUser[]> {
+    return this.http.get<AdminUser[]>(`${this.BASE}/users`);
+  }
+
+  banUser(id: number): Observable<AdminUser> {
+    return this.http.put<AdminUser>(`${this.BASE}/users/${id}/ban`, {});
+  }
+
+  unbanUser(id: number): Observable<AdminUser> {
+    return this.http.put<AdminUser>(`${this.BASE}/users/${id}/unban`, {});
   }
 
   // Orders

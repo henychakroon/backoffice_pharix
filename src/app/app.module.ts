@@ -19,11 +19,12 @@ import { CategoriesComponent } from './pages/categories/categories.component';
 import { AnalyticsComponent }  from './pages/analytics/analytics.component';
 import { SettingsComponent }   from './pages/settings/settings.component';
 import { ZonesComponent }      from './pages/zones/zones.component';
+import { UsersComponent }      from './pages/users/users.component';
 import { FilterStatusPipe }    from './shared/pipes/filter-status.pipe';
 import { AdBannersComponent }  from './pages/zones/ad-banners/ad-banners.component';
-import { PharmacistDashboardComponent } from './pages/pharmacist-dashboard/pharmacist-dashboard.component';
-import { PharmacistOrdersComponent }    from './pages/pharmacist-orders/pharmacist-orders.component';
-import { PharmacistScheduleComponent }  from './pages/pharmacist-schedule/pharmacist-schedule.component';
+import { PharmacistDashboardComponent } from './pages/pharmacist-interface/dashboard/pharmacist-dashboard.component';
+import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/orders/pharmacist-orders.component';
+import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/schedule/pharmacist-schedule.component';
 
 @NgModule({
   declarations: [
@@ -32,6 +33,7 @@ import { PharmacistScheduleComponent }  from './pages/pharmacist-schedule/pharma
     LoginComponent,
     DashboardComponent,
     OrdersComponent,
+    UsersComponent,
     ClientsComponent,
     PharmaciesComponent,
     AgentsComponent,

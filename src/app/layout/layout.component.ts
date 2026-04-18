@@ -24,6 +24,7 @@ export class LayoutComponent {
     {
       group: 'Actors',
       items: [
+        { label: 'Users',             icon: 'users',       route: '/users'      },
         { label: 'Clients',           icon: 'users',       route: '/clients'    },
         { label: 'Pharmacies',        icon: 'plus-square', route: '/pharmacies' },
         { label: 'Delivery Agents',   icon: 'truck',       route: '/agents'     },

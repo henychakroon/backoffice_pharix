@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { PharmacistService } from '../../services/pharmacist.service';
-import { AuthService } from '../../services/auth.service';
-import { OrderDTO } from '../../services/admin.service';
+import { PharmacistService } from '../../../services/pharmacist.service';
+import { AuthService } from '../../../services/auth.service';
+import { OrderDTO } from '../../../services/admin.service';
 import * as QRCode from 'qrcode';
 
 @Component({

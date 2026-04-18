@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { PharmacistService, PharmacienDashboard } from '../../services/pharmacist.service';
-import { AuthService } from '../../services/auth.service';
+import { PharmacistService, PharmacienDashboard } from '../../../services/pharmacist.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-pharmacist-dashboard',

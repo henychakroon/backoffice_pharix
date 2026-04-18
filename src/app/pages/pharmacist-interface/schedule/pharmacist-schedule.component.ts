@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService } from '../../services/auth.service';
-import { PharmacistScheduleService, DaySchedule } from '../../services/pharmacist-schedule.service';
+import { AuthService } from '../../../services/auth.service';
+import { PharmacistScheduleService, DaySchedule } from '../../../services/pharmacist-schedule.service';
 
 const DAY_LABELS: Record<string, string> = {
   MONDAY:    'Lundi',

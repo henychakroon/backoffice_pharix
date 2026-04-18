@@ -1,0 +1,129 @@
+<div class="animate-fadeInUp">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Utilisateurs</div>
+      <div class="page-subtitle">Vue consolidée de tous les comptes avec bannissement administratif</div>
+    </div>
+  </div>
+
+  <div class="summary-row">
+    <div class="summary-chip">
+      <span class="summary-dot" style="background:var(--primary)"></span>
+      <span class="fw-600">{{ users.length }}</span>
+      <span class="text-muted text-sm">Total</span>
+    </div>
+    <div class="summary-chip">
+      <span class="summary-dot" style="background:var(--danger)"></span>
+      <span class="fw-600">{{ bannedCount }}</span>
+      <span class="text-muted text-sm">Bannis</span>
+    </div>
+    <div class="summary-chip">
+      <span class="summary-dot" style="background:var(--success)"></span>
+      <span class="fw-600">{{ roleCounts['PHARMACIEN'] || 0 }}</span>
+      <span class="text-muted text-sm">Pharmaciens</span>
+    </div>
+    <div class="summary-chip">
+      <span class="summary-dot" style="background:var(--info,#0ea5e9)"></span>
+      <span class="fw-600">{{ roleCounts['CLIENT'] || 0 }}</span>
+      <span class="text-muted text-sm">Clients</span>
+    </div>
+    <div class="summary-chip">
+      <span class="summary-dot" style="background:var(--warning,#f59e0b)"></span>
+      <span class="fw-600">{{ roleCounts['LIVREUR'] || 0 }}</span>
+      <span class="text-muted text-sm">Livreurs</span>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="input-wrap" style="flex:1;min-width:260px">
+      <span class="input-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </span>
+      <input type="text" placeholder="Rechercher par nom, email, téléphone, zone…" [(ngModel)]="searchTerm">
+    </div>
+    <select [(ngModel)]="roleFilter">
+      <option value="all">Tous les rôles</option>
+      <option value="ADMIN">Admins</option>
+      <option value="CLIENT">Clients</option>
+      <option value="PHARMACIEN">Pharmaciens</option>
+      <option value="LIVREUR">Livreurs</option>
+    </select>
+    <select [(ngModel)]="banFilter">
+      <option value="all">Tous les statuts</option>
+      <option value="active">Actifs</option>
+      <option value="banned">Bannis</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="table-wrapper" *ngIf="!loading; else loadingBlock">
+      <table class="pharix-table">
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Rôle</th>
+            <th class="hide-mobile">Contact</th>
+            <th class="hide-mobile">Détails</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filtered">
+            <td>
+              <div class="user-cell">
+                <div class="avatar avatar-md user-avatar">{{ initials(user) }}</div>
+                <div>
+                  <div class="fw-600 user-name">{{ user.displayName || user.email }}</div>
+                  <div class="text-xs text-muted">#{{ user.id }} · {{ user.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="roleBadge(user.role)">{{ roleLabel(user.role) }}</span>
+            </td>
+            <td class="hide-mobile">
+              <div style="font-size:13px">{{ user.phone || '—' }}</div>
+              <div class="text-xs text-muted">OTP: {{ user.phoneVerified ? 'Vérifié' : 'Non vérifié' }}</div>
+            </td>
+            <td class="hide-mobile detail-cell">
+              <div>{{ userMeta(user) || '—' }}</div>
+              <div class="text-xs text-muted" *ngIf="coordsLabel(user)">GPS: {{ coordsLabel(user) }}</div>
+            </td>
+            <td>
+              <div class="status-stack">
+                <span class="badge" [ngClass]="user.banned ? 'badge-danger' : 'badge-success'">{{ user.banned ? 'Banni' : 'Actif' }}</span>
+                <span class="badge badge-gray" *ngIf="user.online != null">{{ user.online ? 'En ligne' : 'Hors ligne' }}</span>
+                <span class="badge badge-warning" *ngIf="user.active === false">Bloqué métier</span>
+              </div>
+            </td>
+            <td>
+              <button
+                *ngIf="user.role !== 'ADMIN'"
+                class="btn btn-sm"
+                [ngClass]="user.banned ? 'btn-primary' : 'btn-danger'"
+                [disabled]="actionLoadingId === user.id"
+                (click)="user.banned ? unban(user) : ban(user)">
+                {{ actionLoadingId === user.id ? '...' : (user.banned ? 'Débannir' : 'Bannir') }}
+              </button>
+              <span *ngIf="user.role === 'ADMIN'" class="text-xs text-muted">Protégé</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="filtered.length === 0">
+        <div class="empty-title">Aucun utilisateur trouvé</div>
+        <div class="empty-sub">Ajustez les filtres ou le texte de recherche.</div>
+      </div>
+    </div>
+
+    <ng-template #loadingBlock>
+      <div class="loading-state">Chargement des utilisateurs…</div>
+    </ng-template>
+
+    <div class="table-footer">
+      <span class="text-sm text-muted">Affichage de {{ filtered.length }} sur {{ users.length }} utilisateurs</span>
+    </div>
+  </div>
+</div>
