@@ -1,0 +1,82 @@
+<div class="animate-fadeInUp">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Horaires & Disponibilité</div>
+      <div class="page-subtitle">Gérez vos heures d'ouverture et votre statut en ligne</div>
+    </div>
+    <button class="btn btn-primary" (click)="saveAll()" [disabled]="saving || loading">
+      <svg *ngIf="!saving" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      <div *ngIf="saving" class="spinner spinner-sm"></div>
+      {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+    </button>
+  </div>
+
+  <!-- Success toast -->
+  <div class="save-banner" *ngIf="saved">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Horaires enregistrés avec succès
+  </div>
+
+  <!-- Error toast -->
+  <div class="save-banner" *ngIf="errorMsg" style="background:var(--danger,#ef4444);color:#fff">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    {{ errorMsg }}
+  </div>
+
+  <!-- Online toggle card -->
+  <div class="card online-card" style="margin-bottom:24px">
+    <div class="online-left">
+      <div class="online-dot" [class.active]="online"></div>
+      <div>
+        <div class="fw-600">Statut en ligne</div>
+        <div class="text-sm text-muted">{{ online ? 'Votre pharmacie est actuellement visible et ouverte aux commandes' : 'Votre pharmacie est hors ligne — les clients ne peuvent pas passer de commandes' }}</div>
+      </div>
+    </div>
+    <button class="toggle-btn" [class.on]="online" [disabled]="togglingOnline" (click)="toggleOnline()">
+      <span class="toggle-knob"></span>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" style="text-align:center;padding:60px;color:var(--gray-400)">Chargement…</div>
+
+  <!-- Schedule table -->
+  <div class="card" *ngIf="!loading">
+    <div class="schedule-header">
+      <span>Jour</span>
+      <span>Ouverture</span>
+      <span>Fermeture</span>
+      <span>Fermé</span>
+    </div>
+
+    <div class="schedule-row" *ngFor="let s of schedule" [class.closed-row]="s.closed">
+      <!-- Day name -->
+      <div class="day-cell">
+        <div class="day-badge" [class.closed-badge]="s.closed">{{ dayLabel(s.day) }}</div>
+      </div>
+
+      <!-- Opening time -->
+      <div class="time-cell">
+        <input type="time" class="time-input" [(ngModel)]="s.openingTime" [disabled]="s.closed || savingDay === s.day" (change)="saveDay(s)">
+      </div>
+
+      <!-- Closing time -->
+      <div class="time-cell">
+        <input type="time" class="time-input" [(ngModel)]="s.closingTime" [disabled]="s.closed || savingDay === s.day" (change)="saveDay(s)">
+      </div>
+
+      <!-- Closed toggle -->
+      <div class="closed-cell">
+        <button class="toggle-btn sm" [class.on]="!s.closed" [disabled]="savingDay === s.day" (click)="toggleClosed(s)">
+          <span class="toggle-knob"></span>
+        </button>
+        <span class="text-sm" [style.color]="s.closed ? 'var(--danger)' : 'var(--success)'">
+          {{ s.closed ? 'Fermé' : 'Ouvert' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,178 @@
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.page-title { font-size: 22px; font-weight: 700; color: var(--gray-900); }
+.page-subtitle { font-size: 13px; color: var(--gray-400); margin-top: 2px; }
+
+// ── Save banner ──────────────────────────────────────────────
+.save-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--success-light);
+  color: var(--success);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  animation: fadeIn .2s ease;
+}
+
+// ── Online card ──────────────────────────────────────────────
+.online-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  flex-wrap: wrap;
+}
+
+.online-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.online-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--gray-300);
+  flex-shrink: 0;
+  transition: background .3s;
+
+  &.active {
+    background: var(--success);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, .15);
+  }
+}
+
+// ── Toggle button ────────────────────────────────────────────
+.toggle-btn {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--gray-200);
+  border: none;
+  cursor: pointer;
+  transition: background .25s;
+  flex-shrink: 0;
+
+  &.on { background: var(--primary); }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+
+  &.sm {
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+  }
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .25s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+
+  .toggle-btn.on & { transform: translateX(22px); }
+  .toggle-btn.sm & { width: 16px; height: 16px; }
+  .toggle-btn.sm.on & { transform: translateX(18px); }
+}
+
+// ── Schedule table ───────────────────────────────────────────
+.schedule-header {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr 120px;
+  gap: 12px;
+  padding: 10px 20px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--gray-400);
+  border-radius: 12px 12px 0 0;
+}
+
+.schedule-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr 120px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background .15s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: var(--gray-50); }
+
+  &.closed-row {
+    background: rgba(239, 68, 68, .03);
+    .time-input { opacity: .35; }
+  }
+}
+
+.day-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+
+  &.closed-badge { color: var(--gray-400); }
+}
+
+.time-cell { display: flex; align-items: center; }
+
+.time-input {
+  padding: 8px 12px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  color: var(--gray-800);
+  background: #fff;
+  outline: none;
+  transition: border-color .2s;
+  width: 120px;
+
+  &:focus { border-color: var(--primary); }
+  &:disabled { background: var(--gray-50); cursor: not-allowed; }
+}
+
+.closed-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .schedule-header,
+  .schedule-row {
+    grid-template-columns: 100px 1fr 1fr 90px;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .time-input { width: 90px; font-size: 13px; }
+}

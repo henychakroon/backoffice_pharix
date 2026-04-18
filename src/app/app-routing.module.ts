@@ -14,6 +14,7 @@ import { SettingsComponent }   from './pages/settings/settings.component';
 import { ZonesComponent }      from './pages/zones/zones.component';
 import { PharmacistDashboardComponent } from './pages/pharmacist-dashboard/pharmacist-dashboard.component';
 import { PharmacistOrdersComponent }    from './pages/pharmacist-orders/pharmacist-orders.component';
+import { PharmacistScheduleComponent }  from './pages/pharmacist-schedule/pharmacist-schedule.component';
 import { AuthGuard }           from './guards/auth.guard';
 
 const routes: Routes = [
@@ -44,6 +45,7 @@ const routes: Routes = [
       { path: '',          redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: PharmacistDashboardComponent },
       { path: 'orders',    component: PharmacistOrdersComponent    },
+      { path: 'schedule',  component: PharmacistScheduleComponent  },
     ]
   },
   { path: '**', redirectTo: 'dashboard' }

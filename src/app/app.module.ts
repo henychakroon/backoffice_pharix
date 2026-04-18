@@ -23,6 +23,7 @@ import { FilterStatusPipe }    from './shared/pipes/filter-status.pipe';
 import { AdBannersComponent }  from './pages/zones/ad-banners/ad-banners.component';
 import { PharmacistDashboardComponent } from './pages/pharmacist-dashboard/pharmacist-dashboard.component';
 import { PharmacistOrdersComponent }    from './pages/pharmacist-orders/pharmacist-orders.component';
+import { PharmacistScheduleComponent }  from './pages/pharmacist-schedule/pharmacist-schedule.component';
 
 @NgModule({
   declarations: [
@@ -43,6 +44,7 @@ import { PharmacistOrdersComponent }    from './pages/pharmacist-orders/pharmaci
     AdBannersComponent,
     PharmacistDashboardComponent,
     PharmacistOrdersComponent,
+    PharmacistScheduleComponent,
   ],
   imports: [
     BrowserModule,

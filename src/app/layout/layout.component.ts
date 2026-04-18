@@ -57,6 +57,7 @@ export class LayoutComponent {
       items: [
         { label: 'Tableau de bord',   icon: 'grid',        route: '/ph/dashboard' },
         { label: 'Mes commandes',     icon: 'shopping-bag', route: '/ph/orders'   },
+        { label: 'Horaires',          icon: 'clock',        route: '/ph/schedule' },
       ]
     }
   ];
