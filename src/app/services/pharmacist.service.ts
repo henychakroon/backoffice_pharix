@@ -14,6 +14,26 @@ export interface PharmacienDashboard {
   totalRevenue: number;
 }
 
+export interface CreateReportPayload {
+  reportedUserId: number;
+  type: string;
+  description: string;
+}
+
+export interface ReportItem {
+  id: number;
+  type: string;
+  description: string;
+  status: string;
+  createdAt: string;
+  reporterId: number;
+  reporterEmail: string;
+  reporterRole: string;
+  reportedId: number;
+  reportedEmail: string;
+  reportedRole: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PharmacistService {
   private readonly BASE = '/api/v1/pharmacien';
@@ -60,5 +80,13 @@ export class PharmacistService {
     return this.http.get<PharmacienDashboard>(`${this.BASE}/dashboard`, {
       params: new HttpParams().set('email', email)
     });
+  }
+
+  createReport(payload: CreateReportPayload): Observable<ReportItem> {
+    return this.http.post<ReportItem>('/api/v1/reports', payload);
+  }
+
+  getMyReports(): Observable<ReportItem[]> {
+    return this.http.get<ReportItem[]>('/api/v1/reports/me');
   }
 }

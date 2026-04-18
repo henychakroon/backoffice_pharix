@@ -13,6 +13,7 @@ import { AnalyticsComponent }  from './pages/analytics/analytics.component';
 import { SettingsComponent }   from './pages/settings/settings.component';
 import { ZonesComponent }      from './pages/zones/zones.component';
 import { UsersComponent }      from './pages/users/users.component';
+import { ReportsComponent }    from './pages/reports/reports.component';
 import { PharmacistDashboardComponent } from './pages/pharmacist-interface/dashboard/pharmacist-dashboard.component';
 import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/orders/pharmacist-orders.component';
 import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/schedule/pharmacist-schedule.component';
@@ -29,6 +30,7 @@ const routes: Routes = [
       { path: 'dashboard',  component: DashboardComponent  },
       { path: 'orders',     component: OrdersComponent     },
       { path: 'users',      component: UsersComponent      },
+      { path: 'reports',    component: ReportsComponent    },
       { path: 'clients',    component: ClientsComponent    },
       { path: 'pharmacies', component: PharmaciesComponent },
       { path: 'agents',     component: AgentsComponent     },

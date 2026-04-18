@@ -137,6 +137,9 @@
             <div class="text-sm text-muted">{{ selectedOrder.clientPhone }}</div>
           </div>
         </div>
+        <button class="btn btn-ghost btn-sm report-btn" [disabled]="!selectedOrder.clientUserId" (click)="openReport(selectedOrder, $event, 'client')">
+          Signaler le client
+        </button>
       </div>
 
       <div class="detail-section">
@@ -154,6 +157,9 @@
               <div class="text-sm text-muted">{{ selectedOrder.livreurPhone }}</div>
             </div>
           </div>
+          <button class="btn btn-ghost btn-sm report-btn" [disabled]="!selectedOrder.livreurUserId" (click)="openReport(selectedOrder, $event, 'livreur')">
+            Signaler le livreur
+          </button>
         </div>
         <span *ngIf="!selectedOrder.livreurId" class="badge badge-warning">Non assigné</span>
       </div>
@@ -213,6 +219,46 @@
     <button class="btn btn-primary btn-sm" (click)="printQr()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       Imprimer
+    </button>
+  </div>
+</div>
+
+<!-- ══════ REPORT MODAL ══════ -->
+<div class="modal-backdrop" *ngIf="reportModalOrder" (click)="closeReport()"></div>
+<div class="modal" *ngIf="reportModalOrder">
+  <div class="modal-header">
+    <div class="modal-title">Signaler {{ reportTargetLabel.toLowerCase() }}</div>
+    <button class="btn btn-ghost btn-icon" (click)="closeReport()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="report-target-card">
+      <div class="text-sm text-muted">Commande #{{ reportModalOrder.id }}</div>
+      <div class="fw-600">{{ reportTargetLabel }}: {{ reportTargetName }}</div>
+    </div>
+
+    <div class="report-form">
+      <label class="report-label">Type</label>
+      <select [(ngModel)]="reportType">
+        <option value="ORDER">ORDER</option>
+        <option value="DELIVERY">DELIVERY</option>
+        <option value="CLIENT">CLIENT</option>
+        <option value="PHARMACY">PHARMACY</option>
+        <option value="OTHER">OTHER</option>
+      </select>
+
+      <label class="report-label">Description</label>
+      <textarea [(ngModel)]="reportDescription" rows="5" placeholder="Décrivez précisément le problème..."></textarea>
+
+      <div class="report-feedback error" *ngIf="reportError">{{ reportError }}</div>
+      <div class="report-feedback success" *ngIf="reportSuccess">{{ reportSuccess }}</div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost btn-sm" (click)="closeReport()">Fermer</button>
+    <button class="btn btn-danger btn-sm" [disabled]="reportSubmitting" (click)="submitReport()">
+      {{ reportSubmitting ? 'Envoi...' : 'Envoyer le signalement' }}
     </button>
   </div>
 </div>

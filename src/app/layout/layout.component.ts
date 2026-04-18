@@ -40,6 +40,7 @@ export class LayoutComponent {
     {
       group: 'Operations',
       items: [
+        { label: 'Reports',           icon: 'flag',        route: '/reports'    },
         { label: 'Analytics',         icon: 'bar-chart-2', route: '/analytics'  },
         { label: 'Settings',          icon: 'settings',    route: '/settings'   },
       ]

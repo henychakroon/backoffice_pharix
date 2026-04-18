@@ -20,6 +20,7 @@ import { AnalyticsComponent }  from './pages/analytics/analytics.component';
 import { SettingsComponent }   from './pages/settings/settings.component';
 import { ZonesComponent }      from './pages/zones/zones.component';
 import { UsersComponent }      from './pages/users/users.component';
+import { ReportsComponent }    from './pages/reports/reports.component';
 import { FilterStatusPipe }    from './shared/pipes/filter-status.pipe';
 import { AdBannersComponent }  from './pages/zones/ad-banners/ad-banners.component';
 import { PharmacistDashboardComponent } from './pages/pharmacist-interface/dashboard/pharmacist-dashboard.component';
@@ -34,6 +35,7 @@ import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/sched
     DashboardComponent,
     OrdersComponent,
     UsersComponent,
+    ReportsComponent,
     ClientsComponent,
     PharmaciesComponent,
     AgentsComponent,

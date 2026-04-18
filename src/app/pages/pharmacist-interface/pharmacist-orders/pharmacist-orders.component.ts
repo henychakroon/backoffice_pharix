@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { PharmacistService, CreateReportPayload } from '../../../services/pharmacist.service';
+import { PharmacistService } from '../../../services/pharmacist.service';
 import { AuthService } from '../../../services/auth.service';
 import { OrderDTO } from '../../../services/admin.service';
 import * as QRCode from 'qrcode';
@@ -23,17 +23,6 @@ export class PharmacistOrdersComponent implements OnInit {
   // QR modal
   qrModalOrder: OrderDTO | null = null;
   qrDataUrl = '';
-
-  // Report modal
-  reportModalOrder: OrderDTO | null = null;
-  reportTargetLabel = '';
-  reportTargetName = '';
-  reportTargetUserId: number | null = null;
-  reportType = 'ORDER';
-  reportDescription = '';
-  reportSubmitting = false;
-  reportError = '';
-  reportSuccess = '';
 
   constructor(
     private pharmacistService: PharmacistService,
@@ -146,69 +135,6 @@ export class PharmacistOrdersComponent implements OnInit {
   closeQr(): void {
     this.qrModalOrder = null;
     this.qrDataUrl = '';
-  }
-
-  openReport(order: OrderDTO, event: Event, target: 'client' | 'livreur'): void {
-    event.stopPropagation();
-    this.reportModalOrder = order;
-    this.reportType = target === 'livreur' ? 'DELIVERY' : 'ORDER';
-    this.reportDescription = '';
-    this.reportError = '';
-    this.reportSuccess = '';
-
-    if (target === 'livreur') {
-      this.reportTargetLabel = 'Livreur';
-      this.reportTargetName = order.livreurName || 'Livreur';
-      this.reportTargetUserId = order.livreurUserId ?? null;
-    } else {
-      this.reportTargetLabel = 'Client';
-      this.reportTargetName = order.clientName || 'Client';
-      this.reportTargetUserId = order.clientUserId ?? null;
-    }
-  }
-
-  closeReport(): void {
-    this.reportModalOrder = null;
-    this.reportTargetLabel = '';
-    this.reportTargetName = '';
-    this.reportTargetUserId = null;
-    this.reportType = 'ORDER';
-    this.reportDescription = '';
-    this.reportSubmitting = false;
-    this.reportError = '';
-    this.reportSuccess = '';
-  }
-
-  submitReport(): void {
-    if (!this.reportTargetUserId) {
-      this.reportError = 'Utilisateur cible introuvable pour ce signalement.';
-      return;
-    }
-    if (!this.reportDescription.trim()) {
-      this.reportError = 'La description est obligatoire.';
-      return;
-    }
-
-    const payload: CreateReportPayload = {
-      reportedUserId: this.reportTargetUserId,
-      type: this.reportType,
-      description: this.reportDescription.trim()
-    };
-
-    this.reportSubmitting = true;
-    this.reportError = '';
-    this.reportSuccess = '';
-    this.pharmacistService.createReport(payload).subscribe({
-      next: () => {
-        this.reportSubmitting = false;
-        this.reportSuccess = 'Signalement envoyé avec succès.';
-        this.reportDescription = '';
-      },
-      error: (err) => {
-        this.reportSubmitting = false;
-        this.reportError = err?.error?.message || err?.error?.error || 'Impossible d\'envoyer le signalement.';
-      }
-    });
   }
 
   printQr(): void {

@@ -59,14 +59,17 @@ export interface OrderDTO {
   description?: string;
 
   clientId: number;
+  clientUserId?: number;
   clientName: string;
   clientPhone?: string;
 
   vendorId: number;
+  vendorUserId?: number;
   pharmacyName: string;
   pharmacyPhone?: string;
 
   livreurId?: number;
+  livreurUserId?: number;
   livreurName?: string;
   livreurPhone?: string;
 
@@ -115,6 +118,20 @@ export interface AdvertisementBanner {
   zoneName: string | null;
 }
 
+export interface AdminReport {
+  id: number;
+  type: string;
+  description: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
+  createdAt: string;
+  reporterId: number;
+  reporterEmail: string;
+  reporterRole: string;
+  reportedId: number;
+  reportedEmail: string;
+  reportedRole: string;
+}
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -151,6 +168,14 @@ export class AdminService {
 
   unbanUser(id: number): Observable<AdminUser> {
     return this.http.put<AdminUser>(`${this.BASE}/users/${id}/unban`, {});
+  }
+
+  getReports(): Observable<AdminReport[]> {
+    return this.http.get<AdminReport[]>('/api/v1/reports');
+  }
+
+  updateReportStatus(id: number, status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'): Observable<AdminReport> {
+    return this.http.put<AdminReport>(`/api/v1/reports/${id}/status`, { status });
   }
 
   // Orders

@@ -154,6 +154,10 @@
   gap: 10px;
 }
 
+.report-btn {
+  margin-top: 12px;
+}
+
 /* ── QR Modal ── */
 .modal-backdrop {
   position: fixed;
@@ -215,4 +219,58 @@
 
 .qr-info {
   text-align: center;
+}
+
+.report-target-card {
+  border: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.report-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  select,
+  textarea {
+    width: 100%;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--gray-700);
+    background: #fff;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+}
+
+.report-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.report-feedback {
+  font-size: 13px;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+
+  &.error {
+    background: var(--danger-light);
+    color: var(--danger);
+  }
+
+  &.success {
+    background: var(--success-light);
+    color: var(--success);
+  }
 }
