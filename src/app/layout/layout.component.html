@@ -13,7 +13,7 @@
       </div>
       <!-- Expanded logo -->
       <img src="assets/images/logo.png" class="brand-logo-full" alt="Pharix">
-      <span class="brand-badge">Admin</span>
+      <span class="brand-badge">{{ brandBadge }}</span>
     </div>
 
     <!-- Nav -->
@@ -58,10 +58,10 @@
     <!-- Footer -->
     <div class="sidebar-footer">
       <div class="user-profile">
-        <div class="avatar avatar-md" style="background:#4f6ef722; color:var(--primary)">A</div>
+        <div class="avatar avatar-md" style="background:#4f6ef722; color:var(--primary)">{{ userInitial }}</div>
         <div class="user-info">
-          <div class="user-name">Admin Pharix</div>
-          <div class="user-role">Super Admin</div>
+          <div class="user-name">{{ userDisplayName }}</div>
+          <div class="user-role">{{ userRole }}</div>
         </div>
       </div>
       <button class="sidebar-logout" (click)="logout()" data-tooltip="Sign out">
@@ -106,7 +106,7 @@
           New Order
         </button>
         <!-- Admin avatar -->
-        <div class="avatar avatar-sm topbar-avatar" style="cursor:pointer">A</div>
+        <div class="avatar avatar-sm topbar-avatar" style="cursor:pointer">{{ userInitial }}</div>
       </div>
     </header>
 

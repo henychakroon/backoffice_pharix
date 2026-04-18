@@ -1,0 +1,92 @@
+<div class="animate-fadeInUp">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Tableau de bord</div>
+      <div class="page-subtitle">{{ pharmacyName }} — Vue d'ensemble de votre activité</div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" style="text-align:center;padding:60px;color:var(--gray-400)">Chargement...</div>
+
+  <ng-container *ngIf="!loading && dashboard">
+
+    <!-- Revenue hero -->
+    <div class="revenue-card">
+      <div class="revenue-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </div>
+      <div class="revenue-body">
+        <div class="revenue-label">Chiffre d'affaires total</div>
+        <div class="revenue-value">{{ dashboard.totalRevenue | number:'1.2-2' }} <span>TND</span></div>
+        <div class="revenue-sub">{{ dashboard.deliveredOrders }} commandes livrées</div>
+      </div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--primary-light);color:var(--primary)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{ dashboard.totalOrders }}</div>
+          <div class="stat-label">Total commandes</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--warning-light);color:var(--warning)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{ dashboard.pendingOrders }}</div>
+          <div class="stat-label">En attente</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--accent-light);color:var(--accent)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{ dashboard.acceptedOrders }}</div>
+          <div class="stat-label">Acceptées</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--info-light);color:var(--info)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{ dashboard.readyForDeliveryOrders }}</div>
+          <div class="stat-label">Prêtes à livrer</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--success-light);color:var(--success)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{ dashboard.deliveredOrders }}</div>
+          <div class="stat-label">Livrées</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background:var(--danger-light);color:var(--danger)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{ dashboard.refusedOrders + dashboard.cancelledOrders }}</div>
+          <div class="stat-label">Refusées / Annulées</div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

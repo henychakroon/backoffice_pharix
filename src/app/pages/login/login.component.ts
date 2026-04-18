@@ -14,37 +14,58 @@ export class LoginComponent {
   rememberMe = false;
   loading = false;
   errorMessage = '';
+  loginMode: 'admin' | 'pharmacien' = 'admin';
 
   constructor(private auth: AuthService, private router: Router) {
-    if (this.auth.isLoggedIn()) this.router.navigate(['/dashboard']);
+    if (this.auth.isLoggedIn()) {
+      this.router.navigate([this.auth.isPharmacien() ? '/ph/dashboard' : '/dashboard']);
+    }
   }
 
   onLogin(): void {
     this.errorMessage = '';
     if (!this.email || !this.password) {
-      this.errorMessage = 'Please fill in all fields.';
+      this.errorMessage = 'Veuillez remplir tous les champs.';
       return;
     }
     this.loading = true;
 
-    this.auth.login(this.email, this.password).subscribe({
-      next: () => {
-        this.loading = false;
-        this.router.navigate(['/dashboard']);
-      },
-      error: (err) => {
-        this.loading = false;
-        if (err.status === 401 || err.status === 403) {
-          this.errorMessage = err.error?.error ?? 'Invalid credentials. Access denied.';
-        } else {
-          this.errorMessage = 'Server error. Please try again later.';
+    if (this.loginMode === 'pharmacien') {
+      this.auth.loginPharmacien(this.email, this.password).subscribe({
+        next: () => {
+          this.loading = false;
+          this.router.navigate(['/ph/dashboard']);
+        },
+        error: (err) => {
+          this.loading = false;
+          if (err.status === 401 || err.status === 403) {
+            this.errorMessage = err.error?.error ?? 'Identifiants invalides ou accès refusé.';
+          } else {
+            this.errorMessage = 'Erreur serveur. Veuillez réessayer.';
+          }
         }
-      }
-    });
+      });
+    } else {
+      this.auth.login(this.email, this.password).subscribe({
+        next: () => {
+          this.loading = false;
+          this.router.navigate(['/dashboard']);
+        },
+        error: (err) => {
+          this.loading = false;
+          if (err.status === 401 || err.status === 403) {
+            this.errorMessage = err.error?.error ?? 'Identifiants invalides ou accès refusé.';
+          } else {
+            this.errorMessage = 'Erreur serveur. Veuillez réessayer.';
+          }
+        }
+      });
+    }
   }
 
   fillDemo(): void {
     this.email = 'admin@pharix.tn';
     this.password = 'admin123';
+    this.loginMode = 'admin';
   }
 }

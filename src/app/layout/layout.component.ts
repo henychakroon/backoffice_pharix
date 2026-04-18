@@ -13,7 +13,7 @@ export class LayoutComponent {
   mobileOpen = false;
   currentRoute = '';
 
-  navItems = [
+  adminNavItems = [
     {
       group: 'Main',
       items: [
@@ -50,6 +50,38 @@ export class LayoutComponent {
       ]
     }
   ];
+
+  pharmacistNavItems = [
+    {
+      group: 'Main',
+      items: [
+        { label: 'Tableau de bord',   icon: 'grid',        route: '/ph/dashboard' },
+        { label: 'Mes commandes',     icon: 'shopping-bag', route: '/ph/orders'   },
+      ]
+    }
+  ];
+
+  get navItems() {
+    return this.auth.isPharmacien() ? this.pharmacistNavItems : this.adminNavItems;
+  }
+
+  get userDisplayName(): string {
+    const u = this.auth.getCurrentUser();
+    if (u?.ownerName) return u.ownerName;
+    return 'Admin Pharix';
+  }
+
+  get userRole(): string {
+    return this.auth.isPharmacien() ? 'Pharmacien' : 'Super Admin';
+  }
+
+  get userInitial(): string {
+    return (this.userDisplayName[0] || 'A').toUpperCase();
+  }
+
+  get brandBadge(): string {
+    return this.auth.isPharmacien() ? 'Pharmacie' : 'Admin';
+  }
 
   constructor(private router: Router, private auth: AuthService) {
     this.router.events

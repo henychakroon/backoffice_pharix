@@ -10,6 +10,18 @@ export interface AdminLoginResponse {
   userId: number;
 }
 
+export interface PharmacienLoginResponse {
+  access_token: string;
+  refresh_token: string;
+  role: string;
+  userId: number;
+  profile: {
+    pharmacyName: string;
+    ownerName: string;
+    online: boolean;
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly SESSION_KEY      = 'pharix_admin_session';
@@ -56,15 +68,38 @@ export class AuthService {
       );
   }
 
+  loginPharmacien(email: string, password: string): Observable<PharmacienLoginResponse> {
+    return this.http
+      .post<PharmacienLoginResponse>(`${this.API}/login`, { email, password })
+      .pipe(
+        tap(res => {
+          this.setCookie(this.ACCESS_TOKEN_KEY, res.access_token);
+          this.setCookie(this.REFRESH_TOKEN_KEY, res.refresh_token, 7);
+          this.setCookie(this.SESSION_KEY, JSON.stringify({
+            role: res.role,
+            userId: res.userId,
+            pharmacyName: res.profile.pharmacyName,
+            ownerName: res.profile.ownerName,
+            email
+          }));
+        })
+      );
+  }
+
   logout(): void {
-    this.http
-      .post(`${this.API}/logout_admin`, {}, { withCredentials: true })
-      .subscribe({
-        complete: () => {
-          this.clearSession();
-          this.router.navigate(['/login']);
-        }
-      });
+    const session = this.getCurrentUser();
+    if (session?.role === 'ADMIN') {
+      this.http
+        .post(`${this.API}/logout_admin`, {}, { withCredentials: true })
+        .subscribe({ complete: () => this.finishLogout() });
+    } else {
+      this.finishLogout();
+    }
+  }
+
+  private finishLogout(): void {
+    this.clearSession();
+    this.router.navigate(['/login']);
   }
 
   clearSession(): void {
@@ -98,9 +133,17 @@ export class AuthService {
     }
   }
 
-  getCurrentUser(): { role: string; userId: number } | null {
+  getCurrentUser(): { role: string; userId: number; pharmacyName?: string; ownerName?: string; email?: string } | null {
     const raw = this.getCookie(this.SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
+  }
+
+  isPharmacien(): boolean {
+    return this.getCurrentUser()?.role === 'PHARMACIEN';
+  }
+
+  isAdmin(): boolean {
+    return this.getCurrentUser()?.role === 'ADMIN';
   }
 }
 

@@ -21,6 +21,8 @@ import { SettingsComponent }   from './pages/settings/settings.component';
 import { ZonesComponent }      from './pages/zones/zones.component';
 import { FilterStatusPipe }    from './shared/pipes/filter-status.pipe';
 import { AdBannersComponent }  from './pages/zones/ad-banners/ad-banners.component';
+import { PharmacistDashboardComponent } from './pages/pharmacist-dashboard/pharmacist-dashboard.component';
+import { PharmacistOrdersComponent }    from './pages/pharmacist-orders/pharmacist-orders.component';
 
 @NgModule({
   declarations: [
@@ -39,6 +41,8 @@ import { AdBannersComponent }  from './pages/zones/ad-banners/ad-banners.compone
     ZonesComponent,
     FilterStatusPipe,
     AdBannersComponent,
+    PharmacistDashboardComponent,
+    PharmacistOrdersComponent,
   ],
   imports: [
     BrowserModule,

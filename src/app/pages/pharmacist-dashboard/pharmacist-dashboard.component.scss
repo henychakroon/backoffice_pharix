@@ -1,0 +1,78 @@
+/* ── Revenue Hero Card ── */
+.revenue-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, #082f3a 0%, #0c4f73 50%, #0a3e61 100%);
+  border-radius: var(--radius-xl);
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 12px 36px rgba(8, 47, 58, .35);
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(11, 183, 143, .2), transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+}
+
+.revenue-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-lg);
+  background: rgba(11, 183, 143, .18);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.revenue-body {
+  z-index: 1;
+}
+
+.revenue-label {
+  font-size: var(--font-sm);
+  color: rgba(255, 255, 255, .5);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.revenue-value {
+  font-size: 36px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+
+  span {
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .5);
+    margin-left: 4px;
+  }
+}
+
+.revenue-sub {
+  font-size: var(--font-sm);
+  color: var(--accent);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* ── Stats Grid ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}

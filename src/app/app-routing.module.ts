@@ -12,6 +12,8 @@ import { CategoriesComponent } from './pages/categories/categories.component';
 import { AnalyticsComponent }  from './pages/analytics/analytics.component';
 import { SettingsComponent }   from './pages/settings/settings.component';
 import { ZonesComponent }      from './pages/zones/zones.component';
+import { PharmacistDashboardComponent } from './pages/pharmacist-dashboard/pharmacist-dashboard.component';
+import { PharmacistOrdersComponent }    from './pages/pharmacist-orders/pharmacist-orders.component';
 import { AuthGuard }           from './guards/auth.guard';
 
 const routes: Routes = [
@@ -32,6 +34,16 @@ const routes: Routes = [
       { path: 'analytics',  component: AnalyticsComponent  },
       { path: 'settings',   component: SettingsComponent   },
       { path: 'zones',      component: ZonesComponent      },
+    ]
+  },
+  {
+    path: 'ph',
+    component: LayoutComponent,
+    canActivate: [AuthGuard],
+    children: [
+      { path: '',          redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: PharmacistDashboardComponent },
+      { path: 'orders',    component: PharmacistOrdersComponent    },
     ]
   },
   { path: '**', redirectTo: 'dashboard' }
