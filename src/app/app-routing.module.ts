@@ -15,6 +15,7 @@ import { ZonesComponent }      from './pages/zones/zones.component';
 import { UsersComponent }      from './pages/users/users.component';
 import { ReportsComponent }    from './pages/reports/reports.component';
 import { PharmacistDashboardComponent } from './pages/pharmacist-interface/dashboard/pharmacist-dashboard.component';
+import { PharmacistNearbyPharmaciesComponent } from './pages/pharmacist-interface/nearby-pharmacies/pharmacist-nearby-pharmacies.component';
 import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/orders/pharmacist-orders.component';
 import { PharmacistProductsComponent }  from './pages/pharmacist-interface/products/pharmacist-products.component';
 import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/schedule/pharmacist-schedule.component';
@@ -49,6 +50,7 @@ const routes: Routes = [
     children: [
       { path: '',          redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: PharmacistDashboardComponent },
+      { path: 'nearby-pharmacies', component: PharmacistNearbyPharmaciesComponent },
       { path: 'orders',    component: PharmacistOrdersComponent    },
       { path: 'products',  component: PharmacistProductsComponent  },
       { path: 'schedule',  component: PharmacistScheduleComponent  },

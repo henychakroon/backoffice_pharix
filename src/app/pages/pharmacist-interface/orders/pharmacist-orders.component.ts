@@ -131,6 +131,15 @@ export class PharmacistOrdersComponent implements OnInit {
     });
   }
 
+  undoReady(o: OrderDTO, event: Event): void {
+    event.stopPropagation();
+    this.actionLoading = o.id;
+    this.pharmacistService.undoReady(o.id, this.email).subscribe({
+      next: updated => { this.replaceOrder(updated); this.actionLoading = null; },
+      error: () => { this.actionLoading = null; }
+    });
+  }
+
   // ── QR Code ──
 
   async showQr(o: OrderDTO, event: Event): Promise<void> {

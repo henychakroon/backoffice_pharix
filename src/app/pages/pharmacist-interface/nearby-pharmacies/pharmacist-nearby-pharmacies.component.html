@@ -1,0 +1,96 @@
+<div class="nearby-page animate-fadeInUp">
+  <div class="page-header card">
+    <div>
+      <div class="eyebrow">Pharmacies proches</div>
+      <h1>Pharmacies ouvertes autour de vous</h1>
+      <p>Utilisez votre position actuelle pour voir les pharmacies les plus proches et reperez rapidement la plus proche encore ouverte.</p>
+    </div>
+
+    <div class="header-actions">
+      <label class="radius-control">
+        Rayon
+        <select [(ngModel)]="radiusKm" (change)="onRadiusChange()">
+          <option [ngValue]="3">3 km</option>
+          <option [ngValue]="5">5 km</option>
+          <option [ngValue]="10">10 km</option>
+          <option [ngValue]="15">15 km</option>
+          <option [ngValue]="20">20 km</option>
+        </select>
+      </label>
+
+      <button class="btn btn-primary btn-sm" [disabled]="loadingLocation || loading" (click)="refreshLocation()">
+        {{ loadingLocation ? 'Localisation...' : 'Actualiser ma position' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="error-banner" *ngIf="error">{{ error }}</div>
+
+  <div class="summary-grid" *ngIf="currentPosition">
+    <div class="summary-card card current-card">
+      <div class="summary-label">Votre position</div>
+      <div class="summary-value">{{ currentPosition.latitude | number:'1.4-4' }}, {{ currentPosition.longitude | number:'1.4-4' }}</div>
+      <div class="summary-sub">Rayon de recherche: {{ radiusKm }} km</div>
+    </div>
+
+    <div class="summary-card card" [class.summary-card-muted]="!nearestPharmacy">
+      <div class="summary-label">Pharmacie la plus proche</div>
+      <div class="summary-value">{{ nearestPharmacy?.pharmacyName || 'Aucune pharmacie trouvee' }}</div>
+      <div class="summary-sub" *ngIf="nearestPharmacy">{{ nearestPharmacy.distanceKm | number:'1.2-2' }} km</div>
+    </div>
+
+    <div class="summary-card card open-card" [class.summary-card-muted]="!nearestOpenPharmacy">
+      <div class="summary-label">Plus proche ouverte</div>
+      <div class="summary-value">{{ nearestOpenPharmacy?.pharmacyName || 'Aucune pharmacie ouverte dans ce rayon' }}</div>
+      <div class="summary-sub" *ngIf="nearestOpenPharmacy">{{ nearestOpenPharmacy.distanceKm | number:'1.2-2' }} km</div>
+    </div>
+  </div>
+
+  <div class="loading-card card" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des pharmacies proches...</p>
+  </div>
+
+  <div class="list-card card" *ngIf="!loading">
+    <div class="list-head">
+      <div>
+        <h2>Resultats proches</h2>
+        <p>{{ pharmacies.length }} pharmacie{{ pharmacies.length > 1 ? 's' : '' }} trouvee{{ pharmacies.length > 1 ? 's' : '' }}</p>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="pharmacies.length === 0 && !error">
+      <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <h3>Aucune pharmacie dans ce rayon.</h3>
+      <p>Essayez d'augmenter le rayon ou de recharger votre position.</p>
+    </div>
+
+    <div class="pharmacy-list" *ngIf="pharmacies.length > 0">
+      <article class="pharmacy-card" *ngFor="let pharmacy of pharmacies; trackBy: trackByPharmacy">
+        <div class="pharmacy-main">
+          <div class="pharmacy-topline">
+            <h3>{{ pharmacy.pharmacyName }}</h3>
+            <span class="status-badge" [class.status-badge-closed]="!pharmacy.isOpen">
+              {{ pharmacy.isOpen ? 'Ouverte' : 'Fermee' }}
+            </span>
+          </div>
+          <div class="owner-name">{{ pharmacy.ownerName || 'Responsable non renseigne' }}</div>
+          <div class="hours-row">
+            <span class="hours-label">Horaires aujourd'hui:</span>
+            <span class="hours-value" [class.hours-value-closed]="showClosedHoursStyle(pharmacy)">
+              {{ hoursLabel(pharmacy) }}
+            </span>
+          </div>
+          <div class="meta-row">
+            <span>{{ pharmacy.distanceKm | number:'1.2-2' }} km</span>
+            <span>{{ pharmacy.latitude | number:'1.4-4' }}, {{ pharmacy.longitude | number:'1.4-4' }}</span>
+          </div>
+        </div>
+
+        <div class="pharmacy-actions">
+          <button class="btn btn-secondary btn-sm" (click)="openDirections(pharmacy)">Itineraire</button>
+        </div>
+      </article>
+    </div>
+  </div>
+</div>

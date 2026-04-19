@@ -70,6 +70,19 @@ export interface PharmacistProductQuery {
   size?: number;
 }
 
+export interface NearbyPharmacy {
+  id: number;
+  pharmacyName: string;
+  ownerName: string;
+  latitude: number;
+  longitude: number;
+  isOpen: boolean;
+  closedToday: boolean;
+  openingTime: string | null;
+  closingTime: string | null;
+  distanceKm: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PharmacistService {
   private readonly BASE = '/api/v1/pharmacien';
@@ -104,6 +117,12 @@ export class PharmacistService {
     });
   }
 
+  undoReady(orderId: number, email: string): Observable<OrderDTO> {
+    return this.http.put<OrderDTO>(`${this.BASE}/orders/${orderId}/ready/undo`, {}, {
+      params: new HttpParams().set('email', email)
+    });
+  }
+
   pickupOrder(orderId: number): Observable<OrderDTO> {
     return this.http.put<OrderDTO>(`${this.BASE}/orders/${orderId}/pickup`, {});
   }
@@ -133,6 +152,15 @@ export class PharmacistService {
 
   getProductFilters(): Observable<PharmacistProductFilters> {
     return this.http.get<PharmacistProductFilters>(`${this.BASE}/products/filters`);
+  }
+
+  getNearbyPharmacies(latitude: number, longitude: number, radiusKm = 10): Observable<NearbyPharmacy[]> {
+    const params = new HttpParams()
+      .set('latitude', String(latitude))
+      .set('longitude', String(longitude))
+      .set('radiusKm', String(radiusKm));
+
+    return this.http.get<NearbyPharmacy[]>('/api/v1/location/nearest-pharmacien', { params });
   }
 
   updateProductAvailability(productId: number, available: boolean): Observable<PharmacistProductItem> {

@@ -80,9 +80,15 @@
                 <!-- ACCEPTED → Ready for delivery -->
                 <button *ngIf="o.status === 'ACCEPTED'"
                         class="btn btn-primary btn-sm" [disabled]="actionLoading === o.id"
-                        (click)="markReady(o, $event)" data-tooltip="Prête à livrer">
+                        (click)="markReady(o, $event)" data-tooltip="Rendre commande prête">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                  Prête
+                  Rendre prête
+                </button>
+                <button *ngIf="o.status === 'READY_FOR_DELIVERY'"
+                        class="btn btn-warning btn-sm" [disabled]="actionLoading === o.id"
+                        (click)="undoReady(o, $event)" data-tooltip="Annuler commande prête">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20a8 8 0 0 0-8-8H4"/></svg>
+                  Annuler prête
                 </button>
 
                 <!-- QR Code button (for all non-cancelled/refused) -->
@@ -186,7 +192,10 @@
           </button>
         </ng-container>
         <button *ngIf="selectedOrder.status === 'ACCEPTED'" class="btn btn-primary btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="markReady(selectedOrder, $event)">
-          Prête à livrer
+          Rendre commande prête
+        </button>
+        <button *ngIf="selectedOrder.status === 'READY_FOR_DELIVERY'" class="btn btn-warning btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="undoReady(selectedOrder, $event)">
+          Annuler commande prête
         </button>
         <button *ngIf="selectedOrder.status !== 'CANCELLED' && selectedOrder.status !== 'REFUSED'" class="btn btn-ghost btn-sm" (click)="showQr(selectedOrder, $event)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>

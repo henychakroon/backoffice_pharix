@@ -58,6 +58,7 @@ export class LayoutComponent {
       group: 'Main',
       items: [
         { label: 'Tableau de bord',   icon: 'grid',        route: '/ph/dashboard' },
+        { label: 'Pharmacies proches', icon: 'map-pin',     route: '/ph/nearby-pharmacies' },
         { label: 'Mes commandes',     icon: 'shopping-bag', route: '/ph/orders'   },
         { label: 'Mes produits',      icon: 'package',      route: '/ph/products' },
         { label: 'Horaires',          icon: 'clock',        route: '/ph/schedule' },
