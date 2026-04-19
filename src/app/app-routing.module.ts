@@ -16,6 +16,7 @@ import { UsersComponent }      from './pages/users/users.component';
 import { ReportsComponent }    from './pages/reports/reports.component';
 import { PharmacistDashboardComponent } from './pages/pharmacist-interface/dashboard/pharmacist-dashboard.component';
 import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/orders/pharmacist-orders.component';
+import { PharmacistProductsComponent }  from './pages/pharmacist-interface/products/pharmacist-products.component';
 import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/schedule/pharmacist-schedule.component';
 import { AuthGuard }           from './guards/auth.guard';
 
@@ -49,6 +50,7 @@ const routes: Routes = [
       { path: '',          redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: PharmacistDashboardComponent },
       { path: 'orders',    component: PharmacistOrdersComponent    },
+      { path: 'products',  component: PharmacistProductsComponent  },
       { path: 'schedule',  component: PharmacistScheduleComponent  },
     ]
   },

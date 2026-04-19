@@ -25,6 +25,7 @@ import { FilterStatusPipe }    from './shared/pipes/filter-status.pipe';
 import { AdBannersComponent }  from './pages/zones/ad-banners/ad-banners.component';
 import { PharmacistDashboardComponent } from './pages/pharmacist-interface/dashboard/pharmacist-dashboard.component';
 import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/orders/pharmacist-orders.component';
+import { PharmacistProductsComponent }  from './pages/pharmacist-interface/products/pharmacist-products.component';
 import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/schedule/pharmacist-schedule.component';
 
 @NgModule({
@@ -48,6 +49,7 @@ import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/sched
     AdBannersComponent,
     PharmacistDashboardComponent,
     PharmacistOrdersComponent,
+    PharmacistProductsComponent,
     PharmacistScheduleComponent,
   ],
   imports: [

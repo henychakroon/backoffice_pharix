@@ -64,8 +64,8 @@
           <div class="party-card">
             <div class="party-title">Reporter</div>
             <div class="party-email">{{ report.reporterEmail }}</div>
-           
-            <div class="text-xs text-muted">{{ userById(report.reportedId)?.phone || 'Téléphone indisponible' }}</div>
+
+            <div class="text-xs text-muted">{{ userById(report.reporterId)?.phone || 'Téléphone indisponible' }}</div>
             <div class="text-xs text-muted">{{ roleLabel(report.reporterRole) }}</div>
             <span class="badge" [ngClass]="isUserBanned(report.reporterId) ? 'badge-danger' : 'badge-success'">
               {{ isUserBanned(report.reporterId) ? 'Banni' : 'Actif' }}
@@ -78,7 +78,7 @@
           <div class="party-card">
             <div class="party-title">Reported</div>
             <div class="party-email">{{ report.reportedEmail }}</div>
-             <div class="text-xs text-muted">{{ userById(report.reporterId)?.phone || 'Téléphone indisponible' }}</div>
+            <div class="text-xs text-muted">{{ userById(report.reportedId)?.phone || 'Téléphone indisponible' }}</div>
             <div class="text-xs text-muted">{{ roleLabel(report.reportedRole) }}</div>
 
             <span class="badge" [ngClass]="isUserBanned(report.reportedId) ? 'badge-danger' : 'badge-success'">

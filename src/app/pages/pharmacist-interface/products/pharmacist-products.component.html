@@ -1,0 +1,152 @@
+<div class="ph-products-page animate-fadeInUp">
+  <div class="page-header card">
+    <div>
+      <div class="eyebrow">Catalogue de la pharmacie</div>
+      <h1>Disponibilite des produits</h1>
+      <p>
+        Tous les produits importes par l'administration sont disponibles par defaut.
+        Recherchez un produit pour le rendre indisponible dans votre pharmacie.
+      </p>
+    </div>
+    <div class="header-note">
+      <span class="note-pill">Prix en lecture seule</span>
+      <span class="note-pill note-pill-muted">Catalogue synchronise depuis l'import admin</span>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card card">
+      <div class="stat-label">Produits trouves</div>
+      <div class="stat-value">{{ totalProducts }}</div>
+    </div>
+    <div class="stat-card card stat-card-success">
+      <div class="stat-label">Page actuelle</div>
+      <div class="stat-value">{{ currentPageLabel }}</div>
+    </div>
+    <div class="stat-card card stat-card-warning">
+      <div class="stat-label">Elements charges</div>
+      <div class="stat-value">{{ products.length }}</div>
+    </div>
+  </div>
+
+  <div class="feedback" *ngIf="feedbackMessage" [class.feedback-error]="feedbackType === 'error'" [class.feedback-success]="feedbackType === 'success'">
+    {{ feedbackMessage }}
+  </div>
+
+  <div class="toolbar card">
+    <div class="toolbar-row">
+      <div class="input-wrap search-input">
+        <span class="input-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" [ngModel]="searchTerm" (ngModelChange)="onSearchChange($event)" placeholder="Rechercher par nom, DCI, AMM ou laboratoire...">
+      </div>
+
+      <select [(ngModel)]="selectedCategory" (change)="onFilterChange()">
+        <option value="">Toutes les categories</option>
+        <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+      </select>
+
+      <select [(ngModel)]="selectedSubCategory" (change)="onFilterChange()">
+        <option value="">Toutes les sous-categories</option>
+        <option *ngFor="let subCategory of subCategories" [value]="subCategory">{{ subCategory }}</option>
+      </select>
+
+      <select [(ngModel)]="availabilityFilter" (change)="onFilterChange()">
+        <option value="all">Tous les statuts</option>
+        <option value="available">Disponibles</option>
+        <option value="unavailable">Indisponibles</option>
+      </select>
+
+      <button class="btn btn-ghost btn-sm" (click)="clearFilters()">Reinitialiser</button>
+    </div>
+
+    <div class="toolbar-meta">
+      {{ totalElements }} resultat{{ totalElements > 1 ? 's' : '' }} · Page {{ currentPageLabel }} / {{ totalPages || 1 }}
+    </div>
+  </div>
+
+  <div class="table-shell card" *ngIf="!loading; else loadingState">
+    <div class="table-head" *ngIf="products.length > 0">
+      <div class="th product-col">Produit</div>
+      <div class="th dci-col">DCI</div>
+      <div class="th meta-col">Categorie</div>
+      <div class="th price-col">Prix ref.</div>
+      <div class="th status-col">Disponibilite</div>
+      <div class="th action-col">Action</div>
+    </div>
+
+    <div class="empty-state" *ngIf="products.length === 0">
+      <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <h3>Aucun produit ne correspond a votre recherche.</h3>
+      <p>Essayez un autre nom, une autre DCI ou reinitialisez les filtres.</p>
+    </div>
+
+    <div *ngIf="products.length > 0" class="table-body">
+      <div class="tr" *ngFor="let product of products; trackBy: trackByProduct" [class.tr-unavailable]="!product.available">
+        <div class="td product-col">
+          <div class="product-name">{{ product.productName }}</div>
+          <div class="product-subline">AMM {{ product.amm || '—' }} · {{ product.subCategoryName }}</div>
+        </div>
+
+        <div class="td dci-col">
+          <div>{{ product.dci || '—' }}</div>
+          <div class="text-muted">{{ product.dosage || product.forme || '—' }}</div>
+        </div>
+
+        <div class="td meta-col">
+          <div>{{ product.categoryName }}</div>
+          <div class="text-muted">{{ product.laboratoire || 'Laboratoire indisponible' }}</div>
+        </div>
+
+        <div class="td price-col">{{ priceLabel(product.referencePrice) }}</div>
+
+        <div class="td status-col">
+          <span class="status-badge" [class.status-badge-off]="!product.available">
+            {{ product.available ? 'Disponible' : 'Indisponible' }}
+          </span>
+        </div>
+
+        <div class="td action-col">
+          <button
+            class="btn btn-sm"
+            [class.btn-danger]="product.available"
+            [class.btn-secondary]="!product.available"
+            [disabled]="actionProductId === product.productId"
+            (click)="toggleAvailability(product, $event)">
+            {{ actionProductId === product.productId ? '...' : (product.available ? 'Rendre indisponible' : 'Rendre disponible') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pagination" *ngIf="totalElements > 0">
+      <div class="pagination-meta">
+        <span>{{ totalElements }} produits au total</span>
+        <label>
+          Taille de page
+          <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)">
+            <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="pagination-actions">
+        <button class="btn btn-ghost btn-sm" [disabled]="!hasPreviousPage" (click)="changePage(page - 1)">
+          Precedent
+        </button>
+        <span>Page {{ currentPageLabel }} / {{ totalPages || 1 }}</span>
+        <button class="btn btn-ghost btn-sm" [disabled]="!hasNextPage" (click)="changePage(page + 1)">
+          Suivant
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #loadingState>
+    <div class="loading-card card">
+      <div class="spinner"></div>
+      <p>Chargement du catalogue pharmacie...</p>
+    </div>
+  </ng-template>
+</div>

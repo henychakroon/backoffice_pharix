@@ -34,6 +34,42 @@ export interface ReportItem {
   reportedRole: string;
 }
 
+export interface PharmacistProductItem {
+  productId: number;
+  amm: string;
+  productName: string;
+  dci: string;
+  dosage: string;
+  forme: string;
+  laboratoire: string;
+  categoryName: string;
+  subCategoryName: string;
+  referencePrice: number | null;
+  available: boolean;
+}
+
+export interface PharmacistProductPage {
+  content: PharmacistProductItem[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+export interface PharmacistProductFilters {
+  categories: string[];
+  subCategories: string[];
+}
+
+export interface PharmacistProductQuery {
+  search?: string;
+  category?: string;
+  subCategory?: string;
+  available?: boolean | null;
+  page?: number;
+  size?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PharmacistService {
   private readonly BASE = '/api/v1/pharmacien';
@@ -80,6 +116,27 @@ export class PharmacistService {
     return this.http.get<PharmacienDashboard>(`${this.BASE}/dashboard`, {
       params: new HttpParams().set('email', email)
     });
+  }
+
+  getProducts(query: PharmacistProductQuery = {}): Observable<PharmacistProductPage> {
+    let params = new HttpParams()
+      .set('page', String(query.page ?? 0))
+      .set('size', String(query.size ?? 25));
+
+    if (query.search) params = params.set('search', query.search);
+    if (query.category) params = params.set('category', query.category);
+    if (query.subCategory) params = params.set('subCategory', query.subCategory);
+    if (query.available != null) params = params.set('available', String(query.available));
+
+    return this.http.get<PharmacistProductPage>(`${this.BASE}/products`, { params });
+  }
+
+  getProductFilters(): Observable<PharmacistProductFilters> {
+    return this.http.get<PharmacistProductFilters>(`${this.BASE}/products/filters`);
+  }
+
+  updateProductAvailability(productId: number, available: boolean): Observable<PharmacistProductItem> {
+    return this.http.patch<PharmacistProductItem>(`${this.BASE}/products/${productId}/availability`, { available });
   }
 
   createReport(payload: CreateReportPayload): Observable<ReportItem> {
