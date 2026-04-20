@@ -48,6 +48,62 @@
   border-radius: var(--radius-full);
 }
 
+.zone-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  background: #fff;
+  color: var(--gray-700);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-xs);
+  transition: var(--transition);
+
+  &:hover {
+    border-color: #f59e0b;
+    color: #b45309;
+  }
+
+  &.has-alert {
+    border-color: rgba(245, 158, 11, .35);
+    background: #fff8eb;
+    color: #b45309;
+  }
+
+  &.active {
+    border-color: #f59e0b;
+    background: #f59e0b;
+    color: #fff;
+    box-shadow: 0 10px 20px rgba(245, 158, 11, .18);
+  }
+}
+
+.zone-filter-label {
+  white-space: nowrap;
+}
+
+.zone-filter-count {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(245, 158, 11, .14);
+  color: inherit;
+}
+
+.zone-filter-btn.active .zone-filter-count {
+  background: rgba(255,255,255,.18);
+}
+
 /* Agent Cards Grid */
 .agents-grid {
   display: grid;
@@ -112,6 +168,16 @@
   font-size: var(--font-xs);
   padding: 8px 14px;
   border-bottom: 1px solid rgba(17,205,239,.15);
+}
+
+.zone-warning {
+  margin: 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: #fff8eb;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* Stats row */

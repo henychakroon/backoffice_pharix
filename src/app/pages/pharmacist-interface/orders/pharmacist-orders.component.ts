@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { PharmacistService, CreateReportPayload } from '../../../services/pharmacist.service';
 import { AuthService } from '../../../services/auth.service';
 import { OrderDTO } from '../../../services/admin.service';
+import { Router } from '@angular/router';
 import * as QRCode from 'qrcode';
 
 @Component({
@@ -37,7 +38,8 @@ export class PharmacistOrdersComponent implements OnInit {
 
   constructor(
     private pharmacistService: PharmacistService,
-    private auth: AuthService
+    private auth: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -262,6 +264,23 @@ export class PharmacistOrdersComponent implements OnInit {
 
   openDetail(o: OrderDTO): void { this.selectedOrder = o; }
   closeDetail(): void { this.selectedOrder = null; }
+
+  openProductsForOrder(order: OrderDTO, event: Event): void {
+    event.stopPropagation();
+
+    const productIds = (order.orderItems ?? [])
+      .map(item => item.productId)
+      .filter((productId, index, all) => productId != null && all.indexOf(productId) === index);
+
+    this.router.navigate(['/ph/products'], {
+      queryParams: {
+        orderId: order.id,
+        productIds: productIds.length > 0 ? productIds.join(',') : null,
+        orderDescription: order.description || '',
+        clientName: order.clientName || ''
+      }
+    });
+  }
 
   // ── Helpers ──
 

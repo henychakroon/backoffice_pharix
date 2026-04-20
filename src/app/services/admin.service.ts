@@ -57,6 +57,9 @@ export interface OrderDTO {
   id: number;
   status: string;
   description?: string;
+  productId?: number;
+  productName?: string;
+  orderItems?: OrderItemDTO[];
 
   clientId: number;
   clientUserId?: number;
@@ -79,6 +82,15 @@ export interface OrderDTO {
 
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface OrderItemDTO {
+  id: number;
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
 }
 
 export interface LivreurAdmin {

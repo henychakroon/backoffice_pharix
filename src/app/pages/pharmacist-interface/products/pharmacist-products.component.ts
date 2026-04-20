@@ -1,9 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin, of, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import {
   PharmacistProductFilters,
   PharmacistProductItem,
+  PharmacistProductPage,
   PharmacistService
 } from '../../../services/pharmacist.service';
 
@@ -34,11 +36,20 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
 
   feedbackMessage = '';
   feedbackType: FeedbackType = 'success';
+  orderContextLabel = '';
+  orderId: number | null = null;
+  orderProductIds: number[] = [];
+  clientName = '';
+  hasOrderContext = false;
 
   private readonly destroy$ = new Subject<void>();
   private readonly search$ = new Subject<string>();
 
-  constructor(private pharmacistService: PharmacistService) {}
+  constructor(
+    private pharmacistService: PharmacistService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.search$.pipe(
@@ -48,7 +59,30 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
     ).subscribe(() => this.resetAndLoad());
 
     this.loadFilterOptions();
-    this.loadProducts();
+
+    this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      this.orderId = params.get('orderId') ? Number(params.get('orderId')) : null;
+      this.orderProductIds = this.extractProductIds(params.get('productIds'), params.get('productId'));
+      this.clientName = params.get('clientName')?.trim() || '';
+      this.searchTerm = params.get('orderDescription')?.trim() || '';
+      this.hasOrderContext = this.orderProductIds.length > 0 || !!this.searchTerm;
+      this.pageSize = Math.max(25, this.orderProductIds.length || 25);
+      this.page = 0;
+
+      if (this.orderProductIds.length > 0) {
+        this.orderContextLabel = this.buildProductContextLabel();
+        this.loadProducts();
+        return;
+      }
+
+      if (this.hasOrderContext) {
+        this.loadProductsForOrderContext();
+        return;
+      }
+
+      this.orderContextLabel = '';
+      this.loadProducts();
+    });
   }
 
   ngOnDestroy(): void {
@@ -59,6 +93,7 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
   loadProducts(): void {
     this.loading = true;
     this.pharmacistService.getProducts({
+      productIds: this.orderProductIds.length > 0 ? this.orderProductIds : undefined,
       search: this.searchTerm.trim() || undefined,
       category: this.selectedCategory || undefined,
       subCategory: this.selectedSubCategory || undefined,
@@ -137,6 +172,20 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
     this.resetAndLoad();
   }
 
+  clearOrderContext(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        orderId: null,
+        productIds: null,
+        productId: null,
+        orderDescription: null,
+        clientName: null
+      },
+      queryParamsHandling: 'merge'
+    });
+  }
+
   toggleAvailability(product: PharmacistProductItem, event: Event): void {
     event.stopPropagation();
     const nextAvailability = !product.available;
@@ -182,11 +231,107 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
 
   private resetAndLoad(): void {
     this.page = 0;
+    if (this.orderProductIds.length > 0) {
+      this.loadProducts();
+      return;
+    }
+
+    if (this.hasOrderContext) {
+      this.loadProductsForOrderContext();
+      return;
+    }
+
     this.loadProducts();
   }
 
   private setFeedback(type: FeedbackType, message: string): void {
     this.feedbackType = type;
     this.feedbackMessage = message;
+  }
+
+  private loadProductsForOrderContext(): void {
+    const terms = this.extractOrderTerms(this.searchTerm);
+
+    if (terms.length === 0) {
+      this.hasOrderContext = false;
+      this.orderContextLabel = '';
+      this.loadProducts();
+      return;
+    }
+
+    this.loading = true;
+    this.feedbackMessage = '';
+    this.orderContextLabel = this.buildOrderContextLabel(terms);
+
+    const requests = terms.map(term =>
+      this.pharmacistService.getProducts({
+        search: term,
+        category: this.selectedCategory || undefined,
+        subCategory: this.selectedSubCategory || undefined,
+        available: this.availabilityQueryValue,
+        page: 0,
+        size: 50
+      })
+    );
+
+    forkJoin(requests.length > 0 ? requests : [of<PharmacistProductPage>({ content: [], totalElements: 0, totalPages: 0, page: 0, size: 50 })]).subscribe({
+      next: responses => {
+        const merged = new Map<number, PharmacistProductItem>();
+
+        responses.forEach(response => {
+          response.content.forEach(product => {
+            merged.set(product.productId, product);
+          });
+        });
+
+        this.products = Array.from(merged.values()).sort((left, right) => left.productName.localeCompare(right.productName));
+        this.totalElements = this.products.length;
+        this.totalPages = this.products.length > 0 ? 1 : 0;
+        this.page = 0;
+        this.pageSize = Math.max(this.products.length, 1);
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.setFeedback('error', 'Impossible de charger les produits liés à cette commande.');
+      }
+    });
+  }
+
+  private extractOrderTerms(description: string): string[] {
+    return description
+      .split(/\+|,|\/| et |;/i)
+      .map(term => term.replace(/\bx\s*\d+\b/gi, '').replace(/\s+/g, ' ').trim())
+      .filter(term => term.length >= 3)
+      .filter((term, index, all) => all.indexOf(term) === index);
+  }
+
+  private buildOrderContextLabel(terms: string[]): string {
+    const orderLabel = this.orderId ? `Commande #${this.orderId}` : 'Commande sélectionnée';
+    const clientLabel = this.clientName ? ` de ${this.clientName}` : '';
+    return `${orderLabel}${clientLabel} · ${terms.length} produit${terms.length > 1 ? 's' : ''} détecté${terms.length > 1 ? 's' : ''}`;
+  }
+
+  private buildProductContextLabel(): string {
+    const orderLabel = this.orderId ? `Commande #${this.orderId}` : 'Commande sélectionnée';
+    const clientLabel = this.clientName ? ` de ${this.clientName}` : '';
+    return `${orderLabel}${clientLabel} · ${this.orderProductIds.length} produit${this.orderProductIds.length > 1 ? 's' : ''}`;
+  }
+
+  private extractProductIds(productIdsParam: string | null, legacyProductIdParam: string | null): number[] {
+    const rawValues: string[] = [];
+
+    if (productIdsParam) {
+      rawValues.push(...productIdsParam.split(','));
+    }
+
+    if (legacyProductIdParam) {
+      rawValues.push(legacyProductIdParam);
+    }
+
+    return rawValues
+      .map(value => Number(value.trim()))
+      .filter(value => Number.isFinite(value) && value > 0)
+      .filter((value, index, all) => all.indexOf(value) === index);
   }
 }

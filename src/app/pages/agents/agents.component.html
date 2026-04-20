@@ -3,7 +3,7 @@
   <div class="page-header">
     <div>
       <div class="page-title">Livreurs</div>
-      <div class="page-subtitle">{{ livreurs.length }} livreurs — {{ countOnline() }} en ligne</div>
+      <div class="page-subtitle">{{ livreurs.length }} livreurs ï¿½ {{ countOnline() }} en ligne</div>
     </div>
   </div>
 
@@ -38,6 +38,15 @@
       <option value="online">En ligne</option>
       <option value="offline">Hors ligne</option>
     </select>
+    <button
+      type="button"
+      class="zone-filter-btn"
+      [class.active]="zoneFilter === 'unassigned'"
+      [class.has-alert]="countWithoutZone() > 0"
+      (click)="toggleUnassignedFilter()">
+      <span class="zone-filter-label">Sans zone de livraison</span>
+      <span class="zone-filter-count">{{ countWithoutZone() }}</span>
+    </button>
   </div>
 
   <!-- Agent cards -->
@@ -47,7 +56,7 @@
         <div class="agent-avatar">{{ initials(a.email) }}</div>
         <div class="agent-info">
           <div class="agent-name">{{ a.email }}</div>
-          <div class="text-xs text-muted">ID {{ a.id }} · {{ a.zoneName || 'Aucune zone' }}</div>
+          <div class="text-xs text-muted">ID {{ a.id }} ï¿½ {{ a.zoneName || 'Aucune zone' }}</div>
         </div>
         <span class="badge" [ngClass]="a.online ? 'badge-success' : 'badge-gray'">
           <span class="pulse-dot" *ngIf="a.online"></span>
@@ -55,17 +64,21 @@
         </span>
       </div>
 
+      <div class="zone-warning" *ngIf="!hasDeliveryZone(a)">
+        Ce livreur n'a pas encore de zone de livraison assignee.
+      </div>
+
       <div class="agent-stats">
         <div class="agent-stat">
-          <div class="agent-stat-val" style="font-size:12px">{{ a.phone || '—' }}</div>
+          <div class="agent-stat-val" style="font-size:12px">{{ a.phone || 'ï¿½' }}</div>
           <div class="agent-stat-lbl">Telephone</div>
         </div>
         <div class="agent-stat">
-          <div class="agent-stat-val" style="font-size:12px">{{ a.vehicleType || '—' }}</div>
+          <div class="agent-stat-val" style="font-size:12px">{{ a.vehicleType || 'ï¿½' }}</div>
           <div class="agent-stat-lbl">Vehicule</div>
         </div>
         <div class="agent-stat">
-          <div class="agent-stat-val" style="font-size:12px">{{ a.zoneName || '—' }}</div>
+          <div class="agent-stat-val" style="font-size:12px">{{ a.zoneName || 'ï¿½' }}</div>
           <div class="agent-stat-lbl">Zone</div>
         </div>
       </div>
@@ -107,8 +120,8 @@
            (click)="selectedOrderId = o.id">
         <div class="livreur-avatar">{{ o.id }}</div>
         <div class="livreur-info">
-          <div class="fw-600" style="font-size:13px">{{ o.clientName }} — {{ o.pharmacyName }}</div>
-          <div class="text-xs text-muted">{{ o.total | currency:'TND':'symbol':'1.2-2' }} · {{ o.createdAt | date:'dd MMM HH:mm' }}</div>
+          <div class="fw-600" style="font-size:13px">{{ o.clientName }} ï¿½ {{ o.pharmacyName }}</div>
+          <div class="text-xs text-muted">{{ o.total | currency:'TND':'symbol':'1.2-2' }} ï¿½ {{ o.createdAt | date:'dd MMM HH:mm' }}</div>
         </div>
         <div class="livreur-status">
           <span class="badge badge-warning" style="font-size:10px">{{ o.status }}</span>

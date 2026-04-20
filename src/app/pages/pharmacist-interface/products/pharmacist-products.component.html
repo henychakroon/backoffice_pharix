@@ -33,6 +33,22 @@
     {{ feedbackMessage }}
   </div>
 
+  <div class="order-context-card card" *ngIf="hasOrderContext">
+    <div>
+      <div class="order-context-title">Vérification depuis une commande</div>
+      <div class="order-context-subtitle">{{ orderContextLabel }}</div>
+      <div class="order-context-description">
+        <ng-container *ngIf="orderProductIds.length > 0; else descriptionContext">
+          Les produits liés à cette commande sont affichés directement pour vérifier leur disponibilité malgré la pagination du catalogue.
+        </ng-container>
+        <ng-template #descriptionContext>
+          Les produits affichés correspondent aux éléments détectés dans la description de la commande pour vérifier rapidement leur disponibilité.
+        </ng-template>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" (click)="clearOrderContext()">Voir tout le catalogue</button>
+  </div>
+
   <div class="toolbar card">
     <div class="toolbar-row">
       <div class="input-wrap search-input">
@@ -120,7 +136,7 @@
       </div>
     </div>
 
-    <div class="pagination" *ngIf="totalElements > 0">
+    <div class="pagination" *ngIf="totalElements > 0 && !hasOrderContext">
       <div class="pagination-meta">
         <span>{{ totalElements }} produits au total</span>
         <label>

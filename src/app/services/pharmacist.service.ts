@@ -62,6 +62,7 @@ export interface PharmacistProductFilters {
 }
 
 export interface PharmacistProductQuery {
+  productIds?: number[];
   search?: string;
   category?: string;
   subCategory?: string;
@@ -142,6 +143,11 @@ export class PharmacistService {
       .set('page', String(query.page ?? 0))
       .set('size', String(query.size ?? 25));
 
+    if (query.productIds?.length) {
+      query.productIds.forEach(productId => {
+        params = params.append('productIds', String(productId));
+      });
+    }
     if (query.search) params = params.set('search', query.search);
     if (query.category) params = params.set('category', query.category);
     if (query.subCategory) params = params.set('subCategory', query.subCategory);

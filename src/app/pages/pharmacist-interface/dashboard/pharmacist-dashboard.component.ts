@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { PharmacistService, PharmacienDashboard } from '../../../services/pharmacist.service';
 import { AuthService } from '../../../services/auth.service';
 import { OrderDTO } from '../../../services/admin.service';
@@ -20,7 +21,8 @@ export class PharmacistDashboardComponent implements OnInit {
 
   constructor(
     private pharmacistService: PharmacistService,
-    private auth: AuthService
+    private auth: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -59,6 +61,23 @@ export class PharmacistDashboardComponent implements OnInit {
 
   closeDetail(): void {
     this.selectedOrder = null;
+  }
+
+  openProductsForOrder(order: OrderDTO, event: Event): void {
+    event.stopPropagation();
+
+    const productIds = (order.orderItems ?? [])
+      .map(item => item.productId)
+      .filter((productId, index, all) => productId != null && all.indexOf(productId) === index);
+
+    this.router.navigate(['/ph/products'], {
+      queryParams: {
+        orderId: order.id,
+        productIds: productIds.length > 0 ? productIds.join(',') : null,
+        orderDescription: order.description || '',
+        clientName: order.clientName || ''
+      }
+    });
   }
 
   acceptOrder(order: OrderDTO, event: Event): void {

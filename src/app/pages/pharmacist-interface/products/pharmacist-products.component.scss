@@ -109,6 +109,37 @@
   color: #aa2e2e;
 }
 
+.order-context-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(135deg, #eef8ff 0%, #ffffff 100%);
+  border: 1px solid rgba(12, 63, 108, 0.1);
+}
+
+.order-context-title {
+  color: #0c3f6c;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.order-context-subtitle {
+  margin-top: 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #143553;
+}
+
+.order-context-description {
+  margin-top: 0.35rem;
+  color: #5f778d;
+  line-height: 1.5;
+}
+
 .toolbar {
   display: grid;
   gap: 0.8rem;
@@ -309,6 +340,10 @@
 
 @media (max-width: 840px) {
   .page-header {
+    flex-direction: column;
+  }
+
+  .order-context-card {
     flex-direction: column;
   }
 

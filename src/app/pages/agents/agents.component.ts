@@ -9,6 +9,7 @@ import { AdminService, OrderDTO, LivreurAdmin } from '../../services/admin.servi
 export class AgentsComponent implements OnInit {
   searchTerm = '';
   statusFilter = 'all';
+  zoneFilter: 'all' | 'unassigned' = 'all';
 
   livreurs: LivreurAdmin[] = [];
   allOrders: OrderDTO[] = [];
@@ -42,7 +43,8 @@ export class AgentsComponent implements OnInit {
       const matchStatus = this.statusFilter === 'all' ||
         (this.statusFilter === 'online' && l.online) ||
         (this.statusFilter === 'offline' && !l.online);
-      return matchSearch && matchStatus;
+      const matchZone = this.zoneFilter === 'all' || !this.hasDeliveryZone(l);
+      return matchSearch && matchStatus && matchZone;
     });
   }
 
@@ -80,6 +82,15 @@ export class AgentsComponent implements OnInit {
     return (email || '?')[0].toUpperCase();
   }
 
+  hasDeliveryZone(livreur: LivreurAdmin): boolean {
+    return livreur.zoneId != null || !!livreur.zoneName?.trim();
+  }
+
+  toggleUnassignedFilter(): void {
+    this.zoneFilter = this.zoneFilter === 'unassigned' ? 'all' : 'unassigned';
+  }
+
   countOnline() { return this.livreurs.filter(l => l.online).length; }
   countOffline() { return this.livreurs.filter(l => !l.online).length; }
+  countWithoutZone() { return this.livreurs.filter(l => !this.hasDeliveryZone(l)).length; }
 }
