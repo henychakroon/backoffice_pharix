@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { OrderDTO } from './admin.service';
 
 export interface PharmacienDashboard {
@@ -161,12 +161,15 @@ export class PharmacistService {
   }
 
   getNearbyPharmacies(latitude: number, longitude: number, radiusKm = 10): Observable<NearbyPharmacy[]> {
+    const url = '/api/v1/location/nearest-pharmacien';
     const params = new HttpParams()
       .set('latitude', String(latitude))
       .set('longitude', String(longitude))
       .set('radiusKm', String(radiusKm));
 
-    return this.http.get<NearbyPharmacy[]>('/api/v1/location/nearest-pharmacien', { params });
+    return this.http.get<NearbyPharmacy[]>(url, { params }).pipe(
+      tap(pharmacies => console.log('Nearby pharmacies request', { url, latitude, longitude, radiusKm }, pharmacies))
+    );
   }
 
   updateProductAvailability(productId: number, available: boolean): Observable<PharmacistProductItem> {

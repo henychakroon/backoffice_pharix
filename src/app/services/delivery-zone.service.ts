@@ -54,7 +54,7 @@ export interface ApiResponse<T> {
 
 @Injectable({ providedIn: 'root' })
 export class DeliveryZoneService {
-  private readonly BASE = '/api/zones';
+  private readonly BASE = '/api/v1/zones';
 
   constructor(private http: HttpClient) {}
 
