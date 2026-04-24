@@ -82,6 +82,7 @@ export interface NearbyPharmacy {
   openingTime: string | null;
   closingTime: string | null;
   distanceKm: number;
+  imageUrl: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -1,3 +1,16 @@
+/* ── Order highlight (from notification click) ── */
+@keyframes highlightPulse {
+  0%   { background: #fef9c3; }
+  50%  { background: #fde68a; }
+  100% { background: transparent; }
+}
+
+.order-highlighted {
+  animation: highlightPulse 4s ease-out forwards;
+  outline: 2px solid var(--primary, #4f6ef7);
+  outline-offset: -2px;
+}
+
 /* ── Status Tabs ── */
 .status-tabs {
   display: flex;

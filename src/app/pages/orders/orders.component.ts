@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { AdminService, OrderDTO, LivreurAdmin } from '../../services/admin.service';
 
 @Component({
@@ -11,6 +12,7 @@ export class OrdersComponent implements OnInit {
   statusFilter = 'all';
   selectedOrder: OrderDTO | null = null;
   loading = false;
+  highlightedId: number | null = null;
 
   allOrders: OrderDTO[] = [];
   livreurs: LivreurAdmin[] = [];
@@ -20,12 +22,30 @@ export class OrdersComponent implements OnInit {
   assignLoading = false;
   selectedLivreurId: number | null = null;
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.loading = true;
     this.adminService.getOrders().subscribe({
-      next: orders => { this.allOrders = orders; this.loading = false; },
+      next: orders => {
+        this.allOrders = orders;
+        this.loading = false;
+        this.route.queryParams.subscribe(params => {
+          const id = params['highlight'] ? +params['highlight'] : null;
+          if (id) {
+            this.highlightedId = id;
+            // Reset statusFilter so the row is visible
+            this.statusFilter = 'all';
+            // Scroll after render
+            setTimeout(() => {
+              const el = document.getElementById('order-row-' + id);
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // Clear highlight after 4s
+              setTimeout(() => { this.highlightedId = null; }, 4000);
+            }, 100);
+          }
+        });
+      },
       error: () => { this.loading = false; }
     });
     this.adminService.getLivreurs().subscribe({
@@ -109,6 +129,6 @@ export class OrdersComponent implements OnInit {
   }
 
   livreurDisplay(l: LivreurAdmin): string {
-    return l.email + (l.vehicleType ? ' · ' + l.vehicleType : '');
+    return l.email + (l.vehicleType ? ' ï¿½ ' + l.vehicleType : '');
   }
 }

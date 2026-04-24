@@ -94,10 +94,27 @@
 
       <div class="topbar-actions">
         <!-- Notifications -->
-        <button class="btn btn-ghost btn-icon topbar-btn" data-tooltip="Notifications">
-          <span class="notif-badge">4</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        </button>
+        <div class="notif-wrapper" *ngIf="auth.isAdmin()">
+          <button class="btn btn-ghost btn-icon topbar-btn" data-tooltip="Notifications" (click)="toggleNotifPanel()">
+            <span class="notif-badge" *ngIf="notifCount > 0">{{ notifCount > 99 ? '99+' : notifCount }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          </button>
+
+          <!-- Notification panel -->
+          <div class="notif-panel" *ngIf="notifPanelOpen">
+            <div class="notif-panel-header">
+              <span>Commandes récentes</span>
+              <button class="btn btn-ghost btn-sm" (click)="clearNotifications()">Effacer</button>
+            </div>
+            <div class="notif-panel-empty" *ngIf="recentOrders.length === 0">
+              Aucune notification
+            </div>
+            <div class="notif-item" *ngFor="let order of recentOrders" (click)="goToOrder(order.orderId)">
+              <div class="notif-item-title">#{{ order.orderId }} — {{ order.clientName }}</div>
+              <div class="notif-item-sub">{{ order.pharmacyName }} · {{ order.status }}</div>
+            </div>
+          </div>
+        </div>
         <!-- Help -->
         <button class="btn btn-ghost btn-icon topbar-btn hide-mobile" data-tooltip="Help">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>

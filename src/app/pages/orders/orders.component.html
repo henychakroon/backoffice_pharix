@@ -4,7 +4,7 @@
   <div class="page-header">
     <div>
       <div class="page-title">Commandes</div>
-      <div class="page-subtitle">{{ allOrders.length }} commandes — {{ countByStatus('PENDING') }} en attente d'action</div>
+      <div class="page-subtitle">{{ allOrders.length }} commandes ï¿½ {{ countByStatus('PENDING') }} en attente d'action</div>
     </div>
   </div>
 
@@ -47,7 +47,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let o of filtered" class="order-row" (click)="openDetail(o)">
+          <tr *ngFor="let o of filtered"
+              [id]="'order-row-' + o.id"
+              class="order-row"
+              [class.order-highlighted]="o.id === highlightedId"
+              (click)="openDetail(o)">
             <td>
               <span class="fw-600 text-primary">#{{ o.id }}</span>
               <div class="text-xs text-muted">{{ o.createdAt | date:'dd MMM yyyy HH:mm' }}</div>
@@ -153,7 +157,7 @@
 
       <div class="detail-section">
         <div class="detail-label">Description</div>
-        <div class="detail-value">{{ selectedOrder.description || '—' }}</div>
+        <div class="detail-value">{{ selectedOrder.description || 'ï¿½' }}</div>
       </div>
 
       <div class="detail-section">
@@ -173,7 +177,7 @@
 <div class="modal" *ngIf="assignModalOrder">
   <div class="modal-header">
     <div class="modal-title">Assigner un livreur</div>
-    <div class="text-sm text-muted">Commande #{{ assignModalOrder.id }} — {{ assignModalOrder.clientName }}</div>
+    <div class="text-sm text-muted">Commande #{{ assignModalOrder.id }} ï¿½ {{ assignModalOrder.clientName }}</div>
     <button class="btn btn-ghost btn-icon" (click)="closeAssign()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
@@ -188,7 +192,7 @@
         <div class="livreur-avatar">{{ (l.email || '?')[0].toUpperCase() }}</div>
         <div class="livreur-info">
           <div class="fw-600" style="font-size:13px">{{ l.email }}</div>
-          <div class="text-xs text-muted">{{ l.phone || '—' }} · {{ l.vehicleType || 'Vehicule inconnu' }}</div>
+          <div class="text-xs text-muted">{{ l.phone || 'ï¿½' }} ï¿½ {{ l.vehicleType || 'Vehicule inconnu' }}</div>
           <div *ngIf="l.zoneName" class="text-xs text-muted">Zone: {{ l.zoneName }}</div>
         </div>
         <div class="livreur-status">

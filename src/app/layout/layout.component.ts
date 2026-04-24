@@ -1,17 +1,24 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { filter, Subscription } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { WebSocketService, AdminOrderEvent } from '../services/websocket.service';
 
 @Component({
   selector: 'app-layout',
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.scss']
 })
-export class LayoutComponent {
+export class LayoutComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
   mobileOpen = false;
   currentRoute = '';
+
+  notifCount = 0;
+  notifPanelOpen = false;
+  recentOrders: AdminOrderEvent[] = [];
+
+  private wsSub?: Subscription;
 
   adminNavItems = [
     {
@@ -88,13 +95,48 @@ export class LayoutComponent {
     return this.auth.isPharmacien() ? 'Pharmacie' : 'Admin';
   }
 
-  constructor(private router: Router, private auth: AuthService) {
+  constructor(private router: Router, public auth: AuthService, private ws: WebSocketService) {
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
       .subscribe((e: any) => {
         this.currentRoute = e.urlAfterRedirects;
         this.mobileOpen = false;
       });
+  }
+
+  ngOnInit(): void {
+    if (this.auth.isAdmin()) {
+      const token = this.auth.getAccessToken();
+      if (token) {
+        this.ws.connect(token);
+        this.wsSub = this.ws.orderEvents$.subscribe((event: AdminOrderEvent) => {
+          this.notifCount++;
+          this.recentOrders.unshift(event);
+          if (this.recentOrders.length > 10) this.recentOrders.pop();
+        });
+      }
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.wsSub?.unsubscribe();
+    this.ws.disconnect();
+  }
+
+  clearNotifications(): void {
+    this.notifCount = 0;
+    this.recentOrders = [];
+  }
+
+  toggleNotifPanel(): void {
+    this.notifPanelOpen = !this.notifPanelOpen;
+    if (!this.notifPanelOpen) this.notifCount = 0;
+  }
+
+  goToOrder(orderId: number): void {
+    this.notifPanelOpen = false;
+    this.notifCount = 0;
+    this.router.navigate(['/orders'], { queryParams: { highlight: orderId } });
   }
 
   toggle() { this.sidebarCollapsed = !this.sidebarCollapsed; }
