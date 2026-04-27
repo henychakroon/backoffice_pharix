@@ -71,7 +71,8 @@ export class PharmacistOrdersComponent implements OnInit {
       DELIVERED: 'badge-success',
       REFUSED: 'badge-danger',
       CANCELLED: 'badge-danger',
-      READY_FOR_DELIVERY: 'badge-accent'
+      READY_FOR_DELIVERY: 'badge-accent',
+      DISPATCH_FAILED: 'badge-dispatch-failed'
     };
     return m[s] ?? 'badge-gray';
   }
@@ -86,7 +87,8 @@ export class PharmacistOrdersComponent implements OnInit {
       DELIVERED: 'Livrée',
       REFUSED: 'Refusée',
       CANCELLED: 'Annulée',
-      READY_FOR_DELIVERY: 'Prête'
+      READY_FOR_DELIVERY: 'Prête',
+      DISPATCH_FAILED: 'Echec dispatch'
     };
     return l[s] ?? s;
   }

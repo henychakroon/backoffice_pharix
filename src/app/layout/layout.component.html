@@ -109,8 +109,14 @@
             <div class="notif-panel-empty" *ngIf="recentOrders.length === 0">
               Aucune notification
             </div>
-            <div class="notif-item" *ngFor="let order of recentOrders" (click)="goToOrder(order.orderId)">
-              <div class="notif-item-title">#{{ order.orderId }} — {{ order.clientName }}</div>
+            <div class="notif-item"
+                 [class.notif-item-urgent]="order.dispatchFailed || order.status === 'DISPATCH_FAILED'"
+                 *ngFor="let order of recentOrders"
+                 (click)="goToOrder(order.orderId)">
+              <div class="notif-item-title">
+                <span *ngIf="order.dispatchFailed || order.status === 'DISPATCH_FAILED'" class="notif-urgent-icon">⚠</span>
+                #{{ order.orderId }} — {{ order.clientName }}
+              </div>
               <div class="notif-item-sub">{{ order.pharmacyName }} · {{ order.status }}</div>
             </div>
           </div>

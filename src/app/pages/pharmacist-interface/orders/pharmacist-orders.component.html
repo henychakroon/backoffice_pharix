@@ -6,6 +6,10 @@
       <div class="page-title">Mes commandes</div>
       <div class="page-subtitle">{{ allOrders.length }} commandes · {{ countByStatus('PENDING') }} en attente de validation</div>
     </div>
+    <button class="btn btn-primary btn-sm" (click)="openScanner()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><path d="M20 17v4M20 17h-3M17 21h3"/></svg>
+      Scanner QR livreur
+    </button>
   </div>
 
   <!-- Loading -->
@@ -15,10 +19,10 @@
   <div class="status-tabs" *ngIf="!loading">
     <button class="tab-btn" [class.active]="statusFilter==='all'"             (click)="statusFilter='all'">Tout <span class="tab-count">{{ allOrders.length }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='PENDING'"         (click)="statusFilter='PENDING'">En attente <span class="tab-count warn">{{ countByStatus('PENDING') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='ACCEPTED'"        (click)="statusFilter='ACCEPTED'">Acceptées <span class="tab-count info">{{ countByStatus('ACCEPTED') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='READY_FOR_DELIVERY'" (click)="statusFilter='READY_FOR_DELIVERY'">Prêtes <span class="tab-count primary">{{ countByStatus('READY_FOR_DELIVERY') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='DELIVERED'"       (click)="statusFilter='DELIVERED'">Livrées <span class="tab-count success">{{ countByStatus('DELIVERED') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='REFUSED'"         (click)="statusFilter='REFUSED'">Refusées <span class="tab-count danger">{{ countByStatus('REFUSED') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='ACCEPTED_FROM_PHARMACIEN'" (click)="statusFilter='ACCEPTED_FROM_PHARMACIEN'">Acceptées <span class="tab-count info">{{ countByStatus('ACCEPTED_FROM_PHARMACIEN') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='READY_FOR_DELIVERY'"     (click)="statusFilter='READY_FOR_DELIVERY'">Prêtes <span class="tab-count primary">{{ countByStatus('READY_FOR_DELIVERY') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='DELIVERED'"              (click)="statusFilter='DELIVERED'">Livrées <span class="tab-count success">{{ countByStatus('DELIVERED') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='REFUSED_FROM_PHARMACIEN'" (click)="statusFilter='REFUSED_FROM_PHARMACIEN'">Refusées <span class="tab-count danger">{{ countByStatus('REFUSED_FROM_PHARMACIEN') }}</span></button>
   </div>
 
   <!-- Filter bar -->
@@ -77,8 +81,8 @@
                   </button>
                 </ng-container>
 
-                <!-- ACCEPTED → Ready for delivery -->
-                <button *ngIf="o.status === 'ACCEPTED'"
+                <!-- ACCEPTED_FROM_PHARMACIEN → Ready for delivery -->
+                <button *ngIf="o.status === 'ACCEPTED_FROM_PHARMACIEN'"
                         class="btn btn-primary btn-sm" [disabled]="actionLoading === o.id"
                         (click)="markReady(o, $event)" data-tooltip="Rendre commande prête">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -98,7 +102,7 @@
                 </button>
 
                 <!-- QR Code button (for all non-cancelled/refused) -->
-                <button *ngIf="o.status !== 'CANCELLED' && o.status !== 'REFUSED'"
+                <button *ngIf="o.status !== 'CANCELLED' && o.status !== 'REFUSED_FROM_PHARMACIEN' && o.status !== 'REFUSED_FROM_LIVREUR'"
                         class="btn btn-ghost btn-sm" (click)="showQr(o, $event)" data-tooltip="QR Code">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 </button>
@@ -210,7 +214,7 @@
             Refuser
           </button>
         </ng-container>
-        <button *ngIf="selectedOrder.status === 'ACCEPTED'" class="btn btn-primary btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="markReady(selectedOrder, $event)">
+        <button *ngIf="selectedOrder.status === 'ACCEPTED_FROM_PHARMACIEN'" class="btn btn-primary btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="markReady(selectedOrder, $event)">
           Rendre commande prête
         </button>
         <button *ngIf="selectedOrder.status === 'READY_FOR_DELIVERY'" class="btn btn-warning btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="undoReady(selectedOrder, $event)">
@@ -219,7 +223,7 @@
         <button class="btn btn-ghost btn-sm" (click)="openProductsForOrder(selectedOrder, $event)">
           Vérifier les produits
         </button>
-        <button *ngIf="selectedOrder.status !== 'CANCELLED' && selectedOrder.status !== 'REFUSED'" class="btn btn-ghost btn-sm" (click)="showQr(selectedOrder, $event)">
+        <button *ngIf="selectedOrder.status !== 'CANCELLED' && selectedOrder.status !== 'REFUSED_FROM_PHARMACIEN' && selectedOrder.status !== 'REFUSED_FROM_LIVREUR'" class="btn btn-ghost btn-sm" (click)="showQr(selectedOrder, $event)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           QR Code
         </button>
@@ -293,3 +297,136 @@
     </button>
   </div>
 </div>
+
+<!-- ══════ QR SCANNER MODAL ══════ -->
+<div class="modal-backdrop" *ngIf="scannerOpen" (click)="closeScanner()"></div>
+<div class="modal scanner-modal" *ngIf="scannerOpen">
+  <div class="modal-header">
+    <div class="modal-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;vertical-align:middle"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><path d="M20 17v4M20 17h-3M17 21h3"/></svg>
+      Scanner QR livreur
+    </div>
+    <button class="btn btn-ghost btn-icon" (click)="closeScanner()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="modal-body">
+
+    <!-- ── Step 1: Scan / enter livreur ID ── -->
+    <ng-container *ngIf="scannedLivreurId === null && !livreurOrdersLoading">
+
+      <!-- Camera stream -->
+      <ng-container *ngIf="scannerSupported && !scannerError">
+        <div class="scanner-viewport">
+          <video #scannerVideo class="scanner-video" autoplay muted playsinline></video>
+          <canvas #scannerCanvas style="display:none"></canvas>
+          <div class="scanner-overlay">
+            <div class="scanner-frame"></div>
+          </div>
+          <div class="scanner-hint">Pointez la caméra sur le QR code du livreur</div>
+        </div>
+      </ng-container>
+
+      <!-- Manual ID input -->
+      <div class="scanner-manual" [class.scanner-manual-only]="!scannerSupported || !!scannerError">
+        <div class="scanner-manual-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ scannerSupported ? 'Ou saisissez l\'ID du livreur manuellement' : 'Saisie manuelle de l\'ID livreur' }}
+        </div>
+        <div class="scanner-manual-row">
+          <input type="number" [(ngModel)]="manualOrderId" placeholder="ID du livreur (ex: 3)"
+            (keyup.enter)="submitManualScan()" min="1">
+          <button class="btn btn-primary btn-sm" (click)="submitManualScan()">Valider</button>
+        </div>
+      </div>
+
+      <div class="scan-error" *ngIf="scannerError">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        {{ scannerError }}
+      </div>
+    </ng-container>
+
+    <!-- ── Loading ── -->
+    <div class="scanner-loading" *ngIf="livreurOrdersLoading">
+      <div class="scanner-spinner"></div>
+      <span>Récupération des commandes...</span>
+    </div>
+
+    <!-- ── Step 2: Orders list ── -->
+    <ng-container *ngIf="scannedLivreurId !== null && !livreurOrdersLoading">
+
+      <div class="scan-result">
+        <div class="scan-result-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="scan-result-title">Livreur #{{ scannedLivreurId }} identifié</div>
+        <div class="text-sm text-muted">{{ scannedLivreurOrders.length }} commande(s) prête(s) à livrer</div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="scan-empty" *ngIf="scannedLivreurOrders.length === 0">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gray-300)"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        <p class="text-muted" style="text-align:center;font-size:13px;margin-top:12px">Aucune commande <strong>Prête</strong> assignée à ce livreur pour votre pharmacie.</p>
+      </div>
+
+      <!-- Orders list -->
+      <div class="scan-orders-list" *ngIf="scannedLivreurOrders.length > 0">
+        <div class="scan-order-item" *ngFor="let o of scannedLivreurOrders">
+          <div class="scan-order-top">
+            <span class="fw-600 text-primary">#{{ o.id }}</span>
+            <span class="badge badge-accent">{{ statusLabel(o.status) }}</span>
+          </div>
+          <div class="scan-order-info">
+            <div>
+              <span class="scan-label">Client</span>
+              <span class="fw-600">{{ o.clientName }}</span>
+              <span class="text-muted" *ngIf="o.clientPhone"> · {{ o.clientPhone }}</span>
+            </div>
+            <div *ngIf="o.orderItems?.length" class="scan-order-products">
+              <span class="scan-label">Produits</span>
+              <span *ngFor="let item of o.orderItems; let last = last">
+                {{ item.productName }} x{{ item.quantity }}<span *ngIf="!last">, </span>
+              </span>
+            </div>
+            <div class="scan-order-total">
+              <span class="scan-label">Total</span>
+              <span class="fw-600 text-primary">{{ o.total | number:'1.2-2' }} TND</span>
+            </div>
+          </div>
+          <div class="scan-order-actions">
+            <button class="btn btn-primary btn-sm"
+              [disabled]="confirmingOrderId !== null"
+              (click)="confirmDelivering(o)">
+              <ng-container *ngIf="confirmingOrderId === o.id">Confirmation...</ng-container>
+              <ng-container *ngIf="confirmingOrderId !== o.id">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                Confirmer livraison
+              </ng-container>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="scan-error" *ngIf="scanConfirmError">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        {{ scanConfirmError }}
+      </div>
+    </ng-container>
+
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-ghost btn-sm" (click)="scannedLivreurId !== null ? (scannedLivreurId = null) : closeScanner()">
+      {{ scannedLivreurId !== null ? 'Rescanner' : 'Annuler' }}
+    </button>
+    <button *ngIf="scannedLivreurOrders.length > 1"
+            class="btn btn-primary btn-sm"
+            [disabled]="confirmingOrderId !== null"
+            (click)="confirmAllDelivering()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      {{ confirmingOrderId === -1 ? 'En cours...' : 'Tout confirmer (' + scannedLivreurOrders.length + ')' }}
+    </button>
+  </div>
+</div>
+

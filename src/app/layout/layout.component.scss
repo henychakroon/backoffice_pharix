@@ -83,6 +83,19 @@
   margin-top: 2px;
 }
 
+.notif-item-urgent {
+  border-left: 3px solid var(--warning);
+  background: var(--warning-light);
+
+  &:hover { background: #ffe8d9; }
+}
+
+.notif-urgent-icon {
+  margin-right: 4px;
+  font-size: 13px;
+  color: var(--warning);
+}
+
 
 /* ═══════════════════════════════════════════
    SIDEBAR

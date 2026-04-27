@@ -2,15 +2,20 @@
   <div class="page-header card">
     <div>
       <div class="eyebrow">Catalogue de la pharmacie</div>
-      <h1>Disponibilite des produits</h1>
+      <h1>Produits et disponibilite</h1>
       <p>
-        Tous les produits importes par l'administration sont disponibles par defaut.
-        Recherchez un produit pour le rendre indisponible dans votre pharmacie.
+        Le catalogue admin reste la base commune. Vous pouvez aussi ajouter vos propres produits
+        de parapharmacie avec image, puis gerer leur disponibilite directement ici.
       </p>
     </div>
-    <div class="header-note">
-      <span class="note-pill">Prix en lecture seule</span>
-      <span class="note-pill note-pill-muted">Catalogue synchronise depuis l'import admin</span>
+    <div class="header-actions">
+      <div class="header-note">
+        <span class="note-pill">Catalogue commun + ajouts pharmacie</span>
+        <span class="note-pill note-pill-muted">Images produits prises en charge</span>
+      </div>
+      <button class="btn btn-primary" (click)="openCreateModal()" [disabled]="!canManageParamedicalProducts">
+        Ajouter un produit
+      </button>
     </div>
   </div>
 
@@ -24,7 +29,7 @@
       <div class="stat-value">{{ currentPageLabel }}</div>
     </div>
     <div class="stat-card card stat-card-warning">
-      <div class="stat-label">Elements charges</div>
+      <div class="stat-label">Produits affiches</div>
       <div class="stat-value">{{ products.length }}</div>
     </div>
   </div>
@@ -35,14 +40,15 @@
 
   <div class="order-context-card card" *ngIf="hasOrderContext">
     <div>
-      <div class="order-context-title">Vérification depuis une commande</div>
+      <div class="order-context-title">Verification depuis une commande</div>
       <div class="order-context-subtitle">{{ orderContextLabel }}</div>
       <div class="order-context-description">
         <ng-container *ngIf="orderProductIds.length > 0; else descriptionContext">
-          Les produits liés à cette commande sont affichés directement pour vérifier leur disponibilité malgré la pagination du catalogue.
+          Les produits lies a cette commande sont affiches directement pour verifier leur disponibilite
+          malgre la pagination du catalogue.
         </ng-container>
         <ng-template #descriptionContext>
-          Les produits affichés correspondent aux éléments détectés dans la description de la commande pour vérifier rapidement leur disponibilité.
+          Les produits affiches correspondent aux elements detectes dans la description de la commande.
         </ng-template>
       </div>
     </div>
@@ -78,36 +84,47 @@
     </div>
 
     <div class="toolbar-meta">
-      {{ totalElements }} resultat{{ totalElements > 1 ? 's' : '' }} · Page {{ currentPageLabel }} / {{ totalPages || 1 }}
+      {{ totalElements }} resultat{{ totalElements > 1 ? 's' : '' }} - Page {{ currentPageLabel }} / {{ totalPages || 1 }}
     </div>
   </div>
 
   <div class="table-shell card" *ngIf="!loading; else loadingState">
     <div class="table-head" *ngIf="products.length > 0">
       <div class="th product-col">Produit</div>
-      <div class="th dci-col">DCI</div>
+      <div class="th dci-col">Infos</div>
       <div class="th meta-col">Categorie</div>
-      <div class="th price-col">Prix ref.</div>
-      <div class="th status-col">Disponibilite</div>
-      <div class="th action-col">Action</div>
+      <div class="th price-col">Prix</div>
+      <div class="th status-col">Statut</div>
+      <div class="th action-col">Actions</div>
     </div>
 
     <div class="empty-state" *ngIf="products.length === 0">
       <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <h3>Aucun produit ne correspond a votre recherche.</h3>
-      <p>Essayez un autre nom, une autre DCI ou reinitialisez les filtres.</p>
+      <p>Essayez un autre filtre ou ajoutez un produit de parapharmacie a votre catalogue.</p>
     </div>
 
     <div *ngIf="products.length > 0" class="table-body">
       <div class="tr" *ngFor="let product of products; trackBy: trackByProduct" [class.tr-unavailable]="!product.available">
         <div class="td product-col">
-          <div class="product-name">{{ product.productName }}</div>
-          <div class="product-subline">AMM {{ product.amm || '—' }} · {{ product.subCategoryName }}</div>
+          <div class="product-media" [class.product-media-placeholder]="!product.imageUrl">
+            <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.productName">
+            <span *ngIf="!product.imageUrl">{{ (product.productName || '?').charAt(0) }}</span>
+          </div>
+          <div class="product-copy">
+            <div class="product-name">{{ product.productName }}</div>
+            <div class="product-subline">
+              <span *ngIf="product.amm; else customCode">AMM {{ product.amm }}</span>
+              <ng-template #customCode>Produit pharmacie</ng-template>
+              <span> - {{ product.subCategoryName }}</span>
+            </div>
+            <div class="product-description" *ngIf="product.description">{{ product.description }}</div>
+          </div>
         </div>
 
         <div class="td dci-col">
-          <div>{{ product.dci || '—' }}</div>
-          <div class="text-muted">{{ product.dosage || product.forme || '—' }}</div>
+          <div>{{ product.dci || '-' }}</div>
+          <div class="text-muted">{{ product.dosage || product.forme || '-' }}</div>
         </div>
 
         <div class="td meta-col">
@@ -121,17 +138,35 @@
           <span class="status-badge" [class.status-badge-off]="!product.available">
             {{ product.available ? 'Disponible' : 'Indisponible' }}
           </span>
+          <span class="product-chip" *ngIf="product.editable">Parapharmacie</span>
         </div>
 
         <div class="td action-col">
-          <button
-            class="btn btn-sm"
-            [class.btn-danger]="product.available"
-            [class.btn-secondary]="!product.available"
-            [disabled]="actionProductId === product.productId"
-            (click)="toggleAvailability(product, $event)">
-            {{ actionProductId === product.productId ? '...' : (product.available ? 'Rendre indisponible' : 'Rendre disponible') }}
-          </button>
+          <div class="action-stack">
+            <button
+              class="btn btn-sm"
+              [class.btn-danger]="product.available"
+              [class.btn-secondary]="!product.available"
+              [disabled]="actionProductId === product.productId"
+              (click)="toggleAvailability(product, $event)">
+              {{ actionProductId === product.productId ? '...' : (product.available ? 'Rendre indisponible' : 'Rendre disponible') }}
+            </button>
+
+            <button
+              *ngIf="product.editable"
+              class="btn btn-ghost btn-sm"
+              (click)="openEditModal(product, $event)">
+              Modifier
+            </button>
+
+            <button
+              *ngIf="product.editable"
+              class="btn btn-ghost btn-sm btn-delete"
+              [disabled]="deleteProductId === product.productId"
+              (click)="deleteProduct(product, $event)">
+              {{ deleteProductId === product.productId ? 'Suppression...' : 'Supprimer' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -165,4 +200,82 @@
       <p>Chargement du catalogue pharmacie...</p>
     </div>
   </ng-template>
+</div>
+
+<div class="editor-backdrop" *ngIf="editorOpen" (click)="closeEditor()">
+  <div class="editor-panel card" (click)="$event.stopPropagation()">
+    <div class="editor-header">
+      <div>
+        <div class="editor-eyebrow">Produit parapharmacie</div>
+        <h2>{{ editorTitle }}</h2>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="closeEditor()">Fermer</button>
+    </div>
+
+    <form class="editor-form" [formGroup]="productForm" (ngSubmit)="submitProduct()">
+      <div class="form-grid">
+        <label class="field field-full">
+          <span>Nom du produit</span>
+          <input type="text" formControlName="name" placeholder="Gel douche, creme, serum...">
+          <small class="field-error" *ngIf="isInvalid('name')">Le nom du produit est obligatoire.</small>
+        </label>
+
+        <label class="field">
+          <span>Sous-categorie</span>
+          <select formControlName="subCategoryId">
+            <option [ngValue]="null">Choisir une sous-categorie</option>
+            <option *ngFor="let option of paramedicalSubCategories" [ngValue]="option.id">
+              {{ subCategoryLabel(option) }}
+            </option>
+          </select>
+          <small class="field-error" *ngIf="isInvalid('subCategoryId')">Selectionnez une sous-categorie.</small>
+        </label>
+
+        <label class="field">
+          <span>Prix de reference</span>
+          <input type="number" min="0" step="0.001" formControlName="referencePrice" placeholder="0.000">
+          <small class="field-error" *ngIf="isInvalid('referencePrice')">Le prix doit etre superieur a zero.</small>
+        </label>
+
+        <label class="field field-full">
+          <span>Description</span>
+          <textarea rows="4" formControlName="description" placeholder="Precisez les usages, actifs, ou conseils d'utilisation."></textarea>
+        </label>
+      </div>
+
+      <div class="image-uploader">
+        <div class="image-preview" [class.image-preview-empty]="!currentEditorImage">
+          <img *ngIf="currentEditorImage" [src]="currentEditorImage" alt="Apercu du produit">
+          <div *ngIf="!currentEditorImage" class="image-placeholder">
+            <span>Apercu image</span>
+          </div>
+        </div>
+
+        <div class="image-actions">
+          <div class="image-label">Image produit</div>
+          <p>Ajoutez une photo claire du produit pour l'application client.</p>
+
+          <label class="btn btn-secondary btn-sm upload-btn">
+            <input type="file" accept="image/*" (change)="onImageSelected($event)">
+            Choisir une image
+          </label>
+
+          <div class="selected-file">{{ selectedImageLabel }}</div>
+
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            *ngIf="selectedImageFile"
+            (click)="clearSelectedImage()">
+            Retirer la nouvelle image
+          </button>
+        </div>
+      </div>
+
+      <div class="editor-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeEditor()" [disabled]="editorSaving">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="editorSaving">{{ editorSubmitLabel }}</button>
+      </div>
+    </form>
+  </div>
 </div>

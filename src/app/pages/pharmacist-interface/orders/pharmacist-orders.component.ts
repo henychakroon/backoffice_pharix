@@ -1,16 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { PharmacistService, CreateReportPayload } from '../../../services/pharmacist.service';
 import { AuthService } from '../../../services/auth.service';
 import { OrderDTO } from '../../../services/admin.service';
 import { Router } from '@angular/router';
+import { from } from 'rxjs';
+import { concatMap } from 'rxjs/operators';
 import * as QRCode from 'qrcode';
+import jsQR from 'jsqr';
 
 @Component({
   selector: 'app-pharmacist-orders',
   templateUrl: './pharmacist-orders.component.html',
   styleUrls: ['./pharmacist-orders.component.scss']
 })
-export class PharmacistOrdersComponent implements OnInit {
+export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   allOrders: OrderDTO[] = [];
   loading = true;
   searchTerm = '';
@@ -36,10 +39,27 @@ export class PharmacistOrdersComponent implements OnInit {
   reportError = '';
   reportSuccess = '';
 
+  // QR Scanner
+  @ViewChild('scannerVideo') scannerVideoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('scannerCanvas') scannerCanvasRef!: ElementRef<HTMLCanvasElement>;
+  scannerOpen = false;
+  scannerStream: MediaStream | null = null;
+  scannerError = '';
+  scannerSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  // livreur QR result
+  scannedLivreurId: number | null = null;
+  scannedLivreurOrders: OrderDTO[] = [];
+  livreurOrdersLoading = false;
+  confirmingOrderId: number | null = null;
+  scanConfirmError = '';
+  manualOrderId = '';
+  private scanInterval: any = null;
+
   constructor(
     private pharmacistService: PharmacistService,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -76,30 +96,36 @@ export class PharmacistOrdersComponent implements OnInit {
 
   statusBadge(s: string): string {
     const m: Record<string, string> = {
-      PENDING: 'badge-warning',
-      ASSIGNED: 'badge-primary',
-      ACCEPTED: 'badge-info',
-      PICKED_UP: 'badge-info',
-      DELIVERING: 'badge-info',
-      DELIVERED: 'badge-success',
-      REFUSED: 'badge-danger',
-      CANCELLED: 'badge-danger',
-      READY_FOR_DELIVERY: 'badge-accent'
+      PENDING:                  'badge-warning',
+      ACCEPTED_FROM_PHARMACIEN: 'badge-info',
+      REFUSED_FROM_PHARMACIEN:  'badge-danger',
+      READY_FOR_DELIVERY:       'badge-accent',
+      DISPATCH_FAILED:          'badge-dispatch-failed',
+      ASSIGNED:                 'badge-primary',
+      ACCEPTED_FROM_LIVREUR:    'badge-primary',
+      REFUSED_FROM_LIVREUR:     'badge-danger',
+      PICKED_UP:                'badge-info',
+      DELIVERING:               'badge-info',
+      DELIVERED:                'badge-success',
+      CANCELLED:                'badge-danger'
     };
     return m[s] ?? 'badge-gray';
   }
 
   statusLabel(s: string): string {
     const l: Record<string, string> = {
-      PENDING: 'En attente',
-      ASSIGNED: 'Assigné',
-      ACCEPTED: 'Acceptée',
-      PICKED_UP: 'Récupérée',
-      DELIVERING: 'En livraison',
-      DELIVERED: 'Livrée',
-      REFUSED: 'Refusée',
-      CANCELLED: 'Annulée',
-      READY_FOR_DELIVERY: 'Prête'
+      PENDING:                  'En attente',
+      ACCEPTED_FROM_PHARMACIEN: 'Acceptée',
+      REFUSED_FROM_PHARMACIEN:  'Refusée',
+      READY_FOR_DELIVERY:       'Prête',
+      DISPATCH_FAILED:          'Echec dispatch',
+      ASSIGNED:                 'Assigné',
+      ACCEPTED_FROM_LIVREUR:    'Pris en charge',
+      REFUSED_FROM_LIVREUR:     'Refusé (livreur)',
+      PICKED_UP:                'Récupérée',
+      DELIVERING:               'En livraison',
+      DELIVERED:                'Livrée',
+      CANCELLED:                'Annulée'
     };
     return l[s] ?? s;
   }
@@ -258,6 +284,158 @@ export class PharmacistOrdersComponent implements OnInit {
       </body></html>
     `);
     w.document.close();
+  }
+
+  ngOnDestroy(): void {
+    this.stopScanner();
+  }
+
+  // ── QR Scanner ──
+
+  openScanner(): void {
+    this.scannerOpen = true;
+    this.scannedLivreurId = null;
+    this.scannedLivreurOrders = [];
+    this.scannerError = '';
+    this.scanConfirmError = '';
+    this.manualOrderId = '';
+    if (this.scannerSupported) {
+      setTimeout(() => this.startCamera(), 100);
+    }
+  }
+
+  closeScanner(): void {
+    this.stopScanner();
+    this.scannerOpen = false;
+    this.scannedLivreurId = null;
+    this.scannedLivreurOrders = [];
+    this.scannerError = '';
+    this.scanConfirmError = '';
+    this.manualOrderId = '';
+  }
+
+  private async startCamera(): Promise<void> {
+    try {
+      this.scannerStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      const video = this.scannerVideoRef?.nativeElement;
+      if (video) {
+        video.srcObject = this.scannerStream;
+        await video.play();
+        this.startDecodeLoop();
+      }
+    } catch {
+      this.ngZone.run(() => {
+        this.scannerError = 'Impossible d\'accéder à la caméra. Utilisez la saisie manuelle.';
+      });
+    }
+  }
+
+  private startDecodeLoop(): void {
+    const canvas = this.scannerCanvasRef?.nativeElement;
+    const video = this.scannerVideoRef?.nativeElement;
+    if (!canvas || !video) return;
+    const ctx = canvas.getContext('2d')!;
+
+    this.scanInterval = setInterval(() => {
+      if (video.readyState < 2 || this.scannedLivreurId !== null) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code?.data) {
+        this.ngZone.run(() => this.handleScannedValue(code.data));
+      }
+    }, 300);
+  }
+
+  private stopScanner(): void {
+    if (this.scanInterval) { clearInterval(this.scanInterval); this.scanInterval = null; }
+    if (this.scannerStream) {
+      this.scannerStream.getTracks().forEach(t => t.stop());
+      this.scannerStream = null;
+    }
+  }
+
+  private handleScannedValue(raw: string): void {
+    const id = parseInt(raw, 10);
+    if (isNaN(id)) {
+      this.scannerError = 'QR invalide — valeur non reconnue.';
+      return;
+    }
+    this.stopScanner();
+    this.fetchLivreurOrders(id);
+  }
+
+  submitManualScan(): void {
+    const id = parseInt(this.manualOrderId, 10);
+    if (isNaN(id) || id <= 0) {
+      this.scannerError = 'Numéro de livreur invalide.';
+      return;
+    }
+    this.scannerError = '';
+    this.fetchLivreurOrders(id);
+  }
+
+  private fetchLivreurOrders(livreurId: number): void {
+    this.scannerError = '';
+    this.scanConfirmError = '';
+    this.livreurOrdersLoading = true;
+    this.pharmacistService.getReadyOrdersForLivreur(livreurId).subscribe({
+      next: orders => {
+        this.scannedLivreurId = livreurId;
+        this.scannedLivreurOrders = orders;
+        this.livreurOrdersLoading = false;
+      },
+      error: err => {
+        this.livreurOrdersLoading = false;
+        this.scannerError = err?.error?.error || `Livreur #${livreurId} introuvable ou aucun accès.`;
+      }
+    });
+  }
+
+  confirmDelivering(order: OrderDTO): void {
+    this.confirmingOrderId = order.id;
+    this.scanConfirmError = '';
+    this.pharmacistService.startDelivering(order.id).subscribe({
+      next: updated => {
+        this.replaceOrder(updated);
+        this.scannedLivreurOrders = this.scannedLivreurOrders.filter(o => o.id !== order.id);
+        this.confirmingOrderId = null;
+        if (this.scannedLivreurOrders.length === 0) {
+          this.closeScanner();
+        }
+      },
+      error: err => {
+        this.confirmingOrderId = null;
+        this.scanConfirmError = err?.error?.error || 'Impossible de mettre à jour le statut.';
+      }
+    });
+  }
+
+  confirmAllDelivering(): void {
+    const pending = [...this.scannedLivreurOrders];
+    if (!pending.length) return;
+    this.scanConfirmError = '';
+    this.confirmingOrderId = -1; // sentinel: "all loading"
+    from(pending).pipe(
+      concatMap(o => this.pharmacistService.startDelivering(o.id))
+    ).subscribe({
+      next: updated => {
+        this.replaceOrder(updated);
+        this.scannedLivreurOrders = this.scannedLivreurOrders.filter(o => o.id !== updated.id);
+      },
+      error: err => {
+        this.confirmingOrderId = null;
+        this.scanConfirmError = err?.error?.error || 'Une erreur est survenue.';
+      },
+      complete: () => {
+        this.confirmingOrderId = null;
+        this.closeScanner();
+      }
+    });
   }
 
   // ── Detail drawer ──

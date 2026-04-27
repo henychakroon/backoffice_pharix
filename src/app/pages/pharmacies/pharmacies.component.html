@@ -51,6 +51,7 @@
     <select [(ngModel)]="selectedStatus">
       <option value="">Tous les statuts</option>
       <option value="actif">Actif</option>
+      <option value="en_attente">En attente</option>
       <option value="bloque">Bloqué</option>
     </select>
   </div>
@@ -60,17 +61,22 @@
 
   <!-- ── CARD TEMPLATE ── -->
   <ng-template #pharmacyCard let-p>
-    <div class="pharma-card" [class.pharma-card-blocked]="!p.active">
+    <div class="pharma-card"
+         [class.pharma-card-pending]="getPharmacyStatus(p) === 'PENDING'"
+         [class.pharma-card-blocked]="getPharmacyStatus(p) === 'BLOCKED'">
       <div class="pharma-card-header">
-        <div class="pharma-avatar" [class.para-avatar]="activeTab === 'parapharmacie'">{{ (p.pharmacyName || '?')[0] }}</div>
+        <div class="pharma-avatar"
+             [class.para-avatar]="activeTab === 'parapharmacie'"
+             [class.pending-avatar]="getPharmacyStatus(p) === 'PENDING'">{{ (p.pharmacyName || '?')[0] }}</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px">
             <div class="pharma-card-name truncate">{{ p.pharmacyName }}</div>
-            <svg *ngIf="p.active" width="14" height="14" viewBox="0 0 24 24" fill="var(--primary)" stroke="none"><path d="M9 12l2 2 4-4M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/></svg>
+            <svg *ngIf="getPharmacyStatus(p) === 'ACTIVE'" width="14" height="14" viewBox="0 0 24 24" fill="var(--primary)" stroke="none"><path d="M9 12l2 2 4-4M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/></svg>
+            <svg *ngIf="getPharmacyStatus(p) === 'PENDING'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
           <div class="text-xs text-muted">{{ p.email }}</div>
         </div>
-        <span class="badge" [ngClass]="statusBadge(p.active)">{{ statusLabel(p.active) }}</span>
+        <span class="badge" [ngClass]="statusBadge(getPharmacyStatus(p))">{{ statusLabel(getPharmacyStatus(p)) }}</span>
       </div>
       <div class="pharma-card-meta">
         <div class="meta-item">
@@ -101,8 +107,15 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           Carte
         </button>
-        <button class="btn btn-ghost btn-sm" style="flex:1" (click)="activate(p.id)" [disabled]="p.active">Activer</button>
-        <button class="btn btn-danger btn-sm" style="flex:1" (click)="block(p.id)" [disabled]="!p.active">Bloquer</button>
+        <!-- Accepter: only for PENDING pharmacies -->
+        <button *ngIf="getPharmacyStatus(p) === 'PENDING'" class="btn btn-success btn-sm" style="flex:1" (click)="accept(p.id)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Accepter
+        </button>
+        <!-- Activer: only for BLOCKED pharmacies -->
+        <button *ngIf="getPharmacyStatus(p) === 'BLOCKED'" class="btn btn-ghost btn-sm" style="flex:1" (click)="activate(p.id)">Activer</button>
+        <!-- Bloquer: for ACTIVE or PENDING (not already blocked) -->
+        <button *ngIf="getPharmacyStatus(p) !== 'BLOCKED'" class="btn btn-danger btn-sm" style="flex:1" (click)="block(p.id)">Bloquer</button>
       </div>
     </div>
   </ng-template>
@@ -124,6 +137,19 @@
       </div>
       <div class="pharma-grid">
         <ng-container *ngFor="let p of activeList">
+          <ng-container *ngTemplateOutlet="pharmacyCard; context: { $implicit: p }"></ng-container>
+        </ng-container>
+      </div>
+    </ng-container>
+
+    <!-- Section En attente -->
+    <ng-container *ngIf="pendingList.length > 0">
+      <div class="section-header section-header-pending">
+        <span class="section-dot pending"></span>
+        En attente <span class="section-count">{{ pendingList.length }}</span>
+      </div>
+      <div class="pharma-grid">
+        <ng-container *ngFor="let p of pendingList">
           <ng-container *ngTemplateOutlet="pharmacyCard; context: { $implicit: p }"></ng-container>
         </ng-container>
       </div>
@@ -190,13 +216,53 @@
               <td class="fw-600" [style.color]="p.online ? 'var(--success)' : 'var(--gray-400)'">{{ p.online ? 'En ligne' : 'Hors ligne' }}</td>
               <td class="hide-mobile fw-600">{{ p.phone || '—' }}</td>
               <td class="hide-mobile text-muted" style="font-size:12px">{{ p.deliveryZoneName || '—' }}</td>
-              <td><span class="badge" [ngClass]="statusBadge(p.active)">{{ statusLabel(p.active) }}</span></td>
+              <td><span class="badge" [ngClass]="statusBadge(getPharmacyStatus(p))">{{ statusLabel(getPharmacyStatus(p)) }}</span></td>
               <td>
                 <div style="display:flex;gap:4px">
                   <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="Voir sur la carte" (click)="viewOnMap(p)" [disabled]="!p.latitude || !p.longitude">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   </button>
                   <button class="btn btn-danger btn-icon btn-sm" data-tooltip="Bloquer" (click)="block(p.id)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+
+          <!-- En attente rows -->
+          <ng-container *ngIf="pendingList.length > 0">
+            <tr class="table-section-row table-section-row-pending">
+              <td colspan="8">
+                <span class="section-dot pending"></span>
+                En attente <span class="section-count">{{ pendingList.length }}</span>
+              </td>
+            </tr>
+            <tr *ngFor="let p of pendingList" class="row-pending">
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="pharma-avatar-sm pending-avatar" [class.para-avatar]="activeTab === 'parapharmacie'">{{ (p.pharmacyName || '?')[0] }}</div>
+                  <div>
+                    <span class="fw-600" style="font-size:13px">{{ p.pharmacyName }}</span>
+                    <div class="text-xs text-muted">#{{ p.id }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile text-muted" style="font-size:13px">{{ p.ownerName || '—' }}</td>
+              <td class="hide-mobile text-muted" style="font-size:13px">{{ p.email || '—' }}</td>
+              <td style="color:var(--gray-400)">Hors ligne</td>
+              <td class="hide-mobile text-muted">{{ p.phone || '—' }}</td>
+              <td class="hide-mobile text-muted" style="font-size:12px">{{ p.deliveryZoneName || '—' }}</td>
+              <td><span class="badge" [ngClass]="statusBadge(getPharmacyStatus(p))">{{ statusLabel(getPharmacyStatus(p)) }}</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="Voir sur la carte" (click)="viewOnMap(p)" [disabled]="!p.latitude || !p.longitude">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  </button>
+                  <button class="btn btn-success btn-icon btn-sm" data-tooltip="Accepter" (click)="accept(p.id)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                  <button class="btn btn-danger btn-icon btn-sm" data-tooltip="Rejeter" (click)="block(p.id)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                   </button>
                 </div>
@@ -227,7 +293,7 @@
               <td style="color:var(--gray-400)">Hors ligne</td>
               <td class="hide-mobile text-muted">{{ p.phone || '—' }}</td>
               <td class="hide-mobile text-muted" style="font-size:12px">{{ p.deliveryZoneName || '—' }}</td>
-              <td><span class="badge" [ngClass]="statusBadge(p.active)">{{ statusLabel(p.active) }}</span></td>
+              <td><span class="badge" [ngClass]="statusBadge(getPharmacyStatus(p))">{{ statusLabel(getPharmacyStatus(p)) }}</span></td>
               <td>
                 <div style="display:flex;gap:4px">
                   <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="Voir sur la carte" (click)="viewOnMap(p)" [disabled]="!p.latitude || !p.longitude">

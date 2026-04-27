@@ -10,6 +10,7 @@ export interface PharmacienProfile {
   ownerName: string;
   online: boolean;
   active: boolean;
+  status?: 'ACTIVE' | 'PENDING' | 'BLOCKED';
   latitude: number;
   longitude: number;
   email: string;
@@ -155,6 +156,10 @@ export class AdminService {
   // Pharmacies
   getPharmacies(): Observable<PharmacienProfile[]> {
     return this.http.get<PharmacienProfile[]>(`${this.BASE}/pharmacies`);
+  }
+
+  acceptPharmacy(id: number): Observable<PharmacienProfile> {
+    return this.http.put<PharmacienProfile>(`${this.BASE}/pharmacies/${id}/accept`, {});
   }
 
   activatePharmacy(id: number): Observable<PharmacienProfile> {

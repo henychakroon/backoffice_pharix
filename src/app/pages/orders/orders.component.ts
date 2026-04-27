@@ -1,13 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AdminService, OrderDTO, LivreurAdmin } from '../../services/admin.service';
+import { WebSocketService, AdminOrderEvent } from '../../services/websocket.service';
 
 @Component({
   selector: 'app-orders',
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.scss']
 })
-export class OrdersComponent implements OnInit {
+export class OrdersComponent implements OnInit, OnDestroy {
   searchTerm = '';
   statusFilter = 'all';
   selectedOrder: OrderDTO | null = null;
@@ -22,7 +24,13 @@ export class OrdersComponent implements OnInit {
   assignLoading = false;
   selectedLivreurId: number | null = null;
 
-  constructor(private adminService: AdminService, private route: ActivatedRoute) {}
+  private wsSub?: Subscription;
+
+  constructor(
+    private adminService: AdminService,
+    private route: ActivatedRoute,
+    private ws: WebSocketService
+  ) {}
 
   ngOnInit(): void {
     this.loading = true;
@@ -51,6 +59,24 @@ export class OrdersComponent implements OnInit {
     this.adminService.getLivreurs().subscribe({
       next: livs => { this.livreurs = livs; }
     });
+
+    // Patch order status in real-time from WebSocket events
+    this.wsSub = this.ws.orderEvents$.subscribe((event: AdminOrderEvent) => {
+      const idx = this.allOrders.findIndex(o => o.id === event.orderId);
+      if (idx !== -1) {
+        this.allOrders[idx] = { ...this.allOrders[idx], status: event.status };
+        if (this.selectedOrder?.id === event.orderId) {
+          this.selectedOrder = { ...this.selectedOrder, status: event.status };
+        }
+      } else if (event.status === 'DISPATCH_FAILED') {
+        // New stuck order not yet in our list — refresh
+        this.adminService.getOrders().subscribe(orders => { this.allOrders = orders; });
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.wsSub?.unsubscribe();
   }
 
   get filtered(): OrderDTO[] {
@@ -75,7 +101,12 @@ export class OrdersComponent implements OnInit {
       DELIVERED: 'badge-success',
       REFUSED: 'badge-danger',
       CANCELLED: 'badge-danger',
-      READY_FOR_DELIVERY: 'badge-primary'
+      READY_FOR_DELIVERY: 'badge-primary',
+      DISPATCH_FAILED: 'badge-dispatch-failed',
+      ACCEPTED_FROM_PHARMACIEN: 'badge-info',
+      REFUSED_FROM_PHARMACIEN: 'badge-danger',
+      ACCEPTED_FROM_LIVREUR: 'badge-primary',
+      REFUSED_FROM_LIVREUR: 'badge-danger'
     };
     return m[s] ?? 'badge-gray';
   }
@@ -90,7 +121,12 @@ export class OrdersComponent implements OnInit {
       DELIVERED: 'Livre',
       REFUSED: 'Refuse',
       CANCELLED: 'Annule',
-      READY_FOR_DELIVERY: 'Pret'
+      READY_FOR_DELIVERY: 'Pret',
+      DISPATCH_FAILED: 'Echec dispatch',
+      ACCEPTED_FROM_PHARMACIEN: 'Acceptee',
+      REFUSED_FROM_PHARMACIEN: 'Refusee',
+      ACCEPTED_FROM_LIVREUR: 'Livreur OK',
+      REFUSED_FROM_LIVREUR: 'Livreur refuse'
     };
     return l[s] ?? s;
   }

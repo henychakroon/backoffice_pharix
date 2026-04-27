@@ -11,6 +11,11 @@
   outline-offset: -2px;
 }
 
+/* ── Dispatch Failed row highlight ── */
+.order-dispatch-failed td {
+  background: var(--warning-light) !important;
+}
+
 /* ── Status Tabs ── */
 .status-tabs {
   display: flex;

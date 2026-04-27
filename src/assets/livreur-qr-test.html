@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Test — QR Livreur</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f6fa;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      padding: 36px 40px;
+      width: 100%;
+      max-width: 520px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 28px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    input[type=number], input[type=text], input[type=password] {
+      width: 100%;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 14px;
+      color: #1a1a2e;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 16px;
+    }
+    input:focus { border-color: #4f8ef7; }
+    .row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
+    .row input { margin-bottom: 0; flex: 1; }
+    button {
+      background: #4f8ef7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .2s;
+    }
+    button:hover { background: #3a79e6; }
+    button.secondary {
+      background: #f0f0f0;
+      color: #444;
+    }
+    button.secondary:hover { background: #e0e0e0; }
+    .divider {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 24px 0;
+    }
+    .qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 24px;
+      border: 1.5px dashed #d0d8f0;
+      border-radius: 12px;
+      background: #f8faff;
+      margin-top: 8px;
+    }
+    .qr-box canvas { border-radius: 8px; }
+    .qr-label {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a2e;
+      text-align: center;
+    }
+    .qr-sub {
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+    }
+    .livreur-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .livreur-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .livreur-row:hover { background: #f0f5ff; border-color: #b0c8f7; }
+    .livreur-info { display: flex; flex-direction: column; }
+    .livreur-name { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+    .livreur-detail { font-size: 12px; color: #888; }
+    .livreur-id { font-size: 12px; font-weight: 700; color: #4f8ef7; }
+    .error { color: #e53e3e; font-size: 13px; margin-top: 4px; }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 12px;
+    }
+    .tag {
+      display: inline-block;
+      background: #e8f0ff;
+      color: #4f8ef7;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    #empty { display: none; text-align: center; color: #888; font-size: 13px; padding: 16px; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>🔖 Test — QR Code Livreur</h1>
+  <p class="subtitle">Génère un QR code encodant l'ID de profil livreur, pour tester le scanner pharmacien.</p>
+
+  <!-- Section 1: manual entry -->
+  <div class="section-title">Génération manuelle</div>
+  <div class="row">
+    <input type="number" id="manualId" placeholder="ID livreur (ex: 3)" min="1" />
+    <button onclick="generateQR()">Générer QR</button>
+  </div>
+
+  <div id="qrOutput" style="display:none" class="qr-box">
+    <div id="qrCanvas"></div>
+    <div class="qr-label" id="qrLabel"></div>
+    <div class="qr-sub">Scannez ce QR depuis la page Pharmacien</div>
+    <button class="secondary" onclick="downloadQR()">⬇ Télécharger PNG</button>
+  </div>
+
+  <div id="manualError" class="error"></div>
+
+  <hr class="divider" />
+
+  <!-- Section 2: fetch from backend -->
+  <div class="section-title">Charger depuis le backend <span class="tag">optionnel</span></div>
+  <label>Token JWT admin (copier depuis DevTools → cookies)</label>
+  <input type="password" id="jwtToken" placeholder="eyJhbGci..." />
+  <label>Nginx Basic Auth credentials</label>
+  <input type="text" id="basicAuth" placeholder="username:password" />
+  <div class="row">
+    <button onclick="fetchLivreurs()">Charger les livreurs</button>
+  </div>
+  <div id="fetchError" class="error"></div>
+  <div id="livreurList" class="livreur-list"></div>
+  <div id="empty">Aucun livreur trouvé.</div>
+</div>
+
+<script>
+  function generateQR(idOverride) {
+    const rawId = idOverride !== undefined ? idOverride : document.getElementById('manualId').value;
+    const id = parseInt(rawId, 10);
+    const errEl = document.getElementById('manualError');
+    if (!id || id < 1) {
+      errEl.textContent = 'Veuillez saisir un ID valide (nombre entier > 0).';
+      return;
+    }
+    errEl.textContent = '';
+    const container = document.getElementById('qrCanvas');
+    container.innerHTML = ''; // clear previous
+    new QRCode(container, {
+      text: String(id),
+      width: 220,
+      height: 220,
+      colorDark: '#1a1a2e',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    document.getElementById('qrLabel').textContent = 'Livreur ID: ' + id;
+    document.getElementById('qrOutput').style.display = 'flex';
+    document.getElementById('manualId').value = id;
+  }
+
+  function downloadQR() {
+    const container = document.getElementById('qrCanvas');
+    const canvas = container.querySelector('canvas');
+    if (!canvas) return;
+    const id = document.getElementById('manualId').value || 'livreur';
+    const link = document.createElement('a');
+    link.download = 'qr-livreur-' + id + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  async function fetchLivreurs() {
+    const jwt = document.getElementById('jwtToken').value.trim();
+    const basic = document.getElementById('basicAuth').value.trim();
+    const errEl = document.getElementById('fetchError');
+    const listEl = document.getElementById('livreurList');
+    const emptyEl = document.getElementById('empty');
+    errEl.textContent = '';
+    listEl.innerHTML = '';
+    emptyEl.style.display = 'none';
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (jwt) headers['X-Access-Token'] = 'Bearer ' + jwt;
+    if (basic) headers['Authorization'] = 'Basic ' + btoa(basic);
+
+    try {
+      const res = await fetch('/api/v1/admin/livreurs', { headers });
+      if (!res.ok) {
+        errEl.textContent = 'Erreur ' + res.status + ': ' + (await res.text());
+        return;
+      }
+      const livreurs = await res.json();
+      if (!livreurs.length) { emptyEl.style.display = 'block'; return; }
+      livreurs.forEach(l => {
+        const row = document.createElement('div');
+        row.className = 'livreur-row';
+        row.innerHTML = `
+          <div class="livreur-info">
+            <div class="livreur-name">${l.email || 'Inconnu'}</div>
+            <div class="livreur-detail">${l.phone || ''} ${l.zoneName ? '· Zone: ' + l.zoneName : ''}</div>
+          </div>
+          <div class="livreur-id">ID #${l.id}</div>
+        `;
+        row.onclick = () => generateQR(l.id);
+        listEl.appendChild(row);
+      });
+    } catch(e) {
+      errEl.textContent = 'Impossible de contacter le backend: ' + e.message;
+    }
+  }
+
+  document.getElementById('manualId').addEventListener('keyup', e => {
+    if (e.key === 'Enter') generateQR();
+  });
+</script>
+</body>
+</html>

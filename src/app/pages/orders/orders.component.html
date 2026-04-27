@@ -19,6 +19,7 @@
     <button class="tab-btn" [class.active]="statusFilter==='DELIVERING'"      (click)="statusFilter='DELIVERING'">En livraison <span class="tab-count info">{{ countByStatus('DELIVERING') }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='DELIVERED'"       (click)="statusFilter='DELIVERED'">Livre <span class="tab-count success">{{ countByStatus('DELIVERED') }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='CANCELLED'"       (click)="statusFilter='CANCELLED'">Annule <span class="tab-count danger">{{ countByStatus('CANCELLED') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='DISPATCH_FAILED'" (click)="statusFilter='DISPATCH_FAILED'">⚠ Echec dispatch <span class="tab-count warn">{{ countByStatus('DISPATCH_FAILED') }}</span></button>
   </div>
 
   <!-- Filter bar -->
@@ -51,6 +52,7 @@
               [id]="'order-row-' + o.id"
               class="order-row"
               [class.order-highlighted]="o.id === highlightedId"
+              [class.order-dispatch-failed]="o.status === 'DISPATCH_FAILED'"
               (click)="openDetail(o)">
             <td>
               <span class="fw-600 text-primary">#{{ o.id }}</span>

@@ -25,27 +25,35 @@ export class PharmaciesComponent implements OnInit {
     });
   }
 
+  getPharmacyStatus(p: PharmacienProfile): 'ACTIVE' | 'PENDING' | 'BLOCKED' {
+    if (p.status) return p.status;
+    return p.active ? 'ACTIVE' : 'BLOCKED';
+  }
+
   viewOnMap(p: PharmacienProfile): void {
     this.router.navigate(['/zones'], {
-      queryParams: {
-        lat: p.latitude,
-        lng: p.longitude,
-        pharmacyName: p.pharmacyName
-      }
+      queryParams: { lat: p.latitude, lng: p.longitude, pharmacyName: p.pharmacyName }
+    });
+  }
+
+  accept(id: number): void {
+    this.admin.acceptPharmacy(id).subscribe(updated => {
+      const p = this.pharmacies.find(x => x.id === id);
+      if (p) { p.active = updated.active; p.status = updated.status; p.online = updated.online; }
     });
   }
 
   activate(id: number): void {
     this.admin.activatePharmacy(id).subscribe(updated => {
       const p = this.pharmacies.find(x => x.id === id);
-      if (p) p.active = updated.active;
+      if (p) { p.active = updated.active; p.status = updated.status; }
     });
   }
 
   block(id: number): void {
     this.admin.blockPharmacy(id).subscribe(updated => {
       const p = this.pharmacies.find(x => x.id === id);
-      if (p) { p.active = updated.active; p.online = updated.online; }
+      if (p) { p.active = updated.active; p.online = updated.online; p.status = updated.status; }
     });
   }
 
@@ -60,18 +68,25 @@ export class PharmaciesComponent implements OnInit {
         p.phone?.toLowerCase().includes(this.searchTerm.toLowerCase());
       const matchZone = !this.selectedZone ||
         (this.selectedZone === '__none__' ? !p.deliveryZoneName : p.deliveryZoneName === this.selectedZone);
+      const st = this.getPharmacyStatus(p);
       const matchStatus = !this.selectedStatus ||
-        (this.selectedStatus === 'actif' ? p.active === true : p.active === false);
+        (this.selectedStatus === 'actif'      ? st === 'ACTIVE'  :
+         this.selectedStatus === 'en_attente' ? st === 'PENDING' :
+                                                st === 'BLOCKED');
       return matchType && matchSearch && matchZone && matchStatus;
     });
   }
 
   get activeList(): PharmacienProfile[] {
-    return this.filtered.filter(p => p.active);
+    return this.filtered.filter(p => this.getPharmacyStatus(p) === 'ACTIVE');
+  }
+
+  get pendingList(): PharmacienProfile[] {
+    return this.filtered.filter(p => this.getPharmacyStatus(p) === 'PENDING');
   }
 
   get blockedList(): PharmacienProfile[] {
-    return this.filtered.filter(p => !p.active);
+    return this.filtered.filter(p => this.getPharmacyStatus(p) === 'BLOCKED');
   }
 
   get zoneOptions(): string[] {
@@ -89,12 +104,15 @@ export class PharmaciesComponent implements OnInit {
     return this.pharmacies.filter(p => p.pharmacyType === 'PARAPHARMACIE').length;
   }
 
-  statusBadge(active: boolean): string {
-    return active ? 'badge-success' : 'badge-danger';
+  statusBadge(status: 'ACTIVE' | 'PENDING' | 'BLOCKED'): string {
+    if (status === 'ACTIVE')  return 'badge-success';
+    if (status === 'PENDING') return 'badge-warning';
+    return 'badge-danger';
   }
 
-  statusLabel(active: boolean): string {
-    return active ? 'Actif' : 'Bloqué';
+  statusLabel(status: 'ACTIVE' | 'PENDING' | 'BLOCKED'): string {
+    if (status === 'ACTIVE')  return 'Actif';
+    if (status === 'PENDING') return 'En attente';
+    return 'Bloqué';
   }
 }
-

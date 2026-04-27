@@ -13,6 +13,7 @@ export interface AdminOrderEvent {
   total?: number;
   createdAt: string;
   updatedAt?: string;
+  dispatchFailed?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -38,14 +38,18 @@ export interface PharmacistProductItem {
   productId: number;
   amm: string;
   productName: string;
+  imageUrl: string | null;
+  description: string | null;
   dci: string;
   dosage: string;
   forme: string;
   laboratoire: string;
   categoryName: string;
+  subCategoryId: number;
   subCategoryName: string;
   referencePrice: number | null;
   available: boolean;
+  editable: boolean;
 }
 
 export interface PharmacistProductPage {
@@ -59,6 +63,13 @@ export interface PharmacistProductPage {
 export interface PharmacistProductFilters {
   categories: string[];
   subCategories: string[];
+  paramedicalSubCategories: PharmacistProductSubCategoryOption[];
+}
+
+export interface PharmacistProductSubCategoryOption {
+  id: number;
+  name: string;
+  categoryName: string;
 }
 
 export interface PharmacistProductQuery {
@@ -69,6 +80,13 @@ export interface PharmacistProductQuery {
   available?: boolean | null;
   page?: number;
   size?: number;
+}
+
+export interface PharmacistParamedicalProductPayload {
+  name: string;
+  description?: string;
+  subCategoryId: number;
+  referencePrice: number;
 }
 
 export interface NearbyPharmacy {
@@ -177,11 +195,50 @@ export class PharmacistService {
     return this.http.patch<PharmacistProductItem>(`${this.BASE}/products/${productId}/availability`, { available });
   }
 
+  createParamedicalProduct(
+    payload: PharmacistParamedicalProductPayload,
+    image?: File | null
+  ): Observable<PharmacistProductItem> {
+    return this.http.post<PharmacistProductItem>(`${this.BASE}/products`, this.buildProductFormData(payload, image));
+  }
+
+  updateParamedicalProduct(
+    productId: number,
+    payload: PharmacistParamedicalProductPayload,
+    image?: File | null
+  ): Observable<PharmacistProductItem> {
+    return this.http.put<PharmacistProductItem>(`${this.BASE}/products/${productId}`, this.buildProductFormData(payload, image));
+  }
+
+  deleteParamedicalProduct(productId: number): Observable<void> {
+    return this.http.delete<void>(`${this.BASE}/products/${productId}`);
+  }
+
   createReport(payload: CreateReportPayload): Observable<ReportItem> {
     return this.http.post<ReportItem>('/api/v1/reports', payload);
   }
 
   getMyReports(): Observable<ReportItem[]> {
     return this.http.get<ReportItem[]>('/api/v1/reports/me');
+  }
+
+  startDelivering(orderId: number): Observable<OrderDTO> {
+    return this.http.put<OrderDTO>(`${this.BASE}/orders/${orderId}/delivering`, {});
+  }
+
+  getReadyOrdersForLivreur(livreurId: number): Observable<OrderDTO[]> {
+    return this.http.get<OrderDTO[]>(`${this.BASE}/livreur/${livreurId}/ready-orders`);
+  }
+
+  private buildProductFormData(
+    payload: PharmacistParamedicalProductPayload,
+    image?: File | null
+  ): FormData {
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(payload));
+    if (image) {
+      formData.append('image', image);
+    }
+    return formData;
   }
 }

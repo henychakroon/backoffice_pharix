@@ -1,16 +1,20 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import {
+  PharmacistParamedicalProductPayload,
   PharmacistProductFilters,
   PharmacistProductItem,
   PharmacistProductPage,
+  PharmacistProductSubCategoryOption,
   PharmacistService
 } from '../../../services/pharmacist.service';
 
 type AvailabilityFilter = 'all' | 'available' | 'unavailable';
 type FeedbackType = 'success' | 'error';
+type EditorMode = 'create' | 'edit';
 
 @Component({
   selector: 'app-pharmacist-products',
@@ -21,9 +25,11 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
   products: PharmacistProductItem[] = [];
   categories: string[] = [];
   subCategories: string[] = [];
+  paramedicalSubCategories: PharmacistProductSubCategoryOption[] = [];
 
   loading = true;
   actionProductId: number | null = null;
+  deleteProductId: number | null = null;
   page = 0;
   pageSize = 25;
   totalElements = 0;
@@ -42,13 +48,28 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
   clientName = '';
   hasOrderContext = false;
 
+  editorOpen = false;
+  editorMode: EditorMode = 'create';
+  editorSaving = false;
+  editorProduct: PharmacistProductItem | null = null;
+  selectedImageFile: File | null = null;
+  selectedImagePreview: string | null = null;
+
+  readonly productForm = this.fb.group({
+    name: ['', [Validators.required, Validators.maxLength(120)]],
+    description: ['', [Validators.maxLength(2000)]],
+    subCategoryId: [null as number | null, Validators.required],
+    referencePrice: [null as number | null, [Validators.required, Validators.min(0.001)]]
+  });
+
   private readonly destroy$ = new Subject<void>();
   private readonly search$ = new Subject<string>();
 
   constructor(
-    private pharmacistService: PharmacistService,
-    private route: ActivatedRoute,
-    private router: Router
+    private readonly pharmacistService: PharmacistService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly fb: FormBuilder
   ) {}
 
   ngOnInit(): void {
@@ -90,32 +111,6 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadProducts(): void {
-    this.loading = true;
-    this.pharmacistService.getProducts({
-      productIds: this.orderProductIds.length > 0 ? this.orderProductIds : undefined,
-      search: this.searchTerm.trim() || undefined,
-      category: this.selectedCategory || undefined,
-      subCategory: this.selectedSubCategory || undefined,
-      available: this.availabilityQueryValue,
-      page: this.page,
-      size: this.pageSize
-    }).subscribe({
-      next: response => {
-        this.products = response.content;
-        this.totalElements = response.totalElements;
-        this.totalPages = response.totalPages;
-        this.page = response.page;
-        this.pageSize = response.size;
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.setFeedback('error', 'Impossible de charger le catalogue de la pharmacie.');
-      }
-    });
-  }
-
   get totalProducts(): number {
     return this.totalElements;
   }
@@ -140,6 +135,55 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
     if (this.availabilityFilter === 'available') return true;
     if (this.availabilityFilter === 'unavailable') return false;
     return null;
+  }
+
+  get editorTitle(): string {
+    return this.editorMode === 'create' ? 'Ajouter un produit parapharmacie' : 'Modifier le produit';
+  }
+
+  get editorSubmitLabel(): string {
+    if (this.editorSaving) {
+      return this.editorMode === 'create' ? 'Ajout...' : 'Mise a jour...';
+    }
+    return this.editorMode === 'create' ? 'Ajouter le produit' : 'Enregistrer';
+  }
+
+  get selectedImageLabel(): string {
+    return this.selectedImageFile?.name || 'Aucune image selectionnee';
+  }
+
+  get currentEditorImage(): string | null {
+    return this.selectedImagePreview || this.editorProduct?.imageUrl || null;
+  }
+
+  get canManageParamedicalProducts(): boolean {
+    return this.paramedicalSubCategories.length > 0;
+  }
+
+  loadProducts(): void {
+    this.loading = true;
+    this.pharmacistService.getProducts({
+      productIds: this.orderProductIds.length > 0 ? this.orderProductIds : undefined,
+      search: this.searchTerm.trim() || undefined,
+      category: this.selectedCategory || undefined,
+      subCategory: this.selectedSubCategory || undefined,
+      available: this.availabilityQueryValue,
+      page: this.page,
+      size: this.pageSize
+    }).subscribe({
+      next: response => {
+        this.products = response.content;
+        this.totalElements = response.totalElements;
+        this.totalPages = response.totalPages;
+        this.page = response.page;
+        this.pageSize = response.size;
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.setFeedback('error', 'Impossible de charger le catalogue de la pharmacie.');
+      }
+    });
   }
 
   clearFilters(): void {
@@ -198,13 +242,148 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
           'success',
           updated.available
             ? `${updated.productName} est de nouveau disponible.`
-            : `${updated.productName} a été marqué indisponible.`
+            : `${updated.productName} est maintenant indisponible.`
         );
         this.loadProducts();
       },
       error: () => {
         this.actionProductId = null;
-        this.setFeedback('error', 'La disponibilité du produit n\'a pas pu être mise à jour.');
+        this.setFeedback('error', 'La disponibilite du produit n\'a pas pu etre mise a jour.');
+      }
+    });
+  }
+
+  openCreateModal(): void {
+    if (!this.canManageParamedicalProducts) {
+      this.setFeedback('error', 'Aucune sous-categorie parapharmacie n\'est disponible.');
+      return;
+    }
+
+    this.editorMode = 'create';
+    this.editorProduct = null;
+    this.editorOpen = true;
+    this.editorSaving = false;
+    this.selectedImageFile = null;
+    this.selectedImagePreview = null;
+    this.productForm.reset({
+      name: '',
+      description: '',
+      subCategoryId: this.paramedicalSubCategories[0]?.id ?? null,
+      referencePrice: null
+    });
+  }
+
+  openEditModal(product: PharmacistProductItem, event?: Event): void {
+    event?.stopPropagation();
+    this.editorMode = 'edit';
+    this.editorProduct = product;
+    this.editorOpen = true;
+    this.editorSaving = false;
+    this.selectedImageFile = null;
+    this.selectedImagePreview = null;
+    this.productForm.reset({
+      name: product.productName || '',
+      description: product.description || '',
+      subCategoryId: product.subCategoryId || null,
+      referencePrice: product.referencePrice
+    });
+  }
+
+  closeEditor(): void {
+    this.editorOpen = false;
+    this.editorSaving = false;
+    this.editorProduct = null;
+    this.selectedImageFile = null;
+    this.selectedImagePreview = null;
+    this.productForm.reset({
+      name: '',
+      description: '',
+      subCategoryId: null,
+      referencePrice: null
+    });
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (!file) {
+      return;
+    }
+
+    this.selectedImageFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.selectedImagePreview = typeof reader.result === 'string' ? reader.result : null;
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  clearSelectedImage(): void {
+    this.selectedImageFile = null;
+    this.selectedImagePreview = null;
+  }
+
+  submitProduct(): void {
+    if (this.productForm.invalid || this.editorSaving) {
+      this.productForm.markAllAsTouched();
+      return;
+    }
+
+    const payload = this.buildProductPayload();
+    this.editorSaving = true;
+
+    const request$ = this.editorMode === 'create'
+      ? this.pharmacistService.createParamedicalProduct(payload, this.selectedImageFile)
+      : this.pharmacistService.updateParamedicalProduct(
+          this.editorProduct!.productId,
+          payload,
+          this.selectedImageFile
+        );
+
+    request$.subscribe({
+      next: product => {
+        this.editorSaving = false;
+        this.closeEditor();
+        this.setFeedback(
+          'success',
+          this.editorMode === 'create'
+            ? `${product.productName} a ete ajoute au catalogue.`
+            : `${product.productName} a ete mis a jour.`
+        );
+        this.resetAndLoad();
+      },
+      error: err => {
+        this.editorSaving = false;
+        this.setFeedback('error', this.extractErrorMessage(err, 'Impossible d\'enregistrer le produit.'));
+      }
+    });
+  }
+
+  deleteProduct(product: PharmacistProductItem, event: Event): void {
+    event.stopPropagation();
+    if (!product.editable || this.deleteProductId != null) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Supprimer ${product.productName} du catalogue ?`);
+    if (!confirmed) {
+      return;
+    }
+
+    this.deleteProductId = product.productId;
+    this.pharmacistService.deleteParamedicalProduct(product.productId).subscribe({
+      next: () => {
+        this.deleteProductId = null;
+        if (this.editorProduct?.productId === product.productId) {
+          this.closeEditor();
+        }
+        this.setFeedback('success', `${product.productName} a ete retire du catalogue.`);
+        this.resetAndLoad();
+      },
+      error: err => {
+        this.deleteProductId = null;
+        this.setFeedback('error', this.extractErrorMessage(err, 'Impossible de supprimer le produit.'));
       }
     });
   }
@@ -215,9 +394,28 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
 
   priceLabel(price: number | null): string {
     if (price == null) {
-      return '—';
+      return '-';
     }
     return `${price.toFixed(3)} TND`;
+  }
+
+  subCategoryLabel(option: PharmacistProductSubCategoryOption): string {
+    return `${option.categoryName} - ${option.name}`;
+  }
+
+  isInvalid(controlName: 'name' | 'description' | 'subCategoryId' | 'referencePrice'): boolean {
+    const control = this.productForm.get(controlName);
+    return !!control && control.invalid && (control.dirty || control.touched);
+  }
+
+  private buildProductPayload(): PharmacistParamedicalProductPayload {
+    const raw = this.productForm.getRawValue();
+    return {
+      name: (raw.name || '').trim(),
+      description: (raw.description || '').trim(),
+      subCategoryId: Number(raw.subCategoryId),
+      referencePrice: Number(raw.referencePrice)
+    };
   }
 
   private loadFilterOptions(): void {
@@ -225,6 +423,7 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
       next: (filters: PharmacistProductFilters) => {
         this.categories = filters.categories;
         this.subCategories = filters.subCategories;
+        this.paramedicalSubCategories = filters.paramedicalSubCategories || [];
       }
     });
   }
@@ -293,7 +492,7 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
-        this.setFeedback('error', 'Impossible de charger les produits liés à cette commande.');
+        this.setFeedback('error', 'Impossible de charger les produits lies a cette commande.');
       }
     });
   }
@@ -307,15 +506,15 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
   }
 
   private buildOrderContextLabel(terms: string[]): string {
-    const orderLabel = this.orderId ? `Commande #${this.orderId}` : 'Commande sélectionnée';
+    const orderLabel = this.orderId ? `Commande #${this.orderId}` : 'Commande selectionnee';
     const clientLabel = this.clientName ? ` de ${this.clientName}` : '';
-    return `${orderLabel}${clientLabel} · ${terms.length} produit${terms.length > 1 ? 's' : ''} détecté${terms.length > 1 ? 's' : ''}`;
+    return `${orderLabel}${clientLabel} - ${terms.length} produit${terms.length > 1 ? 's' : ''} detecte${terms.length > 1 ? 's' : ''}`;
   }
 
   private buildProductContextLabel(): string {
-    const orderLabel = this.orderId ? `Commande #${this.orderId}` : 'Commande sélectionnée';
+    const orderLabel = this.orderId ? `Commande #${this.orderId}` : 'Commande selectionnee';
     const clientLabel = this.clientName ? ` de ${this.clientName}` : '';
-    return `${orderLabel}${clientLabel} · ${this.orderProductIds.length} produit${this.orderProductIds.length > 1 ? 's' : ''}`;
+    return `${orderLabel}${clientLabel} - ${this.orderProductIds.length} produit${this.orderProductIds.length > 1 ? 's' : ''}`;
   }
 
   private extractProductIds(productIdsParam: string | null, legacyProductIdParam: string | null): number[] {
@@ -333,5 +532,9 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
       .map(value => Number(value.trim()))
       .filter(value => Number.isFinite(value) && value > 0)
       .filter((value, index, all) => all.indexOf(value) === index);
+  }
+
+  private extractErrorMessage(error: any, fallback: string): string {
+    return error?.error?.error || error?.error?.message || fallback;
   }
 }
