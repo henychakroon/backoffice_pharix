@@ -96,6 +96,12 @@
   color: var(--warning);
 }
 
+.notif-item-warn {
+  border-left: 3px solid var(--danger, #e53e3e);
+  background: #fff5f5;
+  &:hover { background: #ffe8e8; }
+}
+
 
 /* ═══════════════════════════════════════════
    SIDEBAR

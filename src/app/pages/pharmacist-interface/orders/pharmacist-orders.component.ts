@@ -2,11 +2,12 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone } from '@an
 import { PharmacistService, CreateReportPayload } from '../../../services/pharmacist.service';
 import { AuthService } from '../../../services/auth.service';
 import { OrderDTO } from '../../../services/admin.service';
-import { Router } from '@angular/router';
-import { from } from 'rxjs';
+import { Router, ActivatedRoute } from '@angular/router';
+import { from, Subscription } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import * as QRCode from 'qrcode';
 import jsQR from 'jsqr';
+import { WebSocketService, PharmacienOrderEvent } from '../../../services/websocket.service';
 
 @Component({
   selector: 'app-pharmacist-orders',
@@ -55,17 +56,62 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   manualOrderId = '';
   private scanInterval: any = null;
 
+  // Highlighted order (from notification click)
+  highlightedOrderId: number | null = null;
+  private highlightTimer: any = null;
+
+  private wsSub?: Subscription;
+
   constructor(
     private pharmacistService: PharmacistService,
     private auth: AuthService,
     private router: Router,
-    private ngZone: NgZone
+    private route: ActivatedRoute,
+    private ngZone: NgZone,
+    private ws: WebSocketService
   ) {}
 
   ngOnInit(): void {
     const user = this.auth.getCurrentUser();
     this.email = user?.email ?? '';
     this.loadOrders();
+
+    // Handle highlight query param from notification click
+    this.route.queryParams.subscribe(params => {
+      if (params['highlight']) {
+        const id = Number(params['highlight']);
+        if (!isNaN(id)) {
+          this.highlightedOrderId = id;
+          this.statusFilter = 'all';
+          if (this.highlightTimer) clearTimeout(this.highlightTimer);
+          this.highlightTimer = setTimeout(() => { this.highlightedOrderId = null; }, 4000);
+        }
+      }
+    });
+
+    // Subscribe to real-time order events via WebSocket
+    this.wsSub = this.ws.pharmacienOrderEvents$.subscribe((event: PharmacienOrderEvent) => {
+      this.ngZone.run(() => this.handleOrderEvent(event));
+    });
+  }
+
+  private handleOrderEvent(event: PharmacienOrderEvent): void {
+    if (event.status === 'PENDING') {
+      // New order: reload full list to include it
+      this.loadOrders();
+      return;
+    }
+    // For other lifecycle events: update status in place
+    const idx = this.allOrders.findIndex(o => o.id === event.orderId);
+    if (idx !== -1) {
+      this.allOrders[idx] = { ...this.allOrders[idx], status: event.status };
+      if (this.selectedOrder?.id === event.orderId) {
+        this.selectedOrder = { ...this.selectedOrder, status: event.status };
+      }
+    } else {
+      // Unknown order arrived (e.g. ASSIGNED after page load): reload
+      this.loadOrders();
+    }
   }
 
   loadOrders(): void {
@@ -288,6 +334,8 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopScanner();
+    this.wsSub?.unsubscribe();
+    if (this.highlightTimer) clearTimeout(this.highlightTimer);
   }
 
   // ── QR Scanner ──
@@ -461,6 +509,10 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   }
 
   // ── Helpers ──
+
+  isHighlighted(orderId: number): boolean {
+    return this.highlightedOrderId === orderId;
+  }
 
   private replaceOrder(updated: OrderDTO): void {
     const idx = this.allOrders.findIndex(o => o.id === updated.id);

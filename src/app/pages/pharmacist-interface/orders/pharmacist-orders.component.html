@@ -50,7 +50,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let o of filtered" class="order-row" (click)="openDetail(o)">
+          <tr *ngFor="let o of filtered" class="order-row" [class.order-row-highlight]="isHighlighted(o.id)" (click)="openDetail(o)">
             <td>
               <span class="fw-600 text-primary">#{{ o.id }}</span>
               <div class="text-xs text-muted">{{ o.createdAt | date:'dd MMM yyyy HH:mm' }}</div>

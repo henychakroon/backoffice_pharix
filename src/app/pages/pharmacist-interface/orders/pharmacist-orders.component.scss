@@ -59,6 +59,16 @@
 /* ── Table row ── */
 .order-row { cursor: pointer; }
 
+.order-row-highlight {
+  animation: highlight-row 4s ease-out forwards;
+}
+
+@keyframes highlight-row {
+  0%   { background-color: rgba(79, 110, 247, 0.18); }
+  60%  { background-color: rgba(79, 110, 247, 0.12); }
+  100% { background-color: transparent; }
+}
+
 /* ── Table Footer ── */
 .table-footer {
   display: flex;

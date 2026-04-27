@@ -103,6 +103,32 @@ export interface NearbyPharmacy {
   imageUrl: string | null;
 }
 
+export interface PharmacienProfile {
+  id: number;
+  online: boolean;
+  pharmacyName: string;
+  ownerName: string;
+}
+
+export interface PharmacienNotification {
+  id: number;
+  type: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  createdAt: string;
+  data: {
+    orderId: number | null;
+    clientName: string | null;
+    clientPhone: string | null;
+    total: number | null;
+    status: string | null;
+    pharmacyId: number | null;
+    createdAt: string;
+    isRead: boolean;
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class PharmacistService {
   private readonly BASE = '/api/v1/pharmacien';
@@ -228,6 +254,32 @@ export class PharmacistService {
 
   getReadyOrdersForLivreur(livreurId: number): Observable<OrderDTO[]> {
     return this.http.get<OrderDTO[]>(`${this.BASE}/livreur/${livreurId}/ready-orders`);
+  }
+
+  getProfile(): Observable<PharmacienProfile> {
+    return this.http.get<PharmacienProfile>(`${this.BASE}/profile`);
+  }
+
+  // ── Notifications ──────────────────────────────────────────────────────────
+
+  getNotifications(): Observable<PharmacienNotification[]> {
+    return this.http.get<PharmacienNotification[]>(`${this.BASE}/notifications`);
+  }
+
+  getUnreadNotifications(): Observable<PharmacienNotification[]> {
+    return this.http.get<PharmacienNotification[]>(`${this.BASE}/notifications/unread`);
+  }
+
+  getUnreadNotificationCount(): Observable<{ count: number }> {
+    return this.http.get<{ count: number }>(`${this.BASE}/notifications/unread/count`);
+  }
+
+  markNotificationRead(id: number): Observable<void> {
+    return this.http.put<void>(`${this.BASE}/notifications/${id}/read`, {});
+  }
+
+  markAllNotificationsRead(): Observable<void> {
+    return this.http.put<void>(`${this.BASE}/notifications/read-all`, {});
   }
 
   private buildProductFormData(
