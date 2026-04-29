@@ -5,6 +5,13 @@ import { AuthService } from '../services/auth.service';
 import { WebSocketService, AdminOrderEvent, PharmacienOrderEvent } from '../services/websocket.service';
 import { PharmacistService, PharmacienNotification } from '../services/pharmacist.service';
 
+interface OrderToast {
+  uid: number;
+  orderId: number;
+  clientName: string;
+  leaving: boolean;
+}
+
 @Component({
   selector: 'app-layout',
   templateUrl: './layout.component.html',
@@ -23,9 +30,16 @@ export class LayoutComponent implements OnInit, OnDestroy {
   pharmacienNotifCount = 0;
   pharmacienNotifPanelOpen = false;
   recentPharmacienEvents: PharmacienOrderEvent[] = [];
+  pharmacienNotifications: PharmacienNotification[] = [];
+  pharmacienNotifsLoading = false;
+
+  toasts: OrderToast[] = [];
+  private toastUidCounter = 0;
 
   private wsSub?: Subscription;
   private pharmacienWsSub?: Subscription;
+  private soundInterval: any = null;
+  private adminAlertInterval: any = null;
 
   adminNavItems = [
     {
@@ -125,6 +139,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
           this.notifCount++;
           this.recentOrders.unshift(event);
           if (this.recentOrders.length > 10) this.recentOrders.pop();
+          if (event.status === 'DISPATCH_FAILED' || event.dispatchFailed) {
+            this.playDispatchFailedAlert();
+          }
         });
       }
     }
@@ -156,51 +173,130 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.wsSub?.unsubscribe();
     this.pharmacienWsSub?.unsubscribe();
     this.ws.disconnect();
+    this.stopAdminAlert();
+    this.stopSound();
   }
 
   private onPharmacienOrderEvent(event: PharmacienOrderEvent): void {
-    // Play sound only for new incoming orders
     if (event.status === 'PENDING') {
       this.playNewOrderSound();
+      this.addToast(event);
     }
 
     this.pharmacienNotifCount++;
     this.recentPharmacienEvents.unshift(event);
     if (this.recentPharmacienEvents.length > 10) this.recentPharmacienEvents.pop();
+
+    // If panel is open, reload the full list from DB to include the new item
+    if (this.pharmacienNotifPanelOpen) {
+      this.loadPharmacienNotifications();
+    }
   }
 
+  private addToast(event: PharmacienOrderEvent): void {
+    const uid = ++this.toastUidCounter;
+    this.toasts.push({ uid, orderId: event.orderId, clientName: event.clientName, leaving: false });
+    setTimeout(() => this.dismissToast(uid), 8000);
+  }
+
+  dismissToast(uid: number): void {
+    const toast = this.toasts.find(t => t.uid === uid);
+    if (!toast || toast.leaving) return;
+    toast.leaving = true;
+    setTimeout(() => {
+      this.toasts = this.toasts.filter(t => t.uid !== uid);
+      if (this.toasts.length === 0) this.stopSound();
+    }, 350);
+  }
+
+  viewToastOrder(toast: OrderToast): void {
+    this.stopSound();
+    this.dismissToast(toast.uid);
+    this.goToPharmacienOrder(toast.orderId);
+  }
+
+  trackToast(_: number, t: OrderToast): number { return t.uid; }
+
   private playNewOrderSound(): void {
-    try {
-      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx() as AudioContext;
-      // Two-tone chime: 880Hz then 660Hz
-      [880, 660].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        const start = ctx.currentTime + i * 0.25;
-        gain.gain.setValueAtTime(0.35, start);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
-        osc.start(start);
-        osc.stop(start + 0.4);
-      });
-    } catch {
-      // Browser blocked audio or API not available — silent fail
+    if (this.soundInterval) return; // already looping
+
+    const playOnce = () => {
+      try {
+        const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx() as AudioContext;
+        [880, 660].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const start = ctx.currentTime + i * 0.25;
+          gain.gain.setValueAtTime(0.35, start);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+          osc.start(start);
+          osc.stop(start + 0.4);
+        });
+      } catch {
+        // Browser blocked audio — silent fail
+      }
+    };
+
+    playOnce();
+    this.soundInterval = setInterval(playOnce, 2000);
+  }
+
+  private stopSound(): void {
+    if (this.soundInterval) {
+      clearInterval(this.soundInterval);
+      this.soundInterval = null;
+    }
+  }
+
+  private playDispatchFailedAlert(): void {
+    if (this.adminAlertInterval) return;
+    const playOnce = () => {
+      try {
+        const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx() as AudioContext;
+        [440, 330, 220].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'square';
+          osc.frequency.value = freq;
+          const start = ctx.currentTime + i * 0.18;
+          gain.gain.setValueAtTime(0.25, start);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.15);
+          osc.start(start);
+          osc.stop(start + 0.15);
+        });
+      } catch { }
+    };
+    playOnce();
+    this.adminAlertInterval = setInterval(playOnce, 2500);
+  }
+
+  private stopAdminAlert(): void {
+    if (this.adminAlertInterval) {
+      clearInterval(this.adminAlertInterval);
+      this.adminAlertInterval = null;
     }
   }
 
   // ── Admin notification helpers ─────────────────────────────────────────────
 
   clearNotifications(): void {
+    this.stopAdminAlert();
     this.notifCount = 0;
     this.recentOrders = [];
   }
 
   toggleNotifPanel(): void {
+    this.stopAdminAlert();
     this.notifPanelOpen = !this.notifPanelOpen;
     if (!this.notifPanelOpen) this.notifCount = 0;
   }
@@ -213,6 +309,38 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   // ── Pharmacien notification helpers ──────────────────────────────────────
 
+  loadPharmacienNotifications(): void {
+    this.pharmacienNotifsLoading = true;
+    this.pharmacistService.getUnreadNotifications().subscribe({
+      next: (list) => {
+        this.pharmacienNotifications = list;
+        this.pharmacienNotifCount = list.length;
+        this.pharmacienNotifsLoading = false;
+      },
+      error: () => { this.pharmacienNotifsLoading = false; }
+    });
+  }
+
+  markPharmacienNotifRead(notif: PharmacienNotification, event: Event): void {
+    event.stopPropagation();
+    if (notif.isRead) return;
+    this.pharmacistService.markNotificationRead(notif.id).subscribe({
+      next: () => {
+        notif.isRead = true;
+        this.pharmacienNotifCount = Math.max(0, this.pharmacienNotifCount - 1);
+      }
+    });
+  }
+
+  markAllPharmacienNotifsRead(): void {
+    this.pharmacistService.markAllNotificationsRead().subscribe({
+      next: () => {
+        this.pharmacienNotifications.forEach(n => n.isRead = true);
+        this.pharmacienNotifCount = 0;
+      }
+    });
+  }
+
   clearPharmacienNotifications(): void {
     this.pharmacienNotifCount = 0;
     this.recentPharmacienEvents = [];
@@ -220,13 +348,15 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   togglePharmacienNotifPanel(): void {
+    this.stopSound();
     this.pharmacienNotifPanelOpen = !this.pharmacienNotifPanelOpen;
-    if (!this.pharmacienNotifPanelOpen) this.pharmacienNotifCount = 0;
+    if (this.pharmacienNotifPanelOpen) {
+      this.loadPharmacienNotifications();
+    }
   }
 
   goToPharmacienOrder(orderId: number): void {
     this.pharmacienNotifPanelOpen = false;
-    this.pharmacienNotifCount = 0;
     this.router.navigate(['/ph/orders'], { queryParams: { highlight: orderId } });
   }
 
@@ -236,6 +366,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       ACCEPTED_FROM_PHARMACIEN: 'Acceptée',
       READY_FOR_DELIVERY: 'Prête',
       ASSIGNED: 'Livreur assigné',
+      ASSIGNED_FROM_ADMIN: 'Assigné (admin)',
       ACCEPTED_FROM_LIVREUR: 'Livreur en route',
       PICKED_UP: 'Récupérée',
       DELIVERING: 'En livraison',

@@ -50,7 +50,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let o of filtered" class="order-row" [class.order-row-highlight]="isHighlighted(o.id)" (click)="openDetail(o)">
+          <tr *ngFor="let o of filtered" class="order-row" [class.order-row-highlight]="isHighlighted(o.id)" [attr.data-order-id]="o.id" (click)="openDetail(o)">
             <td>
               <span class="fw-600 text-primary">#{{ o.id }}</span>
               <div class="text-xs text-muted">{{ o.createdAt | date:'dd MMM yyyy HH:mm' }}</div>
@@ -99,6 +99,13 @@
                   (click)="openProductsForOrder(o, $event)"
                   data-tooltip="Vérifier les produits commandés">
                   Produits
+                </button>
+
+                <button *ngIf="hasOrdonnance(o)"
+                  class="btn btn-ghost btn-sm"
+                  (click)="openOrdonnance(o, $event)"
+                  data-tooltip="Voir l'ordonnance">
+                  Ordonnance
                 </button>
 
                 <!-- QR Code button (for all non-cancelled/refused) -->
@@ -176,6 +183,16 @@
         <div class="detail-value">{{ selectedOrder.description || '–' }}</div>
       </div>
 
+      <div class="detail-section" *ngIf="hasOrdonnance(selectedOrder)">
+        <div class="detail-label">Ordonnance</div>
+        <div class="detail-value">
+          {{ selectedOrder.ordonnanceFileName || (isPdfOrdonnance(selectedOrder) ? 'Ordonnance PDF' : 'Ordonnance image') }}
+        </div>
+        <button class="btn btn-ghost btn-sm report-btn" (click)="openOrdonnance(selectedOrder, $event)">
+          Voir l'ordonnance
+        </button>
+      </div>
+
       <div class="detail-section">
         <div class="detail-label">Livreur</div>
         <div *ngIf="selectedOrder.livreurId">
@@ -223,6 +240,9 @@
         <button class="btn btn-ghost btn-sm" (click)="openProductsForOrder(selectedOrder, $event)">
           Vérifier les produits
         </button>
+        <button *ngIf="hasOrdonnance(selectedOrder)" class="btn btn-ghost btn-sm" (click)="openOrdonnance(selectedOrder, $event)">
+          Voir l'ordonnance
+        </button>
         <button *ngIf="selectedOrder.status !== 'CANCELLED' && selectedOrder.status !== 'REFUSED_FROM_PHARMACIEN' && selectedOrder.status !== 'REFUSED_FROM_LIVREUR'" class="btn btn-ghost btn-sm" (click)="showQr(selectedOrder, $event)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           QR Code
@@ -233,6 +253,40 @@
 </div>
 
 <!-- ══════ QR CODE MODAL ══════ -->
+<div class="modal-backdrop" *ngIf="ordonnanceModalOrder" (click)="closeOrdonnance()"></div>
+<div class="modal ordonnance-modal" *ngIf="ordonnanceModalOrder">
+  <div class="modal-header">
+    <div class="modal-title">Ordonnance - Commande #{{ ordonnanceModalOrder.id }}</div>
+    <button class="btn btn-ghost btn-icon" (click)="closeOrdonnance()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="modal-body ordonnance-body">
+    <div class="ordonnance-file-name" *ngIf="ordonnanceViewFileName || ordonnanceModalOrder.ordonnanceFileName">
+      {{ ordonnanceViewFileName || ordonnanceModalOrder.ordonnanceFileName }}
+    </div>
+
+    <div class="ordonnance-loading" *ngIf="ordonnanceLoading">Chargement de l'ordonnance...</div>
+
+    <div class="report-feedback error" *ngIf="ordonnanceError">{{ ordonnanceError }}</div>
+
+    <img *ngIf="!ordonnanceLoading && !ordonnanceError && isImageAccess()"
+      [src]="ordonnanceViewUrl"
+      alt="Ordonnance"
+      class="ordonnance-image">
+
+    <iframe *ngIf="!ordonnanceLoading && !ordonnanceError && isPdfAccess() && ordonnanceSafeUrl"
+      [src]="ordonnanceSafeUrl"
+      title="Ordonnance PDF"
+      class="ordonnance-frame">
+    </iframe>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost btn-sm" (click)="closeOrdonnance()">Fermer</button>
+    <button class="btn btn-primary btn-sm" [disabled]="!ordonnanceViewUrl || ordonnanceLoading" (click)="viewOrdonnanceInNewTab()">Ouvrir</button>
+  </div>
+</div>
+
 <div class="modal-backdrop" *ngIf="qrModalOrder" (click)="closeQr()"></div>
 <div class="modal" *ngIf="qrModalOrder">
   <div class="modal-header">

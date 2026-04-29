@@ -3,6 +3,8 @@ import { Subject } from 'rxjs';
 import { Client, IMessage } from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
 
+const WS_PATH = '/ws';
+
 export interface AdminOrderEvent {
   orderId: number;
   status: string;
@@ -37,7 +39,7 @@ export class WebSocketService implements OnDestroy {
     if (this.client?.active) return;
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8082/ws'),
+      webSocketFactory: () => new SockJS(WS_PATH),
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {
@@ -81,7 +83,7 @@ export class WebSocketService implements OnDestroy {
     }
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8082/ws'),
+      webSocketFactory: () => new SockJS(WS_PATH),
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {

@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone } from '@angular/core';
-import { PharmacistService, CreateReportPayload } from '../../../services/pharmacist.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { PharmacistService, CreateReportPayload, OrdonnanceAccess } from '../../../services/pharmacist.service';
 import { AuthService } from '../../../services/auth.service';
 import { OrderDTO } from '../../../services/admin.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -28,6 +29,15 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   // QR modal
   qrModalOrder: OrderDTO | null = null;
   qrDataUrl = '';
+
+  // Ordonnance modal
+  ordonnanceModalOrder: OrderDTO | null = null;
+  ordonnanceSafeUrl: SafeResourceUrl | null = null;
+  ordonnanceViewUrl = '';
+  ordonnanceViewMimeType = '';
+  ordonnanceViewFileName = '';
+  ordonnanceLoading = false;
+  ordonnanceError = '';
 
   // Report modal
   reportModalOrder: OrderDTO | null = null;
@@ -68,7 +78,8 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private ngZone: NgZone,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
@@ -85,6 +96,9 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
           this.statusFilter = 'all';
           if (this.highlightTimer) clearTimeout(this.highlightTimer);
           this.highlightTimer = setTimeout(() => { this.highlightedOrderId = null; }, 4000);
+          if (!this.loading) {
+            setTimeout(() => this.scrollToHighlighted(), 80);
+          }
         }
       }
     });
@@ -120,9 +134,20 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
       next: orders => {
         this.allOrders = orders;
         this.loading = false;
+        if (this.highlightedOrderId) {
+          setTimeout(() => this.scrollToHighlighted(), 80);
+        }
       },
       error: () => { this.loading = false; }
     });
+  }
+
+  private scrollToHighlighted(): void {
+    if (!this.highlightedOrderId) return;
+    const el = document.querySelector(`[data-order-id="${this.highlightedOrderId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 
   get filtered(): OrderDTO[] {
@@ -148,6 +173,7 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
       READY_FOR_DELIVERY:       'badge-accent',
       DISPATCH_FAILED:          'badge-dispatch-failed',
       ASSIGNED:                 'badge-primary',
+      ASSIGNED_FROM_ADMIN:      'badge-primary',
       ACCEPTED_FROM_LIVREUR:    'badge-primary',
       REFUSED_FROM_LIVREUR:     'badge-danger',
       PICKED_UP:                'badge-info',
@@ -166,6 +192,7 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
       READY_FOR_DELIVERY:       'Prête',
       DISPATCH_FAILED:          'Echec dispatch',
       ASSIGNED:                 'Assigné',
+      ASSIGNED_FROM_ADMIN:      'Assigné (admin)',
       ACCEPTED_FROM_LIVREUR:    'Pris en charge',
       REFUSED_FROM_LIVREUR:     'Refusé (livreur)',
       PICKED_UP:                'Récupérée',
@@ -229,6 +256,51 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   closeQr(): void {
     this.qrModalOrder = null;
     this.qrDataUrl = '';
+  }
+
+  openOrdonnance(order: OrderDTO | null, event: Event): void {
+    event.stopPropagation();
+    if (!order?.id || !this.hasOrdonnance(order)) return;
+
+    this.ordonnanceModalOrder = order;
+    this.ordonnanceSafeUrl = null;
+    this.ordonnanceViewUrl = '';
+    this.ordonnanceViewMimeType = '';
+    this.ordonnanceViewFileName = '';
+    this.ordonnanceError = '';
+    this.ordonnanceLoading = true;
+
+    this.pharmacistService.getOrdonnanceAccess(order.id).subscribe({
+      next: (access: OrdonnanceAccess) => {
+        this.ordonnanceLoading = false;
+        this.ordonnanceViewUrl = access.url;
+        this.ordonnanceViewMimeType = access.mimeType || order.ordonnanceMimeType || '';
+        this.ordonnanceViewFileName = access.fileName || order.ordonnanceFileName || '';
+        this.ordonnanceSafeUrl = this.isPdfAccess()
+          ? this.sanitizer.bypassSecurityTrustResourceUrl(access.url)
+          : null;
+      },
+      error: (err) => {
+        this.ordonnanceLoading = false;
+        this.ordonnanceError = err?.error?.error || err?.error?.message || 'Impossible de charger l\'ordonnance.';
+      }
+    });
+  }
+
+  closeOrdonnance(): void {
+    this.ordonnanceModalOrder = null;
+    this.ordonnanceSafeUrl = null;
+    this.ordonnanceViewUrl = '';
+    this.ordonnanceViewMimeType = '';
+    this.ordonnanceViewFileName = '';
+    this.ordonnanceLoading = false;
+    this.ordonnanceError = '';
+  }
+
+  viewOrdonnanceInNewTab(): void {
+    const url = this.ordonnanceViewUrl;
+    if (!url) return;
+    window.open(url, '_blank', 'noopener');
   }
 
   openReport(order: OrderDTO, event: Event, target: 'client' | 'livreur'): void {
@@ -512,6 +584,32 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
 
   isHighlighted(orderId: number): boolean {
     return this.highlightedOrderId === orderId;
+  }
+
+  hasOrdonnance(order: OrderDTO | null): boolean {
+    return !!order?.ordonnanceUrl;
+  }
+
+  isPdfOrdonnance(order: OrderDTO | null): boolean {
+    const mimeType = order?.ordonnanceMimeType?.toLowerCase() ?? '';
+    const fileName = order?.ordonnanceFileName?.toLowerCase() ?? '';
+    const url = order?.ordonnanceUrl?.toLowerCase() ?? '';
+    return mimeType === 'application/pdf' || fileName.endsWith('.pdf') || url.includes('.pdf');
+  }
+
+  isImageOrdonnance(order: OrderDTO | null): boolean {
+    return this.hasOrdonnance(order) && !this.isPdfOrdonnance(order);
+  }
+
+  isPdfAccess(): boolean {
+    const mimeType = this.ordonnanceViewMimeType.toLowerCase();
+    const fileName = this.ordonnanceViewFileName.toLowerCase();
+    const url = this.ordonnanceViewUrl.toLowerCase();
+    return mimeType === 'application/pdf' || fileName.endsWith('.pdf') || url.includes('.pdf');
+  }
+
+  isImageAccess(): boolean {
+    return !!this.ordonnanceViewUrl && !this.isPdfAccess();
   }
 
   private replaceOrder(updated: OrderDTO): void {

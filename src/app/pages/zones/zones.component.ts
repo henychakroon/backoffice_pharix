@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DeliveryZoneService, DeliveryZone, ZoneCreateRequest, LivreurSummary, PharmacySummary } from '../../services/delivery-zone.service';
+import { AdminService, PharmacienProfile } from '../../services/admin.service';
 
 declare const google: any;
 
@@ -70,10 +71,16 @@ export class ZonesComponent implements OnInit, OnDestroy {
   private pharmacyMarker: any = null;
   private targetPharmacy: { lat: number; lng: number; name: string } | null = null;
 
+  // ── All pharmacy markers on map ───────────────────────────────────────────
+  private allPharmacies: PharmacienProfile[] = [];
+  private pharmacyMarkers: any[] = [];
+
   constructor(
     private zoneService: DeliveryZoneService,
     private cdr: ChangeDetectorRef,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private adminService: AdminService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -88,11 +95,13 @@ export class ZonesComponent implements OnInit, OnDestroy {
       }
     });
     this.loadZones();
+    this.loadPharmacyMarkers();
     this.initMap();
   }
 
   ngOnDestroy(): void {
     if (this.toastTimer) clearTimeout(this.toastTimer);
+    delete (window as any).__goToPharmacy;
   }
 
   // ── Data loading ───────────────────────────────────────────────────────────
@@ -115,6 +124,69 @@ export class ZonesComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private loadPharmacyMarkers(): void {
+    this.adminService.getPharmacies().subscribe({
+      next: data => {
+        this.allPharmacies = data.filter(p => p.latitude && p.longitude);
+        this.renderPharmacyMarkers();
+      },
+      error: () => {}
+    });
+  }
+
+  private renderPharmacyMarkers(): void {
+    if (!this.map) return;
+    // Clear existing
+    this.pharmacyMarkers.forEach(m => m.setMap(null));
+    this.pharmacyMarkers = [];
+
+    this.allPharmacies.forEach(p => {
+      const status = p.status ?? (p.active ? 'ACTIVE' : 'PENDING');
+      const color = status === 'ACTIVE' ? '#16a34a' : status === 'BLOCKED' ? '#dc2626' : '#f59e0b';
+
+      const marker = new google.maps.Marker({
+        position: { lat: p.latitude, lng: p.longitude },
+        map: this.map,
+        title: p.pharmacyName,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: color,
+          fillOpacity: 0.9,
+          strokeColor: '#ffffff',
+          strokeWeight: 1.5,
+        }
+      });
+
+      const statusLabel = status === 'ACTIVE' ? 'Actif' : status === 'BLOCKED' ? 'Bloqué' : 'En attente d\'approbation';
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="font-family:inherit;min-width:180px;padding:4px 2px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px">🏪 ${p.pharmacyName || '(sans nom)'}</div>
+            <div style="font-size:11px;color:#555;margin-bottom:2px">👤 ${p.ownerName || '—'}</div>
+            <div style="font-size:11px;color:#555;margin-bottom:6px">📞 ${p.phone || '—'}</div>
+            <div style="margin-bottom:8px">
+              <span style="font-size:11px;padding:2px 8px;border-radius:999px;background:${color}22;color:${color};font-weight:600">${statusLabel}</span>
+            </div>
+            <a href="/pharmacies?pharmacyId=${p.id}" onclick="event.preventDefault();window.__goToPharmacy(${p.id})"
+               style="display:block;text-align:center;font-size:12px;color:#107bac;font-weight:600;text-decoration:none;padding:5px 0;border:1px solid #107bac;border-radius:6px">
+              Voir les détails →
+            </a>
+          </div>`
+      });
+
+      marker.addListener('click', () => {
+        infoWindow.open(this.map, marker);
+      });
+
+      this.pharmacyMarkers.push(marker);
+    });
+
+    (window as any).__goToPharmacy = (id: number) => {
+      this.router.navigate(['/pharmacies'], { queryParams: { pharmacyId: id } });
+    };
   }
 
   // ── Map init ───────────────────────────────────────────────────────────────
@@ -163,6 +235,7 @@ export class ZonesComponent implements OnInit, OnDestroy {
     this.renderAllPolygons();
     this.tryFlyToTarget();
     this.tryDropPharmacyPin();
+    this.renderPharmacyMarkers();
   }
 
   // ── Drawing ────────────────────────────────────────────────────────────────

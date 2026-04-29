@@ -231,6 +231,51 @@
   text-align: center;
 }
 
+.ordonnance-modal {
+  width: min(860px, calc(100vw - 32px));
+  max-height: 90vh;
+
+  .modal-body {
+    overflow: auto;
+  }
+}
+
+.ordonnance-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ordonnance-file-name {
+  font-size: 13px;
+  color: var(--gray-500);
+  word-break: break-word;
+}
+
+.ordonnance-loading {
+  font-size: 14px;
+  color: var(--gray-500);
+  text-align: center;
+  padding: 24px 0;
+}
+
+.ordonnance-image,
+.ordonnance-frame {
+  width: 100%;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+}
+
+.ordonnance-image {
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+.ordonnance-frame {
+  min-height: 70vh;
+}
+
 .report-target-card {
   border: 1px solid var(--gray-200);
   background: var(--gray-50);

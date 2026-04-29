@@ -95,6 +95,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     const m: Record<string, string> = {
       PENDING: 'badge-warning',
       ASSIGNED: 'badge-primary',
+      ASSIGNED_FROM_ADMIN: 'badge-primary',
       ACCEPTED: 'badge-info',
       PICKED_UP: 'badge-info',
       DELIVERING: 'badge-info',
@@ -115,6 +116,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     const l: Record<string, string> = {
       PENDING: 'En attente',
       ASSIGNED: 'Assigne',
+      ASSIGNED_FROM_ADMIN: 'Assigne (admin)',
       ACCEPTED: 'Accepte',
       PICKED_UP: 'Recupere',
       DELIVERING: 'En livraison',

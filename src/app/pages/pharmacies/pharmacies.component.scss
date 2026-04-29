@@ -228,6 +228,19 @@
   .pharma-card-name { color: var(--gray-400); }
 }
 
+/* Highlighted card (navigated from map) */
+.pharma-card-highlighted {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  animation: highlight-pulse 3.5s ease-out forwards;
+}
+
+@keyframes highlight-pulse {
+  0%   { outline-color: var(--primary); background-color: #e0f2fe; }
+  60%  { outline-color: var(--primary); background-color: #f0f9ff; }
+  100% { outline-color: transparent; background-color: transparent; }
+}
+
 /* Section headers between active / blocked */
 .section-header {
   display: flex;

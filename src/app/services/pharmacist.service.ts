@@ -129,6 +129,12 @@ export interface PharmacienNotification {
   };
 }
 
+export interface OrdonnanceAccess {
+  url: string;
+  mimeType?: string | null;
+  fileName?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PharmacistService {
   private readonly BASE = '/api/v1/pharmacien';
@@ -143,6 +149,10 @@ export class PharmacistService {
 
   getOrder(orderId: number): Observable<OrderDTO> {
     return this.http.get<OrderDTO>(`${this.BASE}/orders/${orderId}`);
+  }
+
+  getOrdonnanceAccess(orderId: number): Observable<OrdonnanceAccess> {
+    return this.http.get<OrdonnanceAccess>(`${this.BASE}/orders/${orderId}/ordonnance-access`);
   }
 
   acceptOrder(orderId: number, email: string): Observable<OrderDTO> {

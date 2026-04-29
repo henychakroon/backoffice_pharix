@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AdminService, PharmacienProfile } from '../../services/admin.service';
 
 @Component({
@@ -15,14 +15,40 @@ export class PharmaciesComponent implements OnInit {
   loading = true;
   selectedZone = '';
   selectedStatus = '';
+  highlightedPharmacyId: number | null = null;
+  private targetPharmacyId: number | null = null;
 
-  constructor(private admin: AdminService, private router: Router) {}
+  constructor(private admin: AdminService, private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const id = params['pharmacyId'];
+      if (id) { this.targetPharmacyId = +id; }
+    });
     this.admin.getPharmacies().subscribe({
-      next: data => { this.pharmacies = data; this.loading = false; },
+      next: data => {
+        this.pharmacies = data;
+        this.loading = false;
+        this.scrollToTarget();
+      },
       error: () => { this.loading = false; }
     });
+  }
+
+  private scrollToTarget(): void {
+    if (!this.targetPharmacyId) return;
+    const id = this.targetPharmacyId;
+    this.targetPharmacyId = null;
+    const p = this.pharmacies.find(x => x.id === id);
+    if (!p) return;
+    // Switch to the right tab
+    this.activeTab = (p.pharmacyType ?? 'PHARMACY') === 'PARAPHARMACIE' ? 'parapharmacie' : 'pharmacie';
+    this.highlightedPharmacyId = id;
+    setTimeout(() => {
+      const el = document.getElementById('pharmacy-card-' + id) || document.getElementById('pharmacy-row-' + id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    setTimeout(() => { this.highlightedPharmacyId = null; }, 3500);
   }
 
   getPharmacyStatus(p: PharmacienProfile): 'ACTIVE' | 'PENDING' | 'BLOCKED' {
@@ -112,7 +138,7 @@ export class PharmaciesComponent implements OnInit {
 
   statusLabel(status: 'ACTIVE' | 'PENDING' | 'BLOCKED'): string {
     if (status === 'ACTIVE')  return 'Actif';
-    if (status === 'PENDING') return 'En attente';
+    if (status === 'PENDING') return 'En attente d\'approbation';
     return 'Bloqué';
   }
 }

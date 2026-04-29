@@ -58,6 +58,9 @@ export interface OrderDTO {
   id: number;
   status: string;
   description?: string;
+  ordonnanceUrl?: string;
+  ordonnanceMimeType?: string;
+  ordonnanceFileName?: string;
   productId?: number;
   productName?: string;
   orderItems?: OrderItemDTO[];
