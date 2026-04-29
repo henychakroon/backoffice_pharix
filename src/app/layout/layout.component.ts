@@ -40,6 +40,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private pharmacienWsSub?: Subscription;
   private soundInterval: any = null;
   private adminAlertInterval: any = null;
+  private tokenCheckInterval: any = null;
 
   adminNavItems = [
     {
@@ -131,6 +132,13 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.tokenCheckInterval = setInterval(() => {
+      if (!this.auth.isLoggedIn()) {
+        this.auth.clearSession();
+        this.router.navigate(['/login']);
+      }
+    }, 30000);
+
     if (this.auth.isAdmin()) {
       const token = this.auth.getAccessToken();
       if (token) {
@@ -170,6 +178,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.tokenCheckInterval) clearInterval(this.tokenCheckInterval);
     this.wsSub?.unsubscribe();
     this.pharmacienWsSub?.unsubscribe();
     this.ws.disconnect();

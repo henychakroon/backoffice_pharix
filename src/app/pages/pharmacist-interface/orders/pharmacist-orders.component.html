@@ -23,6 +23,7 @@
     <button class="tab-btn" [class.active]="statusFilter==='READY_FOR_DELIVERY'"     (click)="statusFilter='READY_FOR_DELIVERY'">Prêtes <span class="tab-count primary">{{ countByStatus('READY_FOR_DELIVERY') }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='DELIVERED'"              (click)="statusFilter='DELIVERED'">Livrées <span class="tab-count success">{{ countByStatus('DELIVERED') }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='REFUSED_FROM_PHARMACIEN'" (click)="statusFilter='REFUSED_FROM_PHARMACIEN'">Refusées <span class="tab-count danger">{{ countByStatus('REFUSED_FROM_PHARMACIEN') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='CANCELLED'" (click)="statusFilter='CANCELLED'">Annulées <span class="tab-count danger">{{ countByStatus('CANCELLED') }}</span></button>
   </div>
 
   <!-- Filter bar -->
@@ -71,29 +72,34 @@
             <td><span class="badge" [ngClass]="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
             <td (click)="$event.stopPropagation()">
               <div class="action-btns">
-                <!-- PENDING → Accept / Refuse -->
-                <ng-container *ngIf="o.status === 'PENDING'">
-                  <button class="btn btn-success btn-sm" [disabled]="actionLoading === o.id" (click)="acceptOrder(o, $event)" data-tooltip="Accepter">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  </button>
-                  <button class="btn btn-danger btn-sm" [disabled]="actionLoading === o.id" (click)="refuseOrder(o, $event)" data-tooltip="Refuser">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </ng-container>
+                <!-- Status-transition actions: hidden for terminal/cancelled orders -->
+                <ng-container *ngIf="o.status !== 'CANCELLED' && o.status !== 'REFUSED_FROM_PHARMACIEN' && o.status !== 'REFUSED_FROM_LIVREUR' && o.status !== 'DELIVERED'">
 
-                <!-- ACCEPTED_FROM_PHARMACIEN → Ready for delivery -->
-                <button *ngIf="o.status === 'ACCEPTED_FROM_PHARMACIEN'"
-                        class="btn btn-primary btn-sm" [disabled]="actionLoading === o.id"
-                        (click)="markReady(o, $event)" data-tooltip="Rendre commande prête">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                  Rendre prête
-                </button>
-                <button *ngIf="o.status === 'READY_FOR_DELIVERY'"
-                        class="btn btn-warning btn-sm" [disabled]="actionLoading === o.id"
-                        (click)="undoReady(o, $event)" data-tooltip="Annuler commande prête">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20a8 8 0 0 0-8-8H4"/></svg>
-                  Annuler prête
-                </button>
+                  <!-- PENDING → Accept / Refuse -->
+                  <ng-container *ngIf="o.status === 'PENDING'">
+                    <button class="btn btn-success btn-sm" [disabled]="actionLoading === o.id" (click)="acceptOrder(o, $event)" data-tooltip="Accepter">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </button>
+                    <button class="btn btn-danger btn-sm" [disabled]="actionLoading === o.id" (click)="refuseOrder(o, $event)" data-tooltip="Refuser">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </ng-container>
+
+                  <!-- ACCEPTED_FROM_PHARMACIEN → Ready for delivery -->
+                  <button *ngIf="o.status === 'ACCEPTED_FROM_PHARMACIEN'"
+                          class="btn btn-primary btn-sm" [disabled]="actionLoading === o.id"
+                          (click)="markReady(o, $event)" data-tooltip="Rendre commande prête">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    Rendre prête
+                  </button>
+                  <button *ngIf="o.status === 'READY_FOR_DELIVERY'"
+                          class="btn btn-warning btn-sm" [disabled]="actionLoading === o.id"
+                          (click)="undoReady(o, $event)" data-tooltip="Annuler commande prête">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20a8 8 0 0 0-8-8H4"/></svg>
+                    Annuler prête
+                  </button>
+
+                </ng-container>
 
                 <button class="btn btn-ghost btn-sm"
                   (click)="openProductsForOrder(o, $event)"
@@ -221,22 +227,25 @@
 
       <!-- Drawer actions -->
       <div class="drawer-actions">
-        <ng-container *ngIf="selectedOrder.status === 'PENDING'">
-          <button class="btn btn-success btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="acceptOrder(selectedOrder, $event)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Accepter
+        <!-- Status-transition actions: hidden for terminal/cancelled orders -->
+        <ng-container *ngIf="selectedOrder.status !== 'CANCELLED' && selectedOrder.status !== 'REFUSED_FROM_PHARMACIEN' && selectedOrder.status !== 'REFUSED_FROM_LIVREUR' && selectedOrder.status !== 'DELIVERED'">
+          <ng-container *ngIf="selectedOrder.status === 'PENDING'">
+            <button class="btn btn-success btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="acceptOrder(selectedOrder, $event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Accepter
+            </button>
+            <button class="btn btn-danger btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="refuseOrder(selectedOrder, $event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Refuser
+            </button>
+          </ng-container>
+          <button *ngIf="selectedOrder.status === 'ACCEPTED_FROM_PHARMACIEN'" class="btn btn-primary btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="markReady(selectedOrder, $event)">
+            Rendre commande prête
           </button>
-          <button class="btn btn-danger btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="refuseOrder(selectedOrder, $event)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            Refuser
+          <button *ngIf="selectedOrder.status === 'READY_FOR_DELIVERY'" class="btn btn-warning btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="undoReady(selectedOrder, $event)">
+            Annuler commande prête
           </button>
         </ng-container>
-        <button *ngIf="selectedOrder.status === 'ACCEPTED_FROM_PHARMACIEN'" class="btn btn-primary btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="markReady(selectedOrder, $event)">
-          Rendre commande prête
-        </button>
-        <button *ngIf="selectedOrder.status === 'READY_FOR_DELIVERY'" class="btn btn-warning btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="undoReady(selectedOrder, $event)">
-          Annuler commande prête
-        </button>
         <button class="btn btn-ghost btn-sm" (click)="openProductsForOrder(selectedOrder, $event)">
           Vérifier les produits
         </button>
