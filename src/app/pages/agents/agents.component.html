@@ -3,7 +3,7 @@
   <div class="page-header">
     <div>
       <div class="page-title">Livreurs</div>
-      <div class="page-subtitle">{{ livreurs.length }} livreurs � {{ countOnline() }} en ligne</div>
+      <div class="page-subtitle">{{ livreurs.length }} livreurs &bull; {{ countOnline() }} en ligne</div>
     </div>
   </div>
 
@@ -12,7 +12,7 @@
   <!-- Live status bar -->
   <div class="live-bar" *ngIf="!loading">
     <div class="live-dot"></div>
-    <span class="text-sm fw-600">Statut en temps reel</span>
+    <span class="text-sm fw-600">Statut en temps réel</span>
     <div class="live-chips">
       <div class="live-chip success">
         <span class="chip-count">{{ countOnline() }}</span>
@@ -56,7 +56,7 @@
         <div class="agent-avatar">{{ initials(a.email) }}</div>
         <div class="agent-info">
           <div class="agent-name">{{ a.email }}</div>
-          <div class="text-xs text-muted">ID {{ a.id }} � {{ a.zoneName || 'Aucune zone' }}</div>
+          <div class="text-xs text-muted">ID {{ a.id }} &bull; {{ a.zoneName || 'Aucune zone' }}</div>
         </div>
         <span class="badge" [ngClass]="a.online ? 'badge-success' : 'badge-gray'">
           <span class="pulse-dot" *ngIf="a.online"></span>
@@ -65,26 +65,29 @@
       </div>
 
       <div class="zone-warning" *ngIf="!hasDeliveryZone(a)">
-        Ce livreur n'a pas encore de zone de livraison assignee.
+        Ce livreur n'a pas encore de zone de livraison assignée.
       </div>
 
       <div class="agent-stats">
         <div class="agent-stat">
-          <div class="agent-stat-val" style="font-size:12px">{{ a.phone || '�' }}</div>
-          <div class="agent-stat-lbl">Telephone</div>
+          <div class="agent-stat-val" style="font-size:12px">{{ a.phone || '—' }}</div>
+          <div class="agent-stat-lbl">Téléphone</div>
         </div>
         <div class="agent-stat">
-          <div class="agent-stat-val" style="font-size:12px">{{ a.vehicleType || '�' }}</div>
-          <div class="agent-stat-lbl">Vehicule</div>
+          <div class="agent-stat-val" style="font-size:12px">{{ a.vehicleType || '—' }}</div>
+          <div class="agent-stat-lbl">Véhicule</div>
         </div>
         <div class="agent-stat">
-          <div class="agent-stat-val" style="font-size:12px">{{ a.zoneName || '�' }}</div>
+          <div class="agent-stat-val" style="font-size:12px">{{ a.zoneName || '—' }}</div>
           <div class="agent-stat-lbl">Zone</div>
         </div>
       </div>
 
       <div class="agent-footer">
-        <div style="flex:1"></div>
+        <button class="btn btn-outline btn-sm" (click)="openZoneAssign(a)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          Zone
+        </button>
         <button class="btn btn-primary btn-sm" (click)="openAssign(a)">Assigner commande</button>
       </div>
     </div>
@@ -99,12 +102,12 @@
 
 </div>
 
-<!-- ------ ASSIGN ORDER MODAL ------ -->
+<!-- ── ASSIGN ORDER MODAL ── -->
 <div class="modal-backdrop" *ngIf="assignTarget" (click)="closeAssign()"></div>
 <div class="modal" *ngIf="assignTarget">
   <div class="modal-header">
     <div class="modal-title">Assigner une commande</div>
-    <div class="text-sm text-muted">Livreur: {{ assignTarget.email }}</div>
+    <div class="text-sm text-muted">Livreur : {{ assignTarget.email }}</div>
     <button class="btn btn-ghost btn-icon" (click)="closeAssign()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
@@ -120,8 +123,8 @@
            (click)="selectedOrderId = o.id">
         <div class="livreur-avatar">{{ o.id }}</div>
         <div class="livreur-info">
-          <div class="fw-600" style="font-size:13px">{{ o.clientName }} � {{ o.pharmacyName }}</div>
-          <div class="text-xs text-muted">{{ o.total | currency:'TND':'symbol':'1.2-2' }} � {{ o.createdAt | date:'dd MMM HH:mm' }}</div>
+          <div class="fw-600" style="font-size:13px">{{ o.clientName }} &bull; {{ o.pharmacyName }}</div>
+          <div class="text-xs text-muted">{{ o.total | currency:'TND':'symbol':'1.2-2' }} &bull; {{ o.createdAt | date:'dd MMM HH:mm' }}</div>
         </div>
         <div class="livreur-status">
           <span class="badge badge-warning" style="font-size:10px">{{ o.status }}</span>
@@ -133,6 +136,70 @@
     <button class="btn btn-ghost btn-sm" (click)="closeAssign()">Annuler</button>
     <button class="btn btn-primary btn-sm" [disabled]="!selectedOrderId || assignLoading" (click)="confirmAssign()">
       {{ assignLoading ? 'En cours...' : 'Confirmer' }}
+    </button>
+  </div>
+</div>
+
+<!-- ── ASSIGN ZONE MODAL ── -->
+<div class="modal-backdrop" *ngIf="zoneTarget" (click)="closeZoneAssign()"></div>
+<div class="modal" *ngIf="zoneTarget">
+  <div class="modal-header">
+    <div>
+      <div class="modal-title">Assigner une zone de livraison</div>
+      <div class="text-sm text-muted">Livreur : {{ zoneTarget.email }}</div>
+    </div>
+    <button class="btn btn-ghost btn-icon" (click)="closeZoneAssign()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <!-- Current zone pill -->
+  <div class="modal-current-zone" *ngIf="zoneTarget.zoneName">
+    <span class="current-zone-label">Zone actuelle :</span>
+    <span class="current-zone-pill">{{ zoneTarget.zoneName }}</span>
+  </div>
+
+  <div class="modal-body">
+    <div *ngIf="zones.length === 0" class="text-muted" style="padding:16px 0;text-align:center">
+      Aucune zone disponible
+    </div>
+    <div class="zone-list">
+      <div class="zone-option"
+           *ngFor="let z of zones"
+           [class.selected]="selectedZoneId === z.id"
+           [class.inactive-zone]="!z.active"
+           (click)="selectedZoneId = z.id">
+        <span class="zone-dot" [class.active]="z.active" [class.inactive]="!z.active"></span>
+        <div class="zone-option-info">
+          <div class="zone-option-name">{{ z.name }}</div>
+          <div class="zone-option-meta">
+            {{ z.livreurCount }} livreur{{ z.livreurCount !== 1 ? 's' : '' }}
+            &bull;
+            {{ z.pharmacyCount }} pharmacie{{ z.pharmacyCount !== 1 ? 's' : '' }}
+          </div>
+        </div>
+        <span class="badge" [ngClass]="z.active ? 'badge-success' : 'badge-gray'" style="font-size:10px">
+          {{ z.active ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button
+      *ngIf="hasDeliveryZone(zoneTarget)"
+      class="btn btn-danger-outline btn-sm"
+      [disabled]="zoneLoading"
+      (click)="confirmUnassignZone()">
+      Retirer la zone
+    </button>
+    <div style="flex:1"></div>
+    <button class="btn btn-ghost btn-sm" (click)="closeZoneAssign()">Annuler</button>
+    <button
+      class="btn btn-primary btn-sm"
+      [disabled]="!selectedZoneId || selectedZoneId === zoneTarget.zoneId || zoneLoading"
+      (click)="confirmZoneAssign()">
+      {{ zoneLoading ? 'En cours...' : 'Confirmer' }}
     </button>
   </div>
 </div>

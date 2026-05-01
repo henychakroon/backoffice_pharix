@@ -1,0 +1,296 @@
+<div class="animate-fadeInUp">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Paramètres</div>
+      <div class="page-subtitle">Configuration de la plateforme</div>
+    </div>
+    <button class="btn btn-primary btn-sm" (click)="save()" [disabled]="saving || loading">
+      <span *ngIf="saving" class="spinner"></span>
+      <span *ngIf="!saving">Enregistrer</span>
+    </button>
+  </div>
+
+  <!-- Loading skeleton -->
+  <div *ngIf="loading" class="skeleton-card">
+    <div class="skeleton-line wide"></div>
+    <div class="skeleton-line medium"></div>
+    <div class="skeleton-line medium"></div>
+  </div>
+
+  <!-- Success banner -->
+  <div *ngIf="saved" class="alert alert-success">
+    <span class="alert-icon">✓</span>
+    Configuration enregistrée avec succès.
+  </div>
+
+  <!-- Error banner -->
+  <div *ngIf="error" class="alert alert-error">
+    <span class="alert-icon">!</span>
+    {{ error }}
+  </div>
+
+  <!-- Delivery pricing card -->
+  <div *ngIf="!loading" class="settings-card">
+    <div class="card-header">
+      <div class="card-icon">🚚</div>
+      <div>
+        <div class="card-title">Tarification de la livraison</div>
+        <div class="card-subtitle">Définissez le prix de livraison et le seuil de livraison gratuite</div>
+      </div>
+    </div>
+
+    <div class="fields">
+
+      <div class="field-group">
+        <label class="field-label" for="deliveryPrice">Prix de livraison (DT)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">DT</span>
+          <input
+            id="deliveryPrice"
+            type="number"
+            min="0"
+            step="0.01"
+            class="field-input"
+            [(ngModel)]="deliveryPrice"
+            placeholder="ex: 5.00"
+          />
+        </div>
+        <p class="field-hint">Montant facturé au client pour chaque livraison.</p>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="field-group">
+        <label class="field-label" for="freeThreshold">Seuil de livraison gratuite (DT)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">DT</span>
+          <input
+            id="freeThreshold"
+            type="number"
+            min="0"
+            step="0.01"
+            class="field-input"
+            [(ngModel)]="freeDeliveryThreshold"
+            placeholder="ex: 50.00"
+          />
+        </div>
+        <p class="field-hint">La livraison est offerte lorsque le sous-total atteint ce montant. Laissez à 0 pour désactiver.</p>
+      </div>
+
+    </div>
+
+    <!-- Preview -->
+    <div class="preview-row" *ngIf="deliveryPrice !== null">
+      <div class="preview-chip">
+        <span class="preview-label">Livraison standard</span>
+        <span class="preview-value">{{ deliveryPrice | number:'1.2-2' }} DT</span>
+      </div>
+      <div class="preview-chip free" *ngIf="freeDeliveryThreshold && freeDeliveryThreshold > 0">
+        <span class="preview-label">Gratuite dès</span>
+        <span class="preview-value">{{ freeDeliveryThreshold | number:'1.2-2' }} DT</span>
+      </div>
+      <div class="preview-chip disabled" *ngIf="!freeDeliveryThreshold || freeDeliveryThreshold === 0">
+        <span class="preview-label">Livraison gratuite</span>
+        <span class="preview-value">Désactivée</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frais de service Médicaments -->
+  <div *ngIf="!loading" class="settings-card">
+    <div class="card-header">
+      <div class="card-icon">💊</div>
+      <div>
+        <div class="card-title">Frais de service Médicaments</div>
+        <div class="card-subtitle">Facturés au patient comme frais de traitement numérique (numérisation, vérification, mise en relation)</div>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">i</span>
+      Conformément à l'article 29 du Code de Déontologie, aucune commission n'est prélevée sur la vente de médicaments (0%).
+    </div>
+
+    <div class="fields">
+      <div class="field-group">
+        <label class="field-label" for="medicamentServiceFee">Frais par ordonnance (DT)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">DT</span>
+          <input
+            id="medicamentServiceFee"
+            type="number"
+            min="0"
+            step="0.001"
+            class="field-input"
+            [(ngModel)]="medicamentServiceFee"
+            placeholder="ex: 2.000"
+          />
+        </div>
+        <p class="field-hint">Recommandé : entre 2,000 et 5,000 DT par ordonnance.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Commission Parapharmacie -->
+  <div *ngIf="!loading" class="settings-card">
+    <div class="card-header">
+      <div class="card-icon">🛒</div>
+      <div>
+        <div class="card-title">Commission Parapharmacie</div>
+        <div class="card-subtitle">Prélevée sur chaque vente de produits parapharmacie (prix libres)</div>
+      </div>
+    </div>
+
+    <div class="fields">
+      <div class="field-group">
+        <label class="field-label" for="parapharmacieCommissionPercent">Commission (% HT)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">%</span>
+          <input
+            id="parapharmacieCommissionPercent"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            class="field-input"
+            [(ngModel)]="parapharmacieCommissionPercent"
+            placeholder="ex: 12"
+          />
+        </div>
+        <p class="field-hint">Recommandé : entre 12% et 15%. Référence : Glovo prend jusqu'à 28%.</p>
+      </div>
+    </div>
+
+    <div class="preview-row" *ngIf="parapharmacieCommissionPercent !== null">
+      <div class="preview-chip">
+        <span class="preview-label">Commission appliquée</span>
+        <span class="preview-value">{{ parapharmacieCommissionPercent | number:'1.0-2' }} %</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Abonnement Pharmacien -->
+  <div *ngIf="!loading" class="settings-card">
+    <div class="card-header">
+      <div class="card-icon">🏥</div>
+      <div>
+        <div class="card-title">Abonnement B2B Pharmacie</div>
+        <div class="card-subtitle">Modèle SaaS : support 24/7 + synchronisation des stocks en temps réel</div>
+      </div>
+    </div>
+
+    <div class="fields">
+      <div class="field-group">
+        <label class="field-label" for="pharmacistMonthlySubscription">Abonnement mensuel (DT HT)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">DT</span>
+          <input
+            id="pharmacistMonthlySubscription"
+            type="number"
+            min="0"
+            step="0.001"
+            class="field-input"
+            [(ngModel)]="pharmacistMonthlySubscription"
+            placeholder="ex: 150.000"
+          />
+        </div>
+        <p class="field-hint">Recommandé : entre 150 et 200 DT/mois. Référence : Med.tn facture 850–1500 DT/an.</p>
+      </div>
+    </div>
+
+    <div class="preview-row" *ngIf="pharmacistMonthlySubscription !== null">
+      <div class="preview-chip">
+        <span class="preview-label">Mensuel</span>
+        <span class="preview-value">{{ pharmacistMonthlySubscription | number:'1.2-3' }} DT</span>
+      </div>
+      <div class="preview-chip">
+        <span class="preview-label">Annuel estimé</span>
+        <span class="preview-value">{{ (pharmacistMonthlySubscription * 12) | number:'1.2-3' }} DT</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Livraison de nuit -->
+  <div *ngIf="!loading" class="settings-card">
+    <div class="card-header">
+      <div class="card-icon">🌙</div>
+      <div>
+        <div class="card-title">Livraison de nuit</div>
+        <div class="card-subtitle">Tarif majoré appliqué pendant la plage horaire nocturne</div>
+      </div>
+    </div>
+
+    <div class="fields">
+      <div class="field-group">
+        <label class="field-label" for="nightDeliveryPrice">Prix livraison nuit (DT)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">DT</span>
+          <input
+            id="nightDeliveryPrice"
+            type="number"
+            min="0"
+            step="0.001"
+            class="field-input"
+            [(ngModel)]="nightDeliveryPrice"
+            placeholder="ex: 6.500"
+          />
+        </div>
+        <p class="field-hint">Recommandé : tarif jour + 3,000 DT (≈ 6,500 DT). Référence : taxis +50% la nuit.</p>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="field-group">
+        <label class="field-label" for="nightStartHour">Début de la plage nuit (heure)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">h</span>
+          <input
+            id="nightStartHour"
+            type="number"
+            min="0"
+            max="23"
+            step="1"
+            class="field-input"
+            [(ngModel)]="nightStartHour"
+            placeholder="ex: 21"
+          />
+        </div>
+        <p class="field-hint">Heure (0–23) à partir de laquelle le tarif nuit s'applique.</p>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="field-group">
+        <label class="field-label" for="nightEndHour">Fin de la plage nuit (heure)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">h</span>
+          <input
+            id="nightEndHour"
+            type="number"
+            min="0"
+            max="23"
+            step="1"
+            class="field-input"
+            [(ngModel)]="nightEndHour"
+            placeholder="ex: 5"
+          />
+        </div>
+        <p class="field-hint">Heure (0–23) à laquelle se termine le tarif nuit.</p>
+      </div>
+    </div>
+
+    <div class="preview-row" *ngIf="nightDeliveryPrice !== null">
+      <div class="preview-chip">
+        <span class="preview-label">Plage nuit</span>
+        <span class="preview-value">{{ nightStartHour }}h – {{ nightEndHour }}h</span>
+      </div>
+      <div class="preview-chip">
+        <span class="preview-label">Tarif nuit</span>
+        <span class="preview-value">{{ nightDeliveryPrice | number:'1.2-3' }} DT</span>
+      </div>
+    </div>
+  </div>
+
+</div>

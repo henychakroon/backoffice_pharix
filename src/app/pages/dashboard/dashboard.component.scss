@@ -1,8 +1,122 @@
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
+}
+
+/* ── Revenu Pharix card ─────────────────────────────────────────────────── */
+.pharix-revenue-card {
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+  border: 1px solid #e3e7ff;
+
+  .card-header {
+    border-bottom-color: #eef1ff;
+  }
+}
+
+.pharix-total {
+  padding: 20px 22px 18px;
+  border-bottom: 1px dashed var(--gray-100);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pharix-total-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-400);
+}
+.pharix-total-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: #4f6ef7;
+  line-height: 1.1;
+}
+.pharix-total-unit {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-500);
+  margin-left: 4px;
+}
+.pharix-total-hint {
+  font-size: 12px;
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+
+.pharix-breakdown {
+  padding: 8px 8px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pharix-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  transition: background 0.15s;
+
+  & + .pharix-row { margin-top: 2px; }
+  &:hover { background: #f7f9ff; }
+
+  &.pharix-row-recurring {
+    margin-top: 8px;
+    border-top: 1px dashed var(--gray-100);
+    padding-top: 16px;
+  }
+}
+
+.pharix-row-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.pharix-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.pharix-row-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-800);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pharix-row-meta {
+  font-size: 11px;
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+.pharix-row-amount {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-800);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pharix-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #fde8ed;
+  color: #f5365c;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .dashboard-grid {
@@ -41,7 +155,7 @@
   margin-top: 2px;
 }
 
-/* Status */
+/* Status breakdown */
 .status-list {
   padding: 14px 20px 16px;
   display: flex;
@@ -61,14 +175,27 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
+.status-label {
+  width: 70px;
+  flex-shrink: 0;
+  font-size: var(--font-sm);
+}
+.status-pct {
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+  font-size: var(--font-sm);
+}
 .status-bar-wrap {
   flex: 1;
-}
-.status-bar {
   height: 6px;
+  background: var(--gray-100);
   border-radius: var(--radius-full);
   overflow: hidden;
-  background: var(--gray-100);
+}
+.status-bar-fill {
+  height: 6px;
+  border-radius: var(--radius-full);
   transition: width .6s ease;
 }
 
@@ -92,7 +219,7 @@
   text-align: center;
   flex-shrink: 0;
 }
-.pharma-info { flex: 0 0 auto; min-width: 100px; }
+.pharma-info { flex: 0 0 auto; min-width: 90px; }
 .pharma-name {
   font-size: var(--font-sm);
   font-weight: 600;
@@ -104,4 +231,38 @@
   background: var(--gray-100);
   border-radius: var(--radius-full);
   overflow: hidden;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 24px;
+  text-align: center;
+  color: var(--gray-400);
+  font-size: var(--font-sm);
+}
+
+/* Charts row */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  overflow: hidden;
+}
+
+.chart-body {
+  padding: 12px 16px 4px;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: 130px;
 }

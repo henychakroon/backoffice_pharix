@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService, OrderDTO, LivreurAdmin } from '../../services/admin.service';
+import { DeliveryZoneService, DeliveryZone } from '../../services/delivery-zone.service';
 
 @Component({
   selector: 'app-agents',
@@ -13,14 +14,23 @@ export class AgentsComponent implements OnInit {
 
   livreurs: LivreurAdmin[] = [];
   allOrders: OrderDTO[] = [];
+  zones: DeliveryZone[] = [];
   loading = false;
 
-  // Assign modal
+  // Assign order modal
   assignTarget: LivreurAdmin | null = null;
   assignLoading = false;
   selectedOrderId: number | null = null;
 
-  constructor(private adminService: AdminService) {}
+  // Assign zone modal
+  zoneTarget: LivreurAdmin | null = null;
+  selectedZoneId: number | null = null;
+  zoneLoading = false;
+
+  constructor(
+    private adminService: AdminService,
+    private zoneService: DeliveryZoneService
+  ) {}
 
   ngOnInit(): void {
     this.loading = true;
@@ -30,6 +40,9 @@ export class AgentsComponent implements OnInit {
     });
     this.adminService.getOrders().subscribe({
       next: orders => { this.allOrders = orders; }
+    });
+    this.zoneService.getAll().subscribe({
+      next: res => { this.zones = res.data ?? []; }
     });
   }
 
@@ -53,6 +66,8 @@ export class AgentsComponent implements OnInit {
       o.status === 'PENDING' || o.status === 'READY_FOR_DELIVERY'
     );
   }
+
+  // ── Order assign ──────────────────────────────────────────────────────────
 
   openAssign(l: LivreurAdmin) {
     this.assignTarget = l;
@@ -78,6 +93,58 @@ export class AgentsComponent implements OnInit {
     });
   }
 
+  // ── Zone assign ───────────────────────────────────────────────────────────
+
+  openZoneAssign(l: LivreurAdmin) {
+    this.zoneTarget = l;
+    this.selectedZoneId = l.zoneId ?? null;
+  }
+
+  closeZoneAssign() {
+    this.zoneTarget = null;
+    this.selectedZoneId = null;
+    this.zoneLoading = false;
+  }
+
+  confirmZoneAssign() {
+    if (!this.zoneTarget || !this.selectedZoneId) return;
+    this.zoneLoading = true;
+    this.zoneService.assignLivreur(this.zoneTarget.id, this.selectedZoneId).subscribe({
+      next: res => {
+        this.applyZoneUpdate(this.zoneTarget!.id, res.data);
+        this.zoneLoading = false;
+        this.closeZoneAssign();
+      },
+      error: () => { this.zoneLoading = false; }
+    });
+  }
+
+  confirmUnassignZone() {
+    if (!this.zoneTarget) return;
+    this.zoneLoading = true;
+    this.zoneService.unassignLivreur(this.zoneTarget.id).subscribe({
+      next: res => {
+        this.applyZoneUpdate(this.zoneTarget!.id, res.data);
+        this.zoneLoading = false;
+        this.closeZoneAssign();
+      },
+      error: () => { this.zoneLoading = false; }
+    });
+  }
+
+  private applyZoneUpdate(livreurId: number, updated: any) {
+    const idx = this.livreurs.findIndex(l => l.id === livreurId);
+    if (idx !== -1) {
+      this.livreurs[idx] = {
+        ...this.livreurs[idx],
+        zoneId: updated.zoneId,
+        zoneName: updated.zoneName
+      };
+    }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   initials(email: string): string {
     return (email || '?')[0].toUpperCase();
   }
@@ -90,7 +157,7 @@ export class AgentsComponent implements OnInit {
     this.zoneFilter = this.zoneFilter === 'unassigned' ? 'all' : 'unassigned';
   }
 
-  countOnline() { return this.livreurs.filter(l => l.online).length; }
-  countOffline() { return this.livreurs.filter(l => !l.online).length; }
+  countOnline()      { return this.livreurs.filter(l => l.online).length; }
+  countOffline()     { return this.livreurs.filter(l => !l.online).length; }
   countWithoutZone() { return this.livreurs.filter(l => !this.hasDeliveryZone(l)).length; }
 }

@@ -20,6 +20,7 @@ import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/order
 import { PharmacistProductsComponent }  from './pages/pharmacist-interface/products/pharmacist-products.component';
 import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/schedule/pharmacist-schedule.component';
 import { AuthGuard }           from './guards/auth.guard';
+import { MonthlyDashboardComponent } from './pages/monthly-dashboard/monthly-dashboard.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -41,6 +42,7 @@ const routes: Routes = [
       { path: 'analytics',  component: AnalyticsComponent  },
       { path: 'settings',   component: SettingsComponent   },
       { path: 'zones',      component: ZonesComponent      },
+      { path: 'dashboard/monthly', component: MonthlyDashboardComponent }
     ]
   },
   {

@@ -3,16 +3,16 @@
   <!-- Page Header -->
   <div class="page-header">
     <div>
-      <div class="page-title">Dashboard</div>
-      <div class="page-subtitle">Welcome back, Admin — here's what's happening today</div>
+      <div class="page-title">Dashboard PHARIX_PROBE_20260501_A</div>
+      <div class="page-subtitle">Bienvenue Admin — voici ce qui se passe aujourd'hui</div>
     </div>
     <div style="display:flex; gap:10px; align-items:center">
       <div class="input-wrap input-no-icon" style="width:160px">
-        <input type="date" style="padding-left:12px">
+        <input type="date" [value]="selectedDate" (change)="onDateChange($event)" style="padding-left:12px">
       </div>
-      <button class="btn btn-primary btn-sm">
+      <button class="btn btn-primary btn-sm" (click)="loadDashboard()" [disabled]="loading">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-        Refresh
+        Actualiser
       </button>
     </div>
   </div>
@@ -21,74 +21,157 @@
   <div class="stats-grid">
     <div class="stat-card" *ngFor="let s of stats; let i = index" [style.animation-delay]="(i * 0.07) + 's'" style="animation: fadeInUp .4s both">
       <div class="stat-icon" [style.background]="s.bg" [style.color]="s.color">
-        <!-- bag -->
-        <svg *ngIf="s.icon==='bag'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        <!-- users -->
+        <svg *ngIf="s.icon==='bag'"   width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <svg *ngIf="s.icon==='users'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-        <!-- pharma (cross) -->
         <svg *ngIf="s.icon==='pharma'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        <!-- truck -->
-        <svg *ngIf="s.icon==='truck'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-        <!-- money -->
-        <svg *ngIf="s.icon==='money'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-        <!-- clock -->
         <svg *ngIf="s.icon==='clock'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <svg *ngIf="s.icon==='money'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
       </div>
       <div class="stat-body">
-        <div class="stat-value">{{ s.value }}</div>
+        <div class="stat-value">{{ loading ? '—' : s.value }}</div>
         <div class="stat-label">{{ s.label }}</div>
-        <div class="stat-delta" [class.up]="s.up" [class.down]="!s.up">
-          <svg *ngIf="s.up" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          <svg *ngIf="!s.up" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          {{ s.delta }} vs last month
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- ── Bottom Row ── -->
+  <!-- ── Revenu Pharix (company cut from configured rates) ── -->
+  <div class="card pharix-revenue-card" *ngIf="dashboard?.companyRevenue as cr">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Revenu Pharix   {{ selectedDate }}</div>
+        <div class="card-sub">Notre marge selon les configurations actuelles (frais de service, commission, livraison, abonnements)</div>
+      </div>
+      <a routerLink="/settings" class="btn btn-ghost btn-sm" style="font-size:12px">
+        Configurer
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+    </div>
+
+    <!-- Total of the day (excludes monthly subscription) -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px">
+
+  <div class="pharix-total">
+    <div class="pharix-total-label">Revenu du jour</div>
+    <div class="pharix-total-value">
+      {{ cr.totalDaily | number:'1.2-3' }}
+      <span class="pharix-total-unit">DT</span>
+    </div>
+    <div class="pharix-total-hint">
+      Commandes livrées le {{ selectedDate }}
+    </div>
+  </div>
+
+  <div class="pharix-total">
+    <div class="pharix-total-label">Revenu du mois</div>
+    <div class="pharix-total-value">
+      {{ dashboard?.monthlyRevenue | number:'1.2-3' }}
+      <span class="pharix-total-unit">DT</span>
+    </div>
+    <div class="pharix-total-hint">
+      Total du mois sélectionné
+    </div>
+  </div>
+
+</div>
+
+    <!-- Breakdown grid -->
+    <div class="pharix-breakdown">
+
+      <div class="pharix-row">
+        <div class="pharix-row-icon" style="background:#eef1ff;color:#4f6ef7">💊</div>
+        <div class="pharix-row-body">
+          <div class="pharix-row-title">Frais de service Médicaments</div>
+          <div class="pharix-row-meta">
+            {{ cr.medicamentOrders }} ordonnance(s) × {{ cr.medicamentServiceFeeRate | number:'1.2-3' }} DT
+          </div>
+        </div>
+        <div class="pharix-row-amount">{{ cr.medicamentServiceFee | number:'1.2-3' }} DT</div>
+      </div>
+
+      <div class="pharix-row">
+        <div class="pharix-row-icon" style="background:#e0faf5;color:#00c9a7">🛒</div>
+        <div class="pharix-row-body">
+          <div class="pharix-row-title">Commission Parapharmacie</div>
+          <div class="pharix-row-meta">
+            {{ cr.parapharmacieCommissionPercent | number:'1.0-2' }}% × {{ cr.parapharmacieSubtotal | number:'1.2-2' }} DT (subtotal livré)
+          </div>
+        </div>
+        <div class="pharix-row-amount">{{ cr.parapharmacieCommission | number:'1.2-3' }} DT</div>
+      </div>
+
+      <div class="pharix-row">
+        <div class="pharix-row-icon" style="background:#fff3ee;color:#fb6340">🚚</div>
+        <div class="pharix-row-body">
+          <div class="pharix-row-title">Frais de livraison</div>
+          <div class="pharix-row-meta">Somme des frais de livraison encaissés</div>
+        </div>
+        <div class="pharix-row-amount">{{ cr.deliveryRevenue | number:'1.2-3' }} DT</div>
+      </div>
+
+      <div class="pharix-row pharix-row-recurring">
+        <div class="pharix-row-icon" style="background:#fde8ed;color:#f5365c">🏥</div>
+        <div class="pharix-row-body">
+          <div class="pharix-row-title">
+            Abonnements Pharmacies
+            <span class="pharix-badge">Récurrent</span>
+          </div>
+          <div class="pharix-row-meta">
+            {{ cr.activePharmacyCount }} pharmacie(s) active(s) × {{ cr.pharmacistMonthlySubscription | number:'1.2-3' }} DT/mois
+            · ≈ {{ cr.subscriptionDailyProrated | number:'1.2-3' }} DT/jour
+          </div>
+        </div>
+        <div class="pharix-row-amount">{{ cr.subscriptionMonthly | number:'1.2-3' }} DT/mois</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Main Row ── -->
   <div class="dashboard-grid">
 
     <!-- Recent Orders -->
     <div class="card dashboard-orders">
       <div class="card-header">
         <div>
-          <div class="card-title">Recent Orders</div>
-          <div class="card-sub">Last 24 hours activity</div>
+          <div class="card-title">Commandes récentes</div>
+          <div class="card-sub">Activité du {{ selectedDate }}</div>
         </div>
         <a routerLink="/orders" class="btn btn-ghost btn-sm">
-          View all
+          Voir tout
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
       </div>
       <div class="table-wrapper">
-        <table class="pharix-table">
+        <table class="pharix-table" *ngIf="dashboard?.recentOrders?.length; else noOrders">
           <thead>
             <tr>
-              <th>Order</th>
+              <th>Commande</th>
               <th>Client</th>
-              <th class="hide-mobile">Pharmacy</th>
-              <th class="hide-mobile">Agent</th>
+              <th class="hide-mobile">Pharmacie</th>
+              <th class="hide-mobile">Livreur</th>
               <th>Total</th>
-              <th>Status</th>
+              <th>Statut</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let o of recentOrders">
-              <td><span class="fw-600 text-primary">#{{ o.id }}</span><br><span class="text-xs text-muted">{{ o.description }}</span></td>
+            <tr *ngFor="let o of dashboard!.recentOrders">
+              <td><span class="fw-600 text-primary">#{{ o.id }}</span><br><span class="text-xs text-muted">{{ o.description || '—' }}</span></td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <div class="avatar avatar-sm">C</div>
+                  <div class="avatar avatar-sm">{{ (o.clientName || 'C')[0].toUpperCase() }}</div>
                   <span class="hide-mobile">{{ o.clientName }}</span>
                 </div>
               </td>
               <td class="hide-mobile text-muted">{{ o.pharmacyName }}</td>
               <td class="hide-mobile text-muted">{{ o.livreurName ?? '—' }}</td>
-              <td class="fw-600">{{ o.total }}</td>
+              <td class="fw-600">{{ o.total | number:'1.2-2' }} TND</td>
               <td><span class="badge" [ngClass]="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
             </tr>
           </tbody>
         </table>
+        <ng-template #noOrders>
+          <div class="empty-state">Aucune commande ce jour</div>
+        </ng-template>
       </div>
     </div>
 
@@ -96,48 +179,57 @@
     <div class="dashboard-right">
 
       <!-- Order Status Breakdown -->
-      <div class="card status-card">
+      <div class="card status-card" *ngIf="dashboard">
         <div class="card-header">
-          <div class="card-title">Order Status</div>
-          <span class="badge badge-gray">Today</span>
+          <div class="card-title">Statut des commandes</div>
+          <span class="badge badge-gray">{{ selectedDate }}</span>
         </div>
         <div class="status-list">
           <div class="status-row">
             <div class="status-dot" style="background:var(--success)"></div>
-            <span>Delivered</span>
-            <div class="status-bar-wrap"><div class="status-bar" style="width:68%;background:var(--success-light)"><div style="width:68%;background:var(--success)"></div></div></div>
-            <span class="fw-600">68%</span>
+            <span class="status-label">Livrées</span>
+            <div class="status-bar-wrap">
+              <div class="status-bar-fill" [style.width]="statusPct(dashboard.deliveredOrders) + '%'" style="background:var(--success)"></div>
+            </div>
+            <span class="fw-600 status-pct">{{ statusPct(dashboard.deliveredOrders) }}%</span>
           </div>
           <div class="status-row">
             <div class="status-dot" style="background:var(--info)"></div>
-            <span>In Transit</span>
-            <div class="status-bar-wrap"><div class="status-bar" style="width:15%;background:var(--info-light)"><div style="width:100%;background:var(--info)"></div></div></div>
-            <span class="fw-600">15%</span>
+            <span class="status-label">En livraison</span>
+            <div class="status-bar-wrap">
+              <div class="status-bar-fill" [style.width]="statusPct(dashboard.inTransitOrders) + '%'" style="background:var(--info)"></div>
+            </div>
+            <span class="fw-600 status-pct">{{ statusPct(dashboard.inTransitOrders) }}%</span>
           </div>
           <div class="status-row">
             <div class="status-dot" style="background:var(--warning)"></div>
-            <span>Pending</span>
-            <div class="status-bar-wrap"><div class="status-bar" style="width:10%;background:var(--warning-light)"><div style="width:100%;background:var(--warning)"></div></div></div>
-            <span class="fw-600">10%</span>
+            <span class="status-label">En attente</span>
+            <div class="status-bar-wrap">
+              <div class="status-bar-fill" [style.width]="statusPct(dashboard.pendingOrders) + '%'" style="background:var(--warning)"></div>
+            </div>
+            <span class="fw-600 status-pct">{{ statusPct(dashboard.pendingOrders) }}%</span>
           </div>
           <div class="status-row">
             <div class="status-dot" style="background:var(--danger)"></div>
-            <span>Cancelled</span>
-            <div class="status-bar-wrap"><div class="status-bar" style="width:7%;background:var(--danger-light)"><div style="width:100%;background:var(--danger)"></div></div></div>
-            <span class="fw-600">7%</span>
+            <span class="status-label">Annulées</span>
+            <div class="status-bar-wrap">
+              <div class="status-bar-fill" [style.width]="statusPct(dashboard.cancelledOrders) + '%'" style="background:var(--danger)"></div>
+            </div>
+            <span class="fw-600 status-pct">{{ statusPct(dashboard.cancelledOrders) }}%</span>
           </div>
         </div>
       </div>
 
       <!-- Top Pharmacies -->
-      <div class="card top-pharma-card">
+      <div class="card top-pharma-card" *ngIf="dashboard">
         <div class="card-header">
           <div class="card-title">Top Pharmacies</div>
-          <a routerLink="/pharmacies" class="btn btn-ghost btn-sm" style="font-size:12px">See all</a>
+          <a routerLink="/pharmacies" class="btn btn-ghost btn-sm" style="font-size:12px">Voir tout</a>
         </div>
         <div class="pharma-list">
-          <div class="pharma-row" *ngFor="let p of topPharmacies; let i = index">
-            <div class="pharma-rank">{{ i+1 }}</div>
+          <div *ngIf="!dashboard.topPharmacies?.length" class="empty-state">Aucune donnée</div>
+          <div class="pharma-row" *ngFor="let p of dashboard.topPharmacies; let i = index">
+            <div class="pharma-rank">{{ i + 1 }}</div>
             <div class="avatar avatar-sm" style="background:var(--primary-light);color:var(--primary);font-weight:700">{{ (p.pharmacyName || '?')[0] }}</div>
             <div class="pharma-info">
               <div class="pharma-name">{{ p.pharmacyName }}</div>
@@ -145,9 +237,10 @@
             </div>
             <div class="pharma-bar-wrap">
               <div class="pharma-bar">
-                <div [style.width]="'60%'" style="background:var(--primary);height:100%;border-radius:4px;transition:width .6s ease"></div>
+                <div [style.width]="(dashboard.topPharmacies[0].orderCount ? (p.orderCount / dashboard.topPharmacies[0].orderCount * 100) : 0) + '%'"
+                     style="background:var(--primary);height:100%;border-radius:4px;transition:width .6s ease"></div>
               </div>
-              <div class="text-xs text-muted" style="margin-top:2px;text-align:right">{{ p.active ? 'Active' : 'Inactive' }}</div>
+              <div class="text-xs text-muted" style="margin-top:2px;text-align:right">{{ p.orderCount }} cmd</div>
             </div>
           </div>
         </div>
@@ -156,5 +249,108 @@
     </div>
   </div>
 
+  <!-- ── Charts Row ── -->
+  <div class="charts-row" *ngIf="dashboard">
+
+    <!-- Orders per day (bar chart) -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Commandes — 7 derniers jours</div>
+          <div class="card-sub">Tendance quotidienne</div>
+        </div>
+      </div>
+      <div class="chart-body">
+        <svg class="chart-svg" viewBox="0 0 560 130" preserveAspectRatio="none">
+          <!-- horizontal grid lines -->
+          <line x1="0" y1="25" x2="560" y2="25" stroke="var(--gray-100)" stroke-width="1"/>
+          <line x1="0" y1="50" x2="560" y2="50" stroke="var(--gray-100)" stroke-width="1"/>
+          <line x1="0" y1="75" x2="560" y2="75" stroke="var(--gray-100)" stroke-width="1"/>
+          <line x1="0" y1="100" x2="560" y2="100" stroke="var(--gray-100)" stroke-width="1"/>
+
+          <ng-container *ngFor="let d of dashboard!.ordersByDay; let i = index">
+            <!-- bar -->
+            <rect
+              [attr.x]="barX(i)"
+              [attr.y]="barY(d.orderCount)"
+              [attr.width]="50"
+              [attr.height]="barH(d.orderCount)"
+              rx="4"
+              [attr.fill]="i === 6 ? 'var(--primary)' : 'var(--primary-light)'"
+            />
+            <!-- count label above bar (only when > 0) -->
+            <text *ngIf="d.orderCount > 0"
+              [attr.x]="labelX(i)"
+              [attr.y]="barY(d.orderCount) - 4"
+              text-anchor="middle"
+              font-size="9"
+              font-weight="600"
+              fill="var(--primary)">{{ d.orderCount }}</text>
+            <!-- day label below -->
+            <text
+              [attr.x]="labelX(i)"
+              y="118"
+              text-anchor="middle"
+              font-size="10"
+              [attr.fill]="i === 6 ? 'var(--gray-700)' : 'var(--gray-400)'"
+              [attr.font-weight]="i === 6 ? '700' : '400'">{{ d.dayLabel }}</text>
+          </ng-container>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Revenue per day (line chart) -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Revenu — 7 derniers jours</div>
+          <div class="card-sub">Commandes livrées (TND)</div>
+        </div>
+      </div>
+      <div class="chart-body">
+        <svg class="chart-svg" viewBox="0 0 560 130" preserveAspectRatio="none">
+          <!-- grid lines -->
+          <line x1="0" y1="25" x2="560" y2="25" stroke="var(--gray-100)" stroke-width="1"/>
+          <line x1="0" y1="50" x2="560" y2="50" stroke="var(--gray-100)" stroke-width="1"/>
+          <line x1="0" y1="75" x2="560" y2="75" stroke="var(--gray-100)" stroke-width="1"/>
+          <line x1="0" y1="100" x2="560" y2="100" stroke="var(--gray-100)" stroke-width="1"/>
+
+          <!-- area fill -->
+          <polygon [attr.points]="revenueAreaPoints" fill="var(--primary)" opacity="0.08"/>
+          <!-- line -->
+          <polyline [attr.points]="revenueLinePoints" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+          <ng-container *ngFor="let d of dashboard!.ordersByDay; let i = index">
+            <!-- dot -->
+            <circle
+              [attr.cx]="labelX(i)"
+              [attr.cy]="revY(d.revenue)"
+              r="4"
+              fill="white"
+              stroke="var(--primary)"
+              stroke-width="2"
+            />
+            <!-- day label -->
+            <text
+              [attr.x]="labelX(i)"
+              y="118"
+              text-anchor="middle"
+              font-size="10"
+              [attr.fill]="i === 6 ? 'var(--gray-700)' : 'var(--gray-400)'"
+              [attr.font-weight]="i === 6 ? '700' : '400'">{{ d.dayLabel }}</text>
+            <!-- revenue label above dot (only today's dot) -->
+            <text *ngIf="i === 6 && (d.revenue | number:'1.0-0') !== '0'"
+              [attr.x]="labelX(i)"
+              [attr.y]="revY(d.revenue) - 8"
+              text-anchor="middle"
+              font-size="9"
+              font-weight="600"
+              fill="var(--primary)">{{ d.revenue | number:'1.0-0' }}</text>
+          </ng-container>
+        </svg>
+      </div>
+    </div>
+
+  </div>
 
 </div>

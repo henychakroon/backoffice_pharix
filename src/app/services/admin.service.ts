@@ -120,6 +120,16 @@ export interface DeliveryConfig {
   freeDeliveryThreshold: number;
 }
 
+export interface RevenueConfig {
+  id?: number;
+  medicamentServiceFee: number;
+  parapharmacieCommissionPercent: number;
+  pharmacistMonthlySubscription: number;
+  nightDeliveryPrice: number;
+  nightStartHour: number;
+  nightEndHour: number;
+}
+
 export interface AdvertisementBanner {
   id: number;
   title: string;
@@ -148,6 +158,126 @@ export interface AdminReport {
   reportedRole: string;
 }
 
+export interface TopPharmacyDash {
+  id: number;
+  pharmacyName: string;
+  ownerName: string;
+  active: boolean;
+  orderCount: number;
+}
+
+export interface DayStat {
+  date: string;
+  dayLabel: string;
+  orderCount: number;
+  revenue: number;
+}
+
+export interface CompanyRevenue {
+  // Date-scoped (selected day)
+  medicamentServiceFee: number;
+  parapharmacieCommission: number;
+  deliveryRevenue: number;
+  totalDaily: number;
+
+  // Recurring (monthly)
+  subscriptionMonthly: number;
+  subscriptionDailyProrated: number;
+
+  // Context
+  medicamentServiceFeeRate: number;
+  parapharmacieCommissionPercent: number;
+  pharmacistMonthlySubscription: number;
+  medicamentOrders: number;
+  parapharmacieSubtotal: number;
+  activePharmacyCount: number;
+}
+
+export interface AdminDashboard {
+  totalOrders: number;
+  totalClients: number;
+  activePharmacies: number;
+  pendingOrders: number;
+  deliveredOrders: number;
+  inTransitOrders: number;
+  cancelledOrders: number;
+  totalRevenue: number;
+  recentOrders: OrderDTO[];
+  topPharmacies: TopPharmacyDash[];
+  ordersByDay: DayStat[];
+  companyRevenue: CompanyRevenue | null;
+  monthlyRevenue: number;
+}
+// Add this interface alongside AdminDashboard
+export interface MonthlyDashboard {
+  year: number;
+  month: number;
+  monthLabel: string;
+
+  totalOrders: number;
+  deliveredOrders: number;
+  cancelledOrders: number;
+  pendingOrders: number;
+  inTransitOrders: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+  newClients: number;
+  activePharmacies: number;
+
+  revenueGrowthPct: number | null;
+  orderGrowthPct:   number | null;
+
+  dailyStats:         DayStatM[];
+  weeklyStats:        WeekStat[];
+  statusDistribution: StatusShare[];
+  revenueByType:      PharmacyTypeRevenue[];
+  topPharmacies:      TopPharmacyM[];
+  dailyOutcomes:      DailyOutcome[];
+}
+
+export interface DayStatM {
+  date: string;
+  dayLabel: string;
+  orderCount: number;
+  revenue: number;
+}
+
+export interface WeekStat {
+  weekNumber: number;
+  weekLabel: string;
+  orderCount: number;
+  revenue: number;
+}
+
+export interface StatusShare {
+  status: string;
+  count: number;
+  percentage: number;
+}
+
+export interface PharmacyTypeRevenue {
+  type: string;      // "MEDICAMENT" | "PARAPHARMACIE"
+  revenue: number;
+  orderCount: number;
+}
+
+export interface TopPharmacyM {
+  id: number;
+  pharmacyName: string;
+  ownerName: string;
+  active: boolean;
+  orderCount: number;
+  revenue: number;
+}
+
+export interface DailyOutcome {
+  date: string;
+  dayLabel: string;
+  delivered: number;
+  cancelled: number;
+}
+
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -155,6 +285,21 @@ export class AdminService {
   private readonly BASE = '/api/v1/admin';
 
   constructor(private http: HttpClient) {}
+
+  // Dashboard
+  getDashboard(date?: string): Observable<AdminDashboard> {
+    const q = date ? `?date=${date}` : '';
+    return this.http.get<AdminDashboard>(`${this.BASE}/dashboard${q}`);
+  }
+
+
+  // Add this method inside AdminService
+getMonthlyDashboard(year: number, month: number): Observable<MonthlyDashboard> {
+  return this.http.get<MonthlyDashboard>(
+    `${this.BASE}/dashboard/monthly?year=${year}&month=${month}`
+  );
+}
+
 
   // Pharmacies
   getPharmacies(): Observable<PharmacienProfile[]> {
@@ -223,6 +368,15 @@ export class AdminService {
 
   saveDeliveryConfig(deliveryPrice: number, freeDeliveryThreshold: number): Observable<DeliveryConfig> {
     return this.http.post<DeliveryConfig>(`${this.BASE}/save_config`, { deliveryPrice, freeDeliveryThreshold });
+  }
+
+  // Revenue config (commissions, abonnements, frais service, livraison nuit)
+  getRevenueConfig(): Observable<RevenueConfig> {
+    return this.http.get<RevenueConfig>(`${this.BASE}/revenue_config`);
+  }
+
+  saveRevenueConfig(payload: RevenueConfig): Observable<RevenueConfig> {
+    return this.http.post<RevenueConfig>(`${this.BASE}/save_revenue_config`, payload);
   }
 
   // Advertisement Banners

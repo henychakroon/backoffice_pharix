@@ -1,0 +1,159 @@
+.monthly-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+// Growth badge on KPI cards
+.growth-badge {
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 20px;
+  display: inline-block;
+
+  &.growth-up   { background: #e3faf1; color: var(--success); }
+  &.growth-down { background: #fde8ed; color: var(--danger);  }
+}
+
+.growth-inline {
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 12px;
+
+  &.growth-up   { background: #e3faf1; color: var(--success); }
+  &.growth-down { background: #fde8ed; color: var(--danger);  }
+}
+
+// Hero revenue chart card
+.hero-chart {
+  .card-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .hero-summary {
+    display: flex;
+    gap: 28px;
+
+    .hero-stat {
+      text-align: right;
+
+      .hero-stat-label {
+        font-size: 11px;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+
+      .hero-stat-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--gray-700);
+        margin-top: 2px;
+      }
+    }
+  }
+}
+
+// Two-column charts row
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Three-column chart row (outcome + 2 donuts)
+.charts-grid-3 {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Top pharmacies redesigned
+.top-pharma-card {
+  .pharma-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 4px 0;
+  }
+
+  .pharma-row {
+    display: grid;
+    grid-template-columns: 28px 36px 1fr 2fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background .2s;
+
+    &:last-child { border-bottom: none; }
+    &:hover { background: var(--gray-50); }
+
+    .pharma-rank {
+      font-weight: 700;
+      color: var(--gray-400);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .pharma-info {
+      min-width: 0;
+
+      .pharma-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--gray-700);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .pharma-bar-wrap {
+      .pharma-bar {
+        height: 8px;
+        background: var(--gray-100);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+    }
+
+    .pharma-revenue {
+      text-align: right;
+      min-width: 80px;
+    }
+  }
+}
+
+// ApexCharts overrides for cleaner look
+::ng-deep {
+  .apexcharts-tooltip {
+    box-shadow: 0 8px 24px rgba(50, 50, 93, 0.12) !important;
+    border: 1px solid var(--gray-100) !important;
+    border-radius: 8px !important;
+  }
+
+  .apexcharts-legend-text {
+    color: var(--gray-600) !important;
+    font-size: 12px !important;
+  }
+
+  .apexcharts-xaxis-label,
+  .apexcharts-yaxis-label {
+    fill: var(--gray-500) !important;
+  }
+}

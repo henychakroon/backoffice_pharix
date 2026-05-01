@@ -48,6 +48,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       items: [
         { label: 'Dashboard',         icon: 'grid',        route: '/dashboard'  },
         { label: 'Orders',            icon: 'shopping-bag',route: '/orders'     },
+        { label: 'Monthly Dashboard', icon: 'bar-chart-2', route: '/dashboard/monthly' },
       ]
     },
     {

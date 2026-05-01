@@ -3,6 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { NgApexchartsModule } from 'ng-apexcharts';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 
 import { AppRoutingModule }    from './app-routing.module';
@@ -28,6 +29,7 @@ import { PharmacistNearbyPharmaciesComponent } from './pages/pharmacist-interfac
 import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/orders/pharmacist-orders.component';
 import { PharmacistProductsComponent }  from './pages/pharmacist-interface/products/pharmacist-products.component';
 import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/schedule/pharmacist-schedule.component';
+import { MonthlyDashboardComponent } from './pages/monthly-dashboard/monthly-dashboard.component';
 
 @NgModule({
   declarations: [
@@ -53,6 +55,7 @@ import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/sched
     PharmacistOrdersComponent,
     PharmacistProductsComponent,
     PharmacistScheduleComponent,
+    MonthlyDashboardComponent,
   ],
   imports: [
     BrowserModule,
@@ -60,6 +63,7 @@ import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/sched
     ReactiveFormsModule,
     HttpClientModule,
     ScrollingModule,
+    NgApexchartsModule,
     AppRoutingModule
   ],
   providers: [
