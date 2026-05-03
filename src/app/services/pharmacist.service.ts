@@ -135,6 +135,35 @@ export interface OrdonnanceAccess {
   fileName?: string | null;
 }
 
+export interface PharmacienBanner {
+  id: number;
+  title: string;
+  description: string;
+  imageUrl: string | null;
+  validated: boolean;
+  active: boolean;
+  pharmacienId: number;
+  pharmacyName: string;
+  ownerName: string;
+  zoneId: number | null;
+  zoneName: string | null;
+}
+
+export interface ClientHealthProfile {
+  fullName?: string | null;
+  age?: number | null;
+  gender?: string | null;
+  height?: number | null;
+  weight?: number | null;
+  hasHealthProblems?: boolean | null;
+  hasPathologicalHistory?: boolean | null;
+  hasOngoingTreatment?: boolean | null;
+  hasAllergicHistory?: boolean | null;
+  hasReducedMobility?: boolean | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PharmacistService {
   private readonly BASE = '/api/v1/pharmacien';
@@ -153,6 +182,10 @@ export class PharmacistService {
 
   getOrdonnanceAccess(orderId: number): Observable<OrdonnanceAccess> {
     return this.http.get<OrdonnanceAccess>(`${this.BASE}/orders/${orderId}/ordonnance-access`);
+  }
+
+  getClientHealthProfile(orderId: number): Observable<ClientHealthProfile> {
+    return this.http.get<ClientHealthProfile>(`${this.BASE}/orders/${orderId}/client-profile`);
   }
 
   acceptOrder(orderId: number, email: string): Observable<OrderDTO> {
@@ -266,6 +299,10 @@ export class PharmacistService {
     return this.http.get<OrderDTO[]>(`${this.BASE}/livreur/${livreurId}/ready-orders`);
   }
 
+  getAdminPhoneNumbers(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.BASE}/admin-phone-numbers`);
+  }
+
   getProfile(): Observable<PharmacienProfile> {
     return this.http.get<PharmacienProfile>(`${this.BASE}/profile`);
   }
@@ -290,6 +327,24 @@ export class PharmacistService {
 
   markAllNotificationsRead(): Observable<void> {
     return this.http.put<void>(`${this.BASE}/notifications/read-all`, {});
+  }
+
+  // ── Advertisement banners ─────────────────────────────────────────────────
+
+  getMyBanners(): Observable<PharmacienBanner[]> {
+    return this.http.get<PharmacienBanner[]>(`${this.BASE}/banners`);
+  }
+
+  createBanner(title: string, description: string, image?: File | null): Observable<PharmacienBanner> {
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    if (image) formData.append('image', image);
+    return this.http.post<PharmacienBanner>(`${this.BASE}/banners`, formData);
+  }
+
+  deleteBanner(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.BASE}/banners/${id}`);
   }
 
   private buildProductFormData(

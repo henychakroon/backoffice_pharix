@@ -15,130 +15,204 @@
   <!-- Loading -->
   <div *ngIf="loading" style="text-align:center;padding:40px;color:var(--gray-400)">Chargement...</div>
 
-  <!-- Status tabs -->
-  <div class="status-tabs" *ngIf="!loading">
-    <button class="tab-btn" [class.active]="statusFilter==='all'"             (click)="statusFilter='all'">Tout <span class="tab-count">{{ allOrders.length }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='PENDING'"         (click)="statusFilter='PENDING'">En attente <span class="tab-count warn">{{ countByStatus('PENDING') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='ACCEPTED_FROM_PHARMACIEN'" (click)="statusFilter='ACCEPTED_FROM_PHARMACIEN'">Acceptées <span class="tab-count info">{{ countByStatus('ACCEPTED_FROM_PHARMACIEN') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='READY_FOR_DELIVERY'"     (click)="statusFilter='READY_FOR_DELIVERY'">Prêtes <span class="tab-count primary">{{ countByStatus('READY_FOR_DELIVERY') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='DELIVERED'"              (click)="statusFilter='DELIVERED'">Livrées <span class="tab-count success">{{ countByStatus('DELIVERED') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='REFUSED_FROM_PHARMACIEN'" (click)="statusFilter='REFUSED_FROM_PHARMACIEN'">Refusées <span class="tab-count danger">{{ countByStatus('REFUSED_FROM_PHARMACIEN') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='CANCELLED'" (click)="statusFilter='CANCELLED'">Annulées <span class="tab-count danger">{{ countByStatus('CANCELLED') }}</span></button>
-  </div>
-
   <!-- Filter bar -->
   <div class="filter-bar" *ngIf="!loading">
     <div class="input-wrap" style="flex:1;max-width:320px">
       <span class="input-icon">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </span>
-      <input type="text" placeholder="Rechercher par ID ou client..." [(ngModel)]="searchTerm">
+      <input type="text" placeholder="Rechercher par ID ou client..." [ngModel]="searchTerm" (ngModelChange)="onSearchTermChange($event)">
     </div>
   </div>
 
-  <!-- Table -->
-  <div class="card" *ngIf="!loading">
-    <div class="table-wrapper">
-      <table class="pharix-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Client</th>
-            <th class="hide-mobile">Description</th>
-            <th>Total</th>
-            <th>Statut</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let o of filtered" class="order-row" [class.order-row-highlight]="isHighlighted(o.id)" [attr.data-order-id]="o.id" (click)="openDetail(o)">
-            <td>
-              <span class="fw-600 text-primary">#{{ o.id }}</span>
-              <div class="text-xs text-muted">{{ o.createdAt | date:'dd MMM yyyy HH:mm' }}</div>
-            </td>
-            <td>
-              <div style="display:flex;align-items:center;gap:8px">
-                <div class="avatar avatar-sm">{{ (o.clientName || '?')[0] }}</div>
-                <div>
-                  <div class="fw-600" style="font-size:13px">{{ o.clientName }}</div>
-                  <div class="text-xs text-muted hide-mobile">{{ o.clientPhone }}</div>
-                </div>
-              </div>
-            </td>
-            <td class="hide-mobile text-muted" style="font-size:13px;max-width:200px">
-              <span class="truncate" style="display:block">{{ o.description || '–' }}</span>
-            </td>
-            <td class="fw-600">{{ o.total | number:'1.2-2' }} TND</td>
-            <td><span class="badge" [ngClass]="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
-            <td (click)="$event.stopPropagation()">
-              <div class="action-btns">
-                <!-- Status-transition actions: hidden for terminal/cancelled orders -->
-                <ng-container *ngIf="o.status !== 'CANCELLED' && o.status !== 'REFUSED_FROM_PHARMACIEN' && o.status !== 'REFUSED_FROM_LIVREUR' && o.status !== 'DELIVERED'">
+  <!-- Lifecycle mapper (queue-oriented) -->
+  <div class="status-tabs" *ngIf="!loading" style="margin-bottom:10px">
+    <button class="tab-btn" *ngFor="let group of lifecycleGroups"
+            [class.active]="lifecycleFilter===group.id"
+            (click)="setLifecycleFilter(group.id)">
+      {{ group.label }}
+      <span class="tab-count">{{ lifecycleGroupCounts[group.id] }}</span>
+    </button>
+  </div>
 
-                  <!-- PENDING → Accept / Refuse -->
-                  <ng-container *ngIf="o.status === 'PENDING'">
-                    <button class="btn btn-success btn-sm" [disabled]="actionLoading === o.id" (click)="acceptOrder(o, $event)" data-tooltip="Accepter">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <!-- Status mapper: inside selected lifecycle -->
+  <div class="status-tabs" *ngIf="!loading">
+    <button class="tab-btn" [class.active]="statusSectionFilter==='all'" (click)="setStatusSectionFilter('all')">
+      Tous les statuts
+      <span class="tab-count">{{ filteredCount }}</span>
+    </button>
+    <button class="tab-btn" *ngFor="let status of mapperStatusSections"
+            [class.active]="statusSectionFilter===status"
+            (click)="setStatusSectionFilter(status)">
+      {{ statusLabel(status) }}
+      <span class="tab-count">{{ statusOrdersMap[status].length }}</span>
+    </button>
+  </div>
+
+  <ng-template #statusAccordion let-status>
+    <div class="card" style="margin-bottom:16px">
+      <div class="table-header"
+           (click)="toggleStatusSection(status)"
+           style="padding:14px 16px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;user-select:none">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge" [ngClass]="statusBadge(status)">{{ statusLabel(status) }}</span>
+          <span class="text-sm text-muted">{{ statusOrdersMap[status].length }} commande(s)</span>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             [style.transform]="isSectionExpanded(status) ? 'rotate(180deg)' : 'rotate(0deg)'"
+             style="transition:transform .2s ease;color:var(--gray-400)">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+
+      <div class="table-wrapper" *ngIf="isSectionExpanded(status) && statusOrdersMap[status].length > 0; else emptyByStatus">
+        <table class="pharix-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Client</th>
+              <th class="hide-mobile">Description</th>
+              <th>Total</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of statusOrdersMap[status]" class="order-row" [class.order-row-highlight]="isHighlighted(o.id)" [attr.data-order-id]="o.id" (click)="openDetail(o)">
+              <td>
+                <span class="fw-600 text-primary">#{{ o.id }}</span>
+                <div class="text-xs text-muted">{{ o.createdAt | date:'dd MMM yyyy HH:mm' }}</div>
+              </td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="avatar avatar-sm">{{ (o.clientName || '?')[0] }}</div>
+                  <div>
+                    <div class="fw-600" style="font-size:13px">{{ o.clientName }}</div>
+                    <div class="text-xs text-muted hide-mobile">{{ o.clientPhone }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile text-muted" style="font-size:13px;max-width:200px">
+                <span class="truncate" style="display:block">{{ o.description || '–' }}</span>
+              </td>
+              <td class="fw-600">{{ o.total | number:'1.2-2' }} TND</td>
+              <td><span class="badge" [ngClass]="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
+              <td (click)="$event.stopPropagation()">
+                <div class="action-btns">
+                  <ng-container *ngIf="o.status !== 'CANCELLED' && o.status !== 'REFUSED_FROM_PHARMACIEN' && o.status !== 'REFUSED_FROM_LIVREUR' && o.status !== 'DELIVERED'">
+                    <ng-container *ngIf="o.status === 'PENDING'">
+                      <button class="btn btn-success btn-sm" [disabled]="actionLoading === o.id" (click)="acceptOrder(o, $event)" data-tooltip="Accepter">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </button>
+                      <button class="btn btn-danger btn-sm" [disabled]="actionLoading === o.id" (click)="refuseOrder(o, $event)" data-tooltip="Refuser">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </ng-container>
+
+                    <button *ngIf="o.status === 'ACCEPTED_FROM_PHARMACIEN'"
+                            class="btn btn-primary btn-sm" [disabled]="actionLoading === o.id"
+                            (click)="markReady(o, $event)" data-tooltip="Rendre commande prête">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                      Rendre prête
                     </button>
-                    <button class="btn btn-danger btn-sm" [disabled]="actionLoading === o.id" (click)="refuseOrder(o, $event)" data-tooltip="Refuser">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <button *ngIf="o.status === 'READY_FOR_DELIVERY'"
+                            class="btn btn-warning btn-sm" [disabled]="actionLoading === o.id"
+                            (click)="undoReady(o, $event)" data-tooltip="Annuler commande prête">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20a8 8 0 0 0-8-8H4"/></svg>
+                      Annuler prête
                     </button>
                   </ng-container>
 
-                  <!-- ACCEPTED_FROM_PHARMACIEN → Ready for delivery -->
-                  <button *ngIf="o.status === 'ACCEPTED_FROM_PHARMACIEN'"
-                          class="btn btn-primary btn-sm" [disabled]="actionLoading === o.id"
-                          (click)="markReady(o, $event)" data-tooltip="Rendre commande prête">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                    Rendre prête
+                  <ng-container *ngIf="o.status === 'DISPATCH_FAILED'">
+                    <span class="text-xs text-muted" *ngIf="adminPhoneNumbers.length > 0">Contact admin (urgence dispatch)</span>
+                    <a *ngFor="let phone of adminPhoneNumbers"
+                       class="btn btn-danger btn-sm"
+                       [href]="'tel:' + phone"
+                       title="Appeler un admin">
+                      Appeler {{ formatAdminPhoneDisplay(phone) }}
+                    </a>
+                  </ng-container>
+
+                  <button class="btn btn-ghost btn-sm"
+                    (click)="openProductsForOrder(o, $event)"
+                    data-tooltip="Vérifier les produits commandés">
+                    Produits
                   </button>
-                  <button *ngIf="o.status === 'READY_FOR_DELIVERY'"
-                          class="btn btn-warning btn-sm" [disabled]="actionLoading === o.id"
-                          (click)="undoReady(o, $event)" data-tooltip="Annuler commande prête">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20a8 8 0 0 0-8-8H4"/></svg>
-                    Annuler prête
+
+                  <button *ngIf="hasOrdonnance(o)"
+                    class="btn btn-ghost btn-sm"
+                    (click)="openOrdonnance(o, $event)"
+                    data-tooltip="Voir l'ordonnance">
+                    Ordonnance
                   </button>
 
-                </ng-container>
+                  <button class="btn btn-ghost btn-sm"
+                    (click)="openClientConditions(o, $event)"
+                    data-tooltip="Voir les conditions médicales du client">
+                    Conditions client
+                  </button>
 
-                <button class="btn btn-ghost btn-sm"
-                  (click)="openProductsForOrder(o, $event)"
-                  data-tooltip="Vérifier les produits commandés">
-                  Produits
-                </button>
+                  <button *ngIf="o.status !== 'CANCELLED' && o.status !== 'REFUSED_FROM_PHARMACIEN' && o.status !== 'REFUSED_FROM_LIVREUR'"
+                          class="btn btn-ghost btn-sm" (click)="showQr(o, $event)" data-tooltip="QR Code">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                  </button>
 
-                <button *ngIf="hasOrdonnance(o)"
-                  class="btn btn-ghost btn-sm"
-                  (click)="openOrdonnance(o, $event)"
-                  data-tooltip="Voir l'ordonnance">
-                  Ordonnance
-                </button>
+                  <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="Voir" (click)="openDetail(o)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-                <!-- QR Code button (for all non-cancelled/refused) -->
-                <button *ngIf="o.status !== 'CANCELLED' && o.status !== 'REFUSED_FROM_PHARMACIEN' && o.status !== 'REFUSED_FROM_LIVREUR'"
-                        class="btn btn-ghost btn-sm" (click)="showQr(o, $event)" data-tooltip="QR Code">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                </button>
+      <ng-template #emptyByStatus>
+        <div class="empty-state" *ngIf="isSectionExpanded(status)" style="padding:18px 16px">
+          <div class="empty-sub">Aucune commande dans ce statut</div>
+        </div>
+      </ng-template>
+    </div>
+  </ng-template>
 
-                <!-- View detail -->
-                <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="Voir" (click)="openDetail(o)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="empty-state" *ngIf="filtered.length === 0">
-        <div class="empty-icon">&#x1F4E6;</div>
-        <div class="empty-title">Aucune commande</div>
-        <div class="empty-sub">Essayez de modifier vos filtres</div>
+  <!-- Work queue -->
+  <ng-container *ngIf="!loading">
+    <div class="queue-head" style="display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px">
+      <div class="text-sm fw-600" style="color:var(--gray-700)">File de traitement</div>
+      <div class="text-xs text-muted">Priorité aux statuts actionnables</div>
+    </div>
+
+    <ng-container *ngFor="let status of visibleWorkStatusSections">
+      <ng-container *ngTemplateOutlet="statusAccordion; context: { $implicit: status }"></ng-container>
+    </ng-container>
+
+    <!-- History (collapsed by default) -->
+    <div class="card" *ngIf="visibleHistoryStatusSections.length > 0" style="margin-bottom:16px">
+      <div class="table-header"
+           (click)="toggleHistoryExpanded()"
+           style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;user-select:none">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge badge-gray">Historique</span>
+          <span class="text-sm text-muted">{{ historyCount }} commande(s)</span>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             [style.transform]="historyExpanded ? 'rotate(180deg)' : 'rotate(0deg)'"
+             style="transition:transform .2s ease;color:var(--gray-400)">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+
+      <div *ngIf="historyExpanded" style="padding:0 14px 14px">
+        <ng-container *ngFor="let status of visibleHistoryStatusSections">
+          <ng-container *ngTemplateOutlet="statusAccordion; context: { $implicit: status }"></ng-container>
+        </ng-container>
       </div>
     </div>
-    <div class="table-footer">
-      <span class="text-sm text-muted">{{ filtered.length }} / {{ allOrders.length }} commandes</span>
+
+    <div class="table-footer" style="margin-top:4px">
+      <span class="text-sm text-muted">{{ filteredCount }} / {{ allOrders.length }} commandes</span>
     </div>
-  </div>
+  </ng-container>
 </div>
 
 <!-- ══════ ORDER DETAIL DRAWER ══════ -->
@@ -252,10 +326,21 @@
         <button *ngIf="hasOrdonnance(selectedOrder)" class="btn btn-ghost btn-sm" (click)="openOrdonnance(selectedOrder, $event)">
           Voir l'ordonnance
         </button>
+        <button class="btn btn-ghost btn-sm" (click)="openClientConditions(selectedOrder, $event)">
+          Conditions client
+        </button>
         <button *ngIf="selectedOrder.status !== 'CANCELLED' && selectedOrder.status !== 'REFUSED_FROM_PHARMACIEN' && selectedOrder.status !== 'REFUSED_FROM_LIVREUR'" class="btn btn-ghost btn-sm" (click)="showQr(selectedOrder, $event)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           QR Code
         </button>
+        <ng-container *ngIf="selectedOrder.status === 'DISPATCH_FAILED'">
+          <span class="text-xs text-muted" *ngIf="adminPhoneNumbers.length > 0">Contact admin (urgence dispatch)</span>
+          <a class="btn btn-danger btn-sm"
+             *ngFor="let phone of adminPhoneNumbers"
+             [href]="'tel:' + phone">
+            Appeler admin: {{ formatAdminPhoneDisplay(phone) }}
+          </a>
+        </ng-container>
       </div>
     </div>
   </ng-container>
@@ -358,6 +443,77 @@
     <button class="btn btn-danger btn-sm" [disabled]="reportSubmitting" (click)="submitReport()">
       {{ reportSubmitting ? 'Envoi...' : 'Envoyer le signalement' }}
     </button>
+  </div>
+</div>
+
+<!-- ══════ CLIENT CONDITIONS MODAL ══════ -->
+<div class="modal-backdrop" *ngIf="conditionsModalOrder" (click)="closeClientConditions()"></div>
+<div class="modal" *ngIf="conditionsModalOrder">
+  <div class="modal-header">
+    <div>
+      <div class="modal-title">Conditions médicales du client</div>
+      <div class="text-sm text-muted">Commande #{{ conditionsModalOrder.id }} · {{ conditionsModalOrder.clientName }}</div>
+    </div>
+    <button class="btn btn-ghost btn-icon" (click)="closeClientConditions()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="ordonnance-loading" *ngIf="conditionsLoading">Chargement des conditions...</div>
+    <div class="report-feedback error" *ngIf="conditionsError">{{ conditionsError }}</div>
+
+    <ng-container *ngIf="!conditionsLoading && !conditionsError && conditionsProfile as p">
+      <div class="detail-section">
+        <div class="detail-label">Identité</div>
+        <div class="detail-value fw-600">{{ p.fullName || conditionsModalOrder.clientName || '–' }}</div>
+        <div class="text-sm text-muted">
+          <span *ngIf="p.age != null">{{ p.age }} ans</span>
+          <span *ngIf="p.age != null && p.gender"> · </span>
+          <span *ngIf="p.gender">{{ p.gender }}</span>
+          <span *ngIf="p.age == null && !p.gender">Âge / sexe non renseignés</span>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Données physiques</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Taille</span><span>{{ p.height != null ? (p.height + ' cm') : '–' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Poids</span><span>{{ p.weight != null ? (p.weight + ' kg') : '–' }}</span></div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Antécédents et traitements</div>
+        <div *ngIf="!hasAnyCondition(p)" class="text-sm text-muted" style="margin-bottom:8px">
+          Le client n'a déclaré aucune condition particulière.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span class="text-sm">Problèmes de santé (diabète, hypertension, etc.)</span>
+            <span class="badge" [ngClass]="conditionBadgeClass(p.hasHealthProblems)">{{ conditionLabel(p.hasHealthProblems) }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span class="text-sm">Antécédents pathologiques (cancer, AVC, opérations…)</span>
+            <span class="badge" [ngClass]="conditionBadgeClass(p.hasPathologicalHistory)">{{ conditionLabel(p.hasPathologicalHistory) }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span class="text-sm">Traitement(s) en cours</span>
+            <span class="badge" [ngClass]="conditionBadgeClass(p.hasOngoingTreatment)">{{ conditionLabel(p.hasOngoingTreatment) }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span class="text-sm">Antécédents allergiques</span>
+            <span class="badge" [ngClass]="conditionBadgeClass(p.hasAllergicHistory)">{{ conditionLabel(p.hasAllergicHistory) }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span class="text-sm">Mobilité réduite</span>
+            <span class="badge" [ngClass]="conditionBadgeClass(p.hasReducedMobility)">{{ conditionLabel(p.hasReducedMobility) }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost btn-sm" (click)="closeClientConditions()">Fermer</button>
   </div>
 </div>
 

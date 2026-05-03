@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Test — Client App</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #4f8ef7;
+      --primary-dark: #3a79e6;
+      --primary-light: #eef4ff;
+      --success: #22c55e;
+      --success-dark: #16a34a;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --purple: #8b5cf6;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-300: #cbd5e1;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-600: #475569;
+      --gray-700: #334155;
+      --gray-800: #1e293b;
+      --gray-900: #0f172a;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-100);
+      min-height: 100vh;
+      color: var(--gray-800);
+    }
+
+    /* ─── SHARED ─────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px; border: none; border-radius: 10px;
+      padding: 10px 18px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background .15s, transform .1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .btn-primary   { background: var(--primary); color: #fff; }
+    .btn-primary:hover   { background: var(--primary-dark); }
+    .btn-success   { background: var(--success); color: #fff; }
+    .btn-success:hover   { background: var(--success-dark); }
+    .btn-danger    { background: var(--danger); color: #fff; }
+    .btn-danger:hover    { background: #dc2626; }
+    .btn-outline   { background: #fff; color: var(--gray-600); border: 1.5px solid var(--gray-200); }
+    .btn-outline:hover   { background: var(--gray-100); }
+    .btn-ghost     { background: transparent; color: var(--gray-500); border: none; }
+    .btn-ghost:hover     { background: var(--gray-100); }
+    .btn-full { width: 100%; }
+    .btn-sm { padding: 7px 13px; font-size: 13px; }
+    .btn-xs { padding: 4px 9px; font-size: 12px; border-radius: 7px; }
+
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+      border-radius: 50%; animation: spin .6s linear infinite;
+    }
+    .spinner-dark {
+      border-color: rgba(0,0,0,.1); border-top-color: var(--gray-600);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    input[type=text], input[type=email], input[type=password], textarea, select {
+      width: 100%; border: 1.5px solid var(--gray-200); border-radius: 10px;
+      padding: 10px 13px; font-size: 14px; color: var(--gray-800);
+      outline: none; transition: border-color .2s; background: var(--gray-50);
+      font-family: inherit;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--primary); background: #fff; }
+
+    label {
+      display: block; font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .05em;
+      color: var(--gray-500); margin-bottom: 5px;
+    }
+
+    .field { margin-bottom: 14px; }
+
+    .error-msg { color: var(--danger); font-size: 13px; margin-top: 8px; }
+
+    .tag {
+      display: inline-block; border-radius: 20px;
+      padding: 2px 9px; font-size: 11px; font-weight: 700;
+    }
+    .tag-blue   { background: #dbeafe; color: #1d4ed8; }
+    .tag-green  { background: #dcfce7; color: #15803d; }
+    .tag-orange { background: #ffedd5; color: #c2410c; }
+    .tag-gray   { background: var(--gray-100); color: var(--gray-500); }
+    .tag-purple { background: #ede9fe; color: #6d28d9; }
+
+    /* ─── LOGIN ───────────────────────────────────────────────────────────── */
+    #loginView {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px 16px;
+    }
+    .login-card {
+      background: #fff; border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.10);
+      padding: 40px 36px; width: 100%; max-width: 400px;
+    }
+    .login-logo {
+      width: 52px; height: 52px; background: var(--primary);
+      border-radius: 14px; display: flex; align-items: center;
+      justify-content: center; font-size: 26px; margin-bottom: 20px;
+    }
+    .login-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .login-sub { font-size: 13px; color: var(--gray-400); margin-bottom: 28px; }
+
+    /* ─── APP SHELL ───────────────────────────────────────────────────────── */
+    #appView { display: none; height: 100vh; display: none; flex-direction: column; }
+
+    .topbar {
+      background: #fff; border-bottom: 1px solid var(--gray-200);
+      padding: 12px 20px; display: flex; align-items: center;
+      justify-content: space-between; flex-shrink: 0;
+    }
+    .topbar-brand { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .topbar-user { font-size: 13px; color: var(--gray-500); }
+
+    /* tabs */
+    .tabs {
+      display: flex; border-bottom: 1px solid var(--gray-200);
+      background: #fff; flex-shrink: 0; padding: 0 20px; gap: 4px;
+    }
+    .tab-btn {
+      padding: 11px 18px; font-size: 14px; font-weight: 600;
+      border: none; background: none; cursor: pointer; color: var(--gray-500);
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color .15s;
+    }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* ─── ORDER CREATION WIZARD ───────────────────────────────────────────── */
+    #orderTab { display: none; flex: 1; overflow: hidden; }
+    #orderTab.active { display: flex; }
+
+    /* step indicator */
+    .step-bar {
+      background: #fff; border-bottom: 1px solid var(--gray-200);
+      padding: 12px 20px; display: flex; align-items: center; gap: 0;
+      flex-shrink: 0;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600; color: var(--gray-400);
+      flex: 1; min-width: 0;
+    }
+    .step-item.active { color: var(--primary); }
+    .step-item.done   { color: var(--success); }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+      background: var(--gray-200); color: var(--gray-500);
+    }
+    .step-item.active .step-num { background: var(--primary); color: #fff; }
+    .step-item.done   .step-num { background: var(--success); color: #fff; }
+    .step-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .step-sep { width: 24px; height: 1px; background: var(--gray-200); flex-shrink: 0; margin: 0 4px; }
+
+    /* wizard panels */
+    .wizard-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+    /* ─── STEP 1: PHARMACY ────────────────────────────────────────────────── */
+    .type-tabs { display: flex; gap: 10px; margin-bottom: 18px; }
+    .type-tab {
+      flex: 1; padding: 12px; border-radius: 12px;
+      border: 2px solid var(--gray-200); background: #fff;
+      cursor: pointer; text-align: center; transition: all .15s;
+      font-weight: 600; font-size: 14px; color: var(--gray-600);
+    }
+    .type-tab:hover { border-color: var(--primary); color: var(--primary); }
+    .type-tab.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+    .type-tab .type-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+
+    .pharmacy-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .pharmacy-card {
+      background: #fff; border-radius: 12px;
+      border: 2px solid var(--gray-200); padding: 16px;
+      cursor: pointer; transition: all .15s;
+    }
+    .pharmacy-card:hover { border-color: var(--primary); box-shadow: 0 4px 16px rgba(79,142,247,.12); }
+    .pharmacy-card.selected { border-color: var(--primary); background: var(--primary-light); }
+    .pharm-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .pharm-owner { font-size: 12px; color: var(--gray-500); margin-bottom: 8px; }
+    .pharm-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .online-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      background: var(--gray-300);
+    }
+    .online-dot.on { background: var(--success); }
+
+    /* ─── STEP 2: PRODUCTS ────────────────────────────────────────────────── */
+    #productStep { display: none; }
+    #productStep.active { display: flex; gap: 16px; height: 100%; }
+
+    .product-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .product-search-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+    .product-search-bar input { flex: 1; }
+
+    .product-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px; overflow-y: auto;
+    }
+    .product-card {
+      background: #fff; border-radius: 12px;
+      border: 1.5px solid var(--gray-200); padding: 12px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .product-img {
+      width: 100%; aspect-ratio: 1; object-fit: cover;
+      border-radius: 8px; background: var(--gray-100);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; flex-shrink: 0; overflow: hidden;
+    }
+    .product-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    .prod-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
+    .prod-cat  { font-size: 11px; color: var(--gray-400); }
+    .prod-price { font-size: 15px; font-weight: 700; color: var(--primary); }
+    .prod-actions { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+    .qty-ctrl { display: flex; align-items: center; gap: 4px; }
+    .qty-btn {
+      width: 26px; height: 26px; border-radius: 7px;
+      border: 1.5px solid var(--gray-200); background: #fff;
+      font-size: 16px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-weight: 700; color: var(--gray-600);
+      transition: all .15s;
+    }
+    .qty-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .qty-val { font-size: 14px; font-weight: 700; min-width: 20px; text-align: center; }
+
+    /* cart sidebar */
+    .cart-sidebar {
+      width: 280px; flex-shrink: 0; display: flex; flex-direction: column;
+      background: #fff; border-radius: 14px; border: 1.5px solid var(--gray-200);
+      overflow: hidden;
+    }
+    .cart-header {
+      padding: 14px 16px; border-bottom: 1px solid var(--gray-100);
+      font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;
+    }
+    .cart-badge {
+      background: var(--primary); color: #fff; border-radius: 20px;
+      padding: 1px 8px; font-size: 11px; font-weight: 700;
+    }
+    .cart-items { flex: 1; overflow-y: auto; padding: 10px; }
+    .cart-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 4px; border-bottom: 1px solid var(--gray-100);
+    }
+    .cart-item:last-child { border-bottom: none; }
+    .ci-name { flex: 1; font-size: 13px; font-weight: 500; line-height: 1.3; }
+    .ci-qty  { font-size: 12px; color: var(--gray-500); white-space: nowrap; }
+    .ci-price { font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .ci-remove {
+      width: 22px; height: 22px; border-radius: 6px; border: none;
+      background: #fee2e2; color: var(--danger); font-size: 14px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .cart-footer { padding: 12px 16px; border-top: 1px solid var(--gray-100); }
+    .cart-total-row {
+      display: flex; justify-content: space-between; font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .cart-total-row.grand { font-weight: 700; font-size: 15px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--gray-200); }
+    .cart-empty { text-align: center; color: var(--gray-400); padding: 32px 16px; font-size: 13px; }
+
+    /* pagination */
+    .pagination { display: flex; gap: 6px; align-items: center; justify-content: center; margin-top: 14px; }
+    .page-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1.5px solid var(--gray-200); background: #fff;
+      font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-weight: 600; color: var(--gray-600);
+    }
+    .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ─── STEP 3: CHECKOUT ────────────────────────────────────────────────── */
+    #checkoutStep { display: none; max-width: 560px; margin: 0 auto; }
+    #checkoutStep.active { display: block; }
+
+    .checkout-card {
+      background: #fff; border-radius: 14px;
+      border: 1.5px solid var(--gray-200); padding: 20px; margin-bottom: 14px;
+    }
+    .checkout-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+    .checkout-line {
+      display: flex; justify-content: space-between; font-size: 14px;
+      padding: 5px 0; border-bottom: 1px solid var(--gray-100);
+    }
+    .checkout-line:last-child { border-bottom: none; }
+    .checkout-line.total {
+      font-weight: 700; font-size: 16px; padding-top: 10px;
+      margin-top: 4px; border-top: 1.5px solid var(--gray-200); border-bottom: none;
+    }
+    .free-tag {
+      background: #dcfce7; color: #15803d; border-radius: 20px;
+      padding: 1px 9px; font-size: 11px; font-weight: 700;
+    }
+    .estimate-loading { text-align: center; color: var(--gray-400); padding: 20px; }
+
+    /* ─── STEP 4: SUCCESS ─────────────────────────────────────────────────── */
+    #successStep { display: none; text-align: center; padding: 40px 20px; max-width: 420px; margin: 0 auto; }
+    #successStep.active { display: block; }
+    .success-icon { font-size: 64px; margin-bottom: 16px; }
+    .success-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .success-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 28px; }
+
+    /* ─── ORDERS TAB ──────────────────────────────────────────────────────── */
+    #ordersTab { display: none; padding: 20px; overflow-y: auto; flex: 1; }
+    #ordersTab.active { display: block; }
+
+    .order-card {
+      background: #fff; border-radius: 14px;
+      border: 1.5px solid var(--gray-200); padding: 16px; margin-bottom: 12px;
+    }
+    .order-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .order-id   { font-size: 15px; font-weight: 700; }
+    .order-date { font-size: 12px; color: var(--gray-400); margin-left: auto; }
+    .order-body { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .ob-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--gray-400); font-weight: 600; }
+    .ob-value { font-size: 13px; font-weight: 500; }
+    .order-total-row { display: flex; justify-content: space-between; border-top: 1px solid var(--gray-100); padding-top: 10px; }
+    .ot-label { font-size: 13px; color: var(--gray-500); }
+    .ot-value { font-size: 15px; font-weight: 700; }
+
+    .items-toggle { font-size: 12px; color: var(--primary); cursor: pointer; font-weight: 600; background: none; border: none; padding: 0; }
+    .items-list { display: none; flex-direction: column; gap: 3px; margin-top: 8px; }
+    .items-list.open { display: flex; }
+    .item-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-600); padding: 3px 0; border-bottom: 1px solid var(--gray-100); }
+    .item-row:last-child { border-bottom: none; }
+
+    /* status badges */
+    .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .s-PENDING                  { background: #fef9c3; color: #854d0e; }
+    .s-ACCEPTED_FROM_PHARMACIEN { background: #dcfce7; color: #166534; }
+    .s-REFUSED_FROM_PHARMACIEN  { background: #fee2e2; color: #991b1b; }
+    .s-READY_FOR_DELIVERY       { background: #dbeafe; color: #1e40af; }
+    .s-ASSIGNED,.s-ASSIGNED_FROM_ADMIN { background: #fef3c7; color: #92400e; }
+    .s-ACCEPTED_FROM_LIVREUR    { background: #dcfce7; color: #166534; }
+    .s-REFUSED_FROM_LIVREUR,.s-DISPATCH_FAILED { background: #fee2e2; color: #991b1b; }
+    .s-PICKED_UP                { background: #dbeafe; color: #1e40af; }
+    .s-DELIVERING               { background: #ede9fe; color: #5b21b6; }
+    .s-DELIVERED                { background: #d1fae5; color: #065f46; }
+    .s-CANCELLED                { background: #f1f5f9; color: var(--gray-500); }
+
+    /* ─── TOAST ───────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--gray-800); color: #fff;
+      padding: 12px 24px; border-radius: 12px;
+      font-size: 14px; font-weight: 500;
+      transition: transform .3s; z-index: 9999;
+      white-space: nowrap; max-width: 90vw;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.success { background: var(--success-dark); }
+    #toast.error   { background: var(--danger); }
+
+    /* ─── EMPTY / LOADING ─────────────────────────────────────────────────── */
+    .empty { text-align: center; padding: 40px; color: var(--gray-400); }
+    .empty-icon { font-size: 40px; margin-bottom: 10px; }
+    .loading { display: flex; justify-content: center; padding: 40px; }
+
+    @media (max-width: 640px) {
+      #productStep.active { flex-direction: column; }
+      .cart-sidebar { width: 100%; }
+      .product-grid { grid-template-columns: repeat(2, 1fr); }
+      .order-body { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── LOGIN ─────────────────────────────────────────────────────────────── -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="login-logo">🛒</div>
+    <div class="login-title">Espace Client</div>
+    <div class="login-sub">Connectez-vous pour passer une commande</div>
+    <div class="field">
+      <label>Adresse email</label>
+      <input type="email" id="loginEmail" placeholder="client@example.com" autocomplete="email" value="client5@example.com"/>
+    </div>
+    <div class="field">
+      <label>Mot de passe</label>
+      <input type="password" id="loginPwd" placeholder="••••••••" autocomplete="current-password" value="password123"/>
+    </div>
+    <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">Se connecter</button>
+    <div class="error-msg" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ─── APP ───────────────────────────────────────────────────────────────── -->
+<div id="appView" style="display:none; flex-direction:column; height:100vh;">
+
+  <div class="topbar">
+    <div class="topbar-brand">🛒 Pharix Client</div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="userLabel"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Déconnecter</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabBtnOrder" onclick="switchTab('order')">➕ Nouvelle commande</button>
+    <button class="tab-btn" id="tabBtnOrders" onclick="switchTab('orders')">📦 Mes commandes</button>
+  </div>
+
+  <!-- ─── NEW ORDER TAB ────────────────────────────────────────────────────── -->
+  <div id="orderTab" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+
+    <!-- step bar -->
+    <div class="step-bar" id="stepBar">
+      <div class="step-item active" id="sitem1"><div class="step-num">1</div><div class="step-label">Pharmacie</div></div>
+      <div class="step-sep"></div>
+      <div class="step-item" id="sitem2"><div class="step-num">2</div><div class="step-label">Produits</div></div>
+      <div class="step-sep"></div>
+      <div class="step-item" id="sitem3"><div class="step-num">3</div><div class="step-label">Commande</div></div>
+      <div class="step-sep"></div>
+      <div class="step-item" id="sitem4"><div class="step-num">✓</div><div class="step-label">Confirmé</div></div>
+    </div>
+
+    <div class="wizard-body" id="wizardBody">
+
+      <!-- STEP 1: choose pharmacy -->
+      <div id="pharmacyStep">
+        <div class="type-tabs">
+          <div class="type-tab active" id="typeMed" onclick="setType('MEDICAMENT')">
+            <span class="type-icon">💊</span>Pharmacie
+          </div>
+          <div class="type-tab" id="typePara" onclick="setType('PARAPHARMACIE')">
+            <span class="type-icon">🧴</span>Parapharmacie
+          </div>
+        </div>
+        <div class="field" style="max-width:340px;">
+          <label>Rechercher une pharmacie</label>
+          <input type="text" id="pharmSearch" placeholder="Nom de la pharmacie…" oninput="filterPharmacies()"/>
+        </div>
+        <div id="pharmLoading" class="loading"><span class="spinner spinner-dark"></span></div>
+        <div id="pharmGrid" class="pharmacy-grid"></div>
+      </div>
+
+      <!-- STEP 2: browse products + cart -->
+      <div id="productStep">
+        <div class="product-panel">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+            <button class="btn btn-ghost btn-sm" onclick="goStep(1)">← Retour</button>
+            <div style="font-size:14px; font-weight:700;" id="selectedPharmName">Pharmacie</div>
+          </div>
+          <div class="product-search-bar">
+            <input type="text" id="prodSearch" placeholder="Rechercher un médicament…" oninput="debounceSearch()"/>
+            <button class="btn btn-outline btn-sm" onclick="loadProducts(0)">↺</button>
+          </div>
+          <div id="prodLoading" class="loading" style="display:none;"><span class="spinner spinner-dark"></span></div>
+          <div id="productGrid" class="product-grid"></div>
+          <div id="pagination" class="pagination"></div>
+        </div>
+
+        <div class="cart-sidebar">
+          <div class="cart-header">
+            🛒 Panier <span class="cart-badge" id="cartBadge">0</span>
+          </div>
+          <div class="cart-items" id="cartItems">
+            <div class="cart-empty">Votre panier est vide</div>
+          </div>
+          <div class="cart-footer" id="cartFooter" style="display:none;">
+            <div class="cart-total-row"><span>Sous-total</span><span id="cartSubtotal">0,00 TND</span></div>
+            <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="goStep(3)">Passer la commande →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: checkout -->
+      <div id="checkoutStep">
+        <button class="btn btn-ghost btn-sm" onclick="goStep(2)" style="margin-bottom:16px;">← Retour aux produits</button>
+
+        <div class="checkout-card">
+          <div class="checkout-title">Récapitulatif du panier</div>
+          <div id="checkoutItems"></div>
+        </div>
+
+        <div class="checkout-card" id="estimateCard">
+          <div class="checkout-title">Estimation de la livraison</div>
+          <div class="estimate-loading" id="estimateLoading">
+            <span class="spinner spinner-dark"></span> Calcul en cours…
+          </div>
+          <div id="estimateResult" style="display:none;"></div>
+        </div>
+
+        <div class="checkout-card">
+          <div class="checkout-title">Note pour la pharmacie</div>
+          <textarea id="orderNote" rows="3" placeholder="Instructions spéciales, ordonnance…" style="resize:vertical;"></textarea>
+        </div>
+
+        <button class="btn btn-success btn-full" id="placeBtn" onclick="placeOrder()" style="font-size:15px; padding:13px;">
+          ✓ Confirmer la commande
+        </button>
+        <div class="error-msg" id="placeErr"></div>
+      </div>
+
+      <!-- STEP 4: success -->
+      <div id="successStep">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">Commande passée !</div>
+        <div class="success-sub" id="successSub">Votre commande a été envoyée à la pharmacie.</div>
+        <button class="btn btn-primary" style="margin-bottom:12px;" onclick="switchTab('orders')">Voir mes commandes</button><br>
+        <button class="btn btn-outline" onclick="newOrder()">Passer une autre commande</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── MY ORDERS TAB ─────────────────────────────────────────────────────── -->
+  <div id="ordersTab" style="padding:20px; overflow-y:auto; flex:1; display:none;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <div style="font-size:16px; font-weight:700;">Mes commandes</div>
+      <button class="btn btn-outline btn-sm" onclick="loadOrders()">↺ Actualiser</button>
+    </div>
+    <div id="ordersLoading" class="loading"><span class="spinner spinner-dark"></span></div>
+    <div id="ordersList"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let token = null;
+let currentStep = 1;
+let pharmacyType = 'MEDICAMENT';
+let allPharmacies = [];
+let selectedPharmacy = null;
+let currentPage = 0;
+let totalPages = 0;
+let cart = {};         // { productId: { product, qty } }
+let estimate = null;
+let searchTimeout = null;
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {})
+    },
+    credentials: 'include'
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  if (res.status === 401) { logout(); throw new Error('Session expirée'); }
+  const text = await res.text();
+  if (!res.ok) {
+    let msg = text;
+    try { msg = JSON.parse(text).message || JSON.parse(text).error || text; } catch(_) {}
+    throw new Error(msg || res.statusText);
+  }
+  return text ? JSON.parse(text) : null;
+}
+
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pwd   = document.getElementById('loginPwd').value;
+  const errEl = document.getElementById('loginErr');
+  const btn   = document.getElementById('loginBtn');
+  errEl.textContent = '';
+  if (!email || !pwd) { errEl.textContent = 'Veuillez remplir tous les champs.'; return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Connexion…';
+  try {
+    const data = await api('POST', '/api/v1/auth/login', { email, password: pwd });
+    if (data.role !== 'CLIENT') {
+      errEl.textContent = 'Ce compte n\'est pas un compte client (rôle: ' + data.role + ').';
+      btn.disabled = false; btn.textContent = 'Se connecter'; return;
+    }
+    token = data.access_token;
+    const profile = data.profile || {};
+    const name = profile.fullName || profile.name || email;
+    document.getElementById('userLabel').textContent = name;
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('appView').style.display = 'flex';
+    switchTab('order');
+    loadPharmacies();
+  } catch(e) {
+    errEl.textContent = 'Erreur: ' + e.message;
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  }
+}
+
+function logout() {
+  token = null; cart = {}; selectedPharmacy = null;
+  document.getElementById('appView').style.display = 'none';
+  document.getElementById('loginView').style.display = 'flex';
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginPwd').value = '';
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tabBtnOrder').classList.toggle('active', tab === 'order');
+  document.getElementById('tabBtnOrders').classList.toggle('active', tab === 'orders');
+
+  const orderTab  = document.getElementById('orderTab');
+  const ordersTab = document.getElementById('ordersTab');
+
+  orderTab.style.display  = tab === 'order'  ? 'flex'  : 'none';
+  ordersTab.style.display = tab === 'orders' ? 'block' : 'none';
+
+  if (tab === 'orders') loadOrders();
+}
+
+// ─── WIZARD STEPS ─────────────────────────────────────────────────────────────
+function goStep(n) {
+  currentStep = n;
+  document.getElementById('pharmacyStep').style.display  = n === 1 ? 'block' : 'none';
+  document.getElementById('productStep').style.display   = n === 2 ? 'flex'  : 'none';
+  document.getElementById('checkoutStep').style.display  = n === 3 ? 'block' : 'none';
+  document.getElementById('successStep').style.display   = n === 4 ? 'block' : 'none';
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById('sitem' + i);
+    el.classList.toggle('active', i === n);
+    el.classList.toggle('done',   i < n);
+  });
+  document.getElementById('wizardBody').scrollTop = 0;
+  if (n === 3) prepareCheckout();
+}
+
+// ─── STEP 1: PHARMACIES ───────────────────────────────────────────────────────
+async function loadPharmacies() {
+  document.getElementById('pharmLoading').style.display = 'flex';
+  document.getElementById('pharmGrid').innerHTML = '';
+  const endpoint = pharmacyType === 'MEDICAMENT'
+    ? '/api/v1/client/pharmacies/medicament'
+    : '/api/v1/client/pharmacies/parapharmacie';
+  try {
+    allPharmacies = await api('GET', endpoint);
+    renderPharmacies(allPharmacies);
+  } catch(e) {
+    showToast('Erreur chargement pharmacies: ' + e.message, 'error');
+  } finally {
+    document.getElementById('pharmLoading').style.display = 'none';
+  }
+}
+
+function setType(type) {
+  pharmacyType = type;
+  document.getElementById('typeMed').classList.toggle('active',  type === 'MEDICAMENT');
+  document.getElementById('typePara').classList.toggle('active', type === 'PARAPHARMACIE');
+  cart = {}; selectedPharmacy = null;
+  loadPharmacies();
+}
+
+function filterPharmacies() {
+  const q = document.getElementById('pharmSearch').value.toLowerCase();
+  const filtered = allPharmacies.filter(p =>
+    (p.pharmacyName || '').toLowerCase().includes(q) ||
+    (p.ownerName    || '').toLowerCase().includes(q)
+  );
+  renderPharmacies(filtered);
+}
+
+function renderPharmacies(list) {
+  const grid = document.getElementById('pharmGrid');
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">🏥</div>Aucune pharmacie trouvée.</div>';
+    return;
+  }
+  grid.innerHTML = list.map(p => `
+    <div class="pharmacy-card${selectedPharmacy && selectedPharmacy.id === p.id ? ' selected' : ''}"
+         onclick="selectPharmacy(${p.id})">
+      <div class="pharm-name">${p.pharmacyName || '—'}</div>
+      <div class="pharm-owner">${p.ownerName || ''}</div>
+      <div class="pharm-meta">
+        <div class="online-dot${p.online ? ' on' : ''}"></div>
+        <span class="tag tag-gray" style="font-size:10px;">${p.online ? 'En ligne' : 'Hors ligne'}</span>
+        ${p.deliveryZoneName ? `<span class="tag tag-blue" style="font-size:10px;">${p.deliveryZoneName}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectPharmacy(id) {
+  selectedPharmacy = allPharmacies.find(p => p.id === id);
+  if (!selectedPharmacy) return;
+  cart = {};
+  document.getElementById('selectedPharmName').textContent = selectedPharmacy.pharmacyName;
+  goStep(2);
+  loadProducts(0);
+}
+
+// ─── STEP 2: PRODUCTS ─────────────────────────────────────────────────────────
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => loadProducts(0), 350);
+}
+
+async function loadProducts(page) {
+  currentPage = page;
+  const search = document.getElementById('prodSearch').value.trim();
+  const params = new URLSearchParams({ page, size: 20 });
+  if (search) params.set('search', search);
+
+  document.getElementById('prodLoading').style.display = 'flex';
+  document.getElementById('productGrid').innerHTML = '';
+  document.getElementById('pagination').innerHTML = '';
+
+  try {
+    const data = await api('GET',
+      `/api/v1/client/products/${selectedPharmacy.id}?${params}`);
+    totalPages = data.totalPages;
+    renderProducts(data.content || []);
+    renderPagination(data.page, data.totalPages, data.totalElements);
+  } catch(e) {
+    showToast('Erreur produits: ' + e.message, 'error');
+  } finally {
+    document.getElementById('prodLoading').style.display = 'none';
+  }
+}
+
+function renderProducts(products) {
+  const grid = document.getElementById('productGrid');
+  if (!products.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div class="empty-icon">💊</div>Aucun produit trouvé.</div>';
+    return;
+  }
+  grid.innerHTML = products.map(p => {
+    const inCart = cart[p.productId] ? cart[p.productId].qty : 0;
+    const imgHtml = p.imageUrl
+      ? `<img src="${p.imageUrl}" alt="${p.productName}" onerror="this.parentElement.innerHTML='💊'"/>`
+      : '💊';
+    const priceStr = p.price != null ? Number(p.price).toFixed(2) + ' TND' : '—';
+    return `
+      <div class="product-card" id="pc-${p.productId}">
+        <div class="product-img">${imgHtml}</div>
+        <div class="prod-name">${p.productName}</div>
+        <div class="prod-cat">${p.categoryName || p.displayGroup || ''}</div>
+        <div class="prod-price">${priceStr}</div>
+        <div class="prod-actions">
+          ${inCart === 0
+            ? `<button class="btn btn-primary btn-xs btn-full" onclick="addToCart(${JSON.stringify(p).replace(/"/g,'&quot;')})">+ Ajouter</button>`
+            : `<div class="qty-ctrl">
+                <button class="qty-btn" onclick="changeQty(${p.productId}, -1)">−</button>
+                <span class="qty-val" id="qty-${p.productId}">${inCart}</span>
+                <button class="qty-btn" onclick="changeQty(${p.productId}, 1)">+</button>
+               </div>`
+          }
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function addToCart(product) {
+  cart[product.productId] = { product, qty: 1 };
+  refreshCartAndGrid();
+}
+
+function changeQty(productId, delta) {
+  if (!cart[productId]) return;
+  cart[productId].qty += delta;
+  if (cart[productId].qty <= 0) delete cart[productId];
+  refreshCartAndGrid();
+}
+
+function removeFromCart(productId) {
+  delete cart[productId];
+  refreshCartAndGrid();
+}
+
+function refreshCartAndGrid() {
+  // re-render product action cells without full reload
+  Object.values(cart).forEach(({ product, qty }) => {
+    const cell = document.querySelector(`#pc-${product.productId} .prod-actions`);
+    if (cell) cell.innerHTML = `
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty(${product.productId}, -1)">−</button>
+        <span class="qty-val" id="qty-${product.productId}">${qty}</span>
+        <button class="qty-btn" onclick="changeQty(${product.productId}, 1)">+</button>
+      </div>`;
+  });
+  // reset removed items back to add button
+  document.querySelectorAll('.product-card').forEach(card => {
+    const id = parseInt(card.id.replace('pc-', ''));
+    if (!cart[id]) {
+      const cell = card.querySelector('.prod-actions');
+      const priceTxt = card.querySelector('.prod-price').textContent;
+      const nameTxt  = card.querySelector('.prod-name').textContent;
+      if (cell && cell.querySelector('.qty-ctrl')) {
+        // reconstruct minimal object — find by scanning grid nodes is safe since we have price in DOM
+        const p = Object.values(cart).find(c => c.product.productId === id);
+        cell.innerHTML = `<button class="btn btn-primary btn-xs btn-full" onclick="addToCartById(${id})">+ Ajouter</button>`;
+      }
+    }
+  });
+  renderCart();
+}
+
+// fallback add when only productId is available in DOM
+function addToCartById(productId) {
+  // re-load products to get full object — or just call loadProducts to rebuild
+  loadProducts(currentPage);
+}
+
+function renderCart() {
+  const items = Object.values(cart);
+  const badge  = document.getElementById('cartBadge');
+  const itemsEl = document.getElementById('cartItems');
+  const footer  = document.getElementById('cartFooter');
+  const total = items.reduce((s, { product, qty }) =>
+    s + (product.price != null ? Number(product.price) * qty : 0), 0);
+
+  badge.textContent = items.reduce((s, { qty }) => s + qty, 0);
+
+  if (!items.length) {
+    itemsEl.innerHTML = '<div class="cart-empty">Votre panier est vide</div>';
+    footer.style.display = 'none';
+    return;
+  }
+
+  itemsEl.innerHTML = items.map(({ product: p, qty }) => `
+    <div class="cart-item">
+      <div class="ci-name">${p.productName}</div>
+      <div class="ci-qty">× ${qty}</div>
+      <div class="ci-price">${(Number(p.price || 0) * qty).toFixed(2)}</div>
+      <button class="ci-remove" onclick="removeFromCart(${p.productId})">×</button>
+    </div>`).join('');
+
+  document.getElementById('cartSubtotal').textContent = total.toFixed(2) + ' TND';
+  footer.style.display = 'block';
+}
+
+function renderPagination(page, pages, total) {
+  const el = document.getElementById('pagination');
+  if (pages <= 1) { el.innerHTML = `<span style="font-size:12px;color:var(--gray-400);">${total} produit${total !== 1 ? 's' : ''}</span>`; return; }
+  let html = `<button class="page-btn" ${page === 0 ? 'disabled' : ''} onclick="loadProducts(${page-1})">‹</button>`;
+  for (let i = 0; i < pages; i++) {
+    if (pages > 7 && Math.abs(i - page) > 2 && i !== 0 && i !== pages-1) {
+      if (i === 1 || i === pages-2) html += `<span style="padding:0 4px;color:var(--gray-400);">…</span>`;
+      continue;
+    }
+    html += `<button class="page-btn${i === page ? ' active' : ''}" onclick="loadProducts(${i})">${i+1}</button>`;
+  }
+  html += `<button class="page-btn" ${page === pages-1 ? 'disabled' : ''} onclick="loadProducts(${page+1})">›</button>`;
+  el.innerHTML = html;
+}
+
+// ─── STEP 3: CHECKOUT ─────────────────────────────────────────────────────────
+async function prepareCheckout() {
+  estimate = null;
+  const items = Object.values(cart);
+
+  // recap
+  document.getElementById('checkoutItems').innerHTML = items.map(({ product: p, qty }) => `
+    <div class="checkout-line">
+      <span>${p.productName} × ${qty}</span>
+      <span>${(Number(p.price || 0) * qty).toFixed(2)} TND</span>
+    </div>`).join('');
+
+  // estimate
+  document.getElementById('estimateLoading').style.display = 'block';
+  document.getElementById('estimateResult').style.display = 'none';
+  document.getElementById('placeErr').textContent = '';
+  document.getElementById('placeBtn').disabled = true;
+
+  try {
+    estimate = await api('POST', '/api/v1/client/orders/estimate-delivery', {
+      pharmasienId: selectedPharmacy.id,
+      items: items.map(({ product, qty }) => ({ productId: product.productId, quantity: qty }))
+    });
+
+    document.getElementById('estimateResult').innerHTML = `
+      <div class="checkout-line"><span>Sous-total</span><span>${Number(estimate.subtotal).toFixed(2)} TND</span></div>
+      <div class="checkout-line">
+        <span>Livraison</span>
+        <span>${estimate.freeDelivery
+          ? '<span class="free-tag">Gratuite</span>'
+          : Number(estimate.deliveryPrice).toFixed(2) + ' TND'}</span>
+      </div>
+      <div class="checkout-line total">
+        <span>Total</span><span>${Number(estimate.total).toFixed(2)} TND</span>
+      </div>`;
+
+    document.getElementById('estimateLoading').style.display = 'none';
+    document.getElementById('estimateResult').style.display = 'block';
+    document.getElementById('placeBtn').disabled = false;
+  } catch(e) {
+    document.getElementById('estimateLoading').innerHTML =
+      '<span style="color:var(--danger);">Erreur estimation: ' + e.message + '</span>';
+    document.getElementById('placeBtn').disabled = false;
+  }
+}
+
+async function placeOrder() {
+  const btn = document.getElementById('placeBtn');
+  const errEl = document.getElementById('placeErr');
+  errEl.textContent = '';
+  const items = Object.values(cart);
+  if (!items.length) { errEl.textContent = 'Panier vide.'; return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Envoi…';
+  try {
+    const order = await api('POST', '/api/v1/client/orders/create', {
+      pharmasienId: selectedPharmacy.id,
+      description: document.getElementById('orderNote').value.trim() || undefined,
+      items: items.map(({ product, qty }) => ({ productId: product.productId, quantity: qty }))
+    });
+    document.getElementById('successSub').textContent =
+      `Commande #${order.id} envoyée à ${selectedPharmacy.pharmacyName}. En attente de confirmation.`;
+    cart = {};
+    renderCart();
+    goStep(4);
+  } catch(e) {
+    errEl.textContent = 'Erreur: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = '✓ Confirmer la commande';
+  }
+}
+
+function newOrder() {
+  cart = {}; selectedPharmacy = null;
+  document.getElementById('prodSearch').value = '';
+  document.getElementById('pharmSearch').value = '';
+  goStep(1);
+}
+
+// ─── MY ORDERS ────────────────────────────────────────────────────────────────
+const statusLabels = {
+  PENDING: 'En attente', ACCEPTED_FROM_PHARMACIEN: 'Accepté', REFUSED_FROM_PHARMACIEN: 'Refusé',
+  READY_FOR_DELIVERY: 'Prêt', ASSIGNED: 'Livreur assigné', ASSIGNED_FROM_ADMIN: 'Assigné (admin)',
+  ACCEPTED_FROM_LIVREUR: 'Livreur en route', REFUSED_FROM_LIVREUR: 'Refus livreur',
+  PICKED_UP: 'Récupéré', DELIVERING: 'En livraison', DELIVERED: 'Livré ✓',
+  DISPATCH_FAILED: 'Problème livraison', CANCELLED: 'Annulé'
+};
+
+async function loadOrders() {
+  document.getElementById('ordersLoading').style.display = 'flex';
+  document.getElementById('ordersList').innerHTML = '';
+  try {
+    const orders = await api('GET', '/api/v1/client/orders');
+    document.getElementById('ordersLoading').style.display = 'none';
+    if (!orders.length) {
+      document.getElementById('ordersList').innerHTML =
+        '<div class="empty"><div class="empty-icon">📦</div>Aucune commande pour le moment.</div>';
+      return;
+    }
+    const sorted = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    document.getElementById('ordersList').innerHTML = sorted.map(o => {
+      const fmt = v => v != null ? Number(v).toFixed(2) + ' TND' : '—';
+      const fmtDate = d => d ? new Date(d).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+      const itemCount = (o.orderItems || []).length;
+      const itemsHtml = (o.orderItems || []).map(i =>
+        `<div class="item-row"><span>${i.productName || 'Produit'} × ${i.quantity}</span><span>${fmt(i.lineTotal)}</span></div>`
+      ).join('');
+      return `
+        <div class="order-card">
+          <div class="order-head">
+            <div class="order-id">Commande #${o.id}</div>
+            <div class="status-badge s-${o.status}">${statusLabels[o.status] || o.status}</div>
+            <div class="order-date">${fmtDate(o.createdAt)}</div>
+          </div>
+          <div class="order-body">
+            <div><div class="ob-label">Pharmacie</div><div class="ob-value">${o.pharmacyName || '—'}</div></div>
+            <div><div class="ob-label">Articles</div><div class="ob-value">${itemCount}</div></div>
+          </div>
+          ${itemCount ? `<div style="margin-bottom:10px;">
+            <button class="items-toggle" onclick="toggleItems(${o.id})">▸ ${itemCount} article${itemCount > 1 ? 's' : ''}</button>
+            <div class="items-list" id="oi-${o.id}">${itemsHtml}</div>
+          </div>` : ''}
+          <div class="order-total-row">
+            <span class="ot-label">Total</span>
+            <span class="ot-value">${fmt(o.total)}</span>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('ordersLoading').style.display = 'none';
+    document.getElementById('ordersList').innerHTML =
+      '<div class="empty">Erreur: ' + e.message + '</div>';
+  }
+}
+
+function toggleItems(orderId) {
+  const el = document.getElementById('oi-' + orderId);
+  const btn = el.previousElementSibling;
+  const open = el.classList.toggle('open');
+  const c = el.children.length;
+  btn.textContent = (open ? '▾ ' : '▸ ') + c + ' article' + (c > 1 ? 's' : '');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3500);
+}
+
+// ─── KEYBOARD ────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') doLogin();
+});
+
+// init first step visible
+goStep(1);
+</script>
+</body>
+</html>

@@ -10,6 +10,7 @@ interface OrderToast {
   orderId: number;
   clientName: string;
   leaving: boolean;
+  sticky?: boolean;
 }
 
 @Component({
@@ -41,6 +42,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private soundInterval: any = null;
   private adminAlertInterval: any = null;
   private tokenCheckInterval: any = null;
+  private pendingPollInterval: any = null;
+  private dismissedReminders = new Map<number, number>();
+  private readonly REMINDER_SNOOZE_MS = 5 * 60 * 1000;
+  private readonly PENDING_POLL_MS = 60 * 1000;
 
   adminNavItems = [
     {
@@ -91,6 +96,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
         { label: 'Pharmacies proches', icon: 'map-pin',     route: '/ph/nearby-pharmacies' },
         { label: 'Mes commandes',     icon: 'shopping-bag', route: '/ph/orders'   },
         { label: 'Mes produits',      icon: 'package',      route: '/ph/products' },
+        { label: 'Mes bannières',     icon: 'image',        route: '/ph/banners'  },
         { label: 'Horaires',          icon: 'clock',        route: '/ph/schedule' },
       ]
     }
@@ -174,12 +180,20 @@ export class LayoutComponent implements OnInit, OnDestroy {
           next: (res) => { this.pharmacienNotifCount = res.count; },
           error: () => {}
         });
+
+        // Persistent reminders for unresolved PENDING orders
+        this.loadPendingReminders();
+        this.pendingPollInterval = setInterval(
+          () => this.loadPendingReminders(),
+          this.PENDING_POLL_MS
+        );
       }
     }
   }
 
   ngOnDestroy(): void {
     if (this.tokenCheckInterval) clearInterval(this.tokenCheckInterval);
+    if (this.pendingPollInterval) clearInterval(this.pendingPollInterval);
     this.wsSub?.unsubscribe();
     this.pharmacienWsSub?.unsubscribe();
     this.ws.disconnect();
@@ -187,10 +201,55 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.stopSound();
   }
 
+  private loadPendingReminders(): void {
+    const email = this.auth.getCurrentUser()?.email;
+    if (!email) return;
+    this.pharmacistService.getOrders(email, 'PENDING').subscribe({
+      next: (orders) => {
+        const pendingIds = new Set(orders.map(o => o.id));
+
+        // Clear toasts whose order is no longer PENDING
+        for (const t of [...this.toasts]) {
+          if (t.sticky && !pendingIds.has(t.orderId)) {
+            this.dismissedReminders.delete(t.orderId);
+            this.dismissToast(t.uid);
+          }
+        }
+
+        // Add toast for each pending not already shown (and not snoozed)
+        const now = Date.now();
+        let addedAny = false;
+        for (const o of orders) {
+          if (this.toasts.some(t => t.orderId === o.id)) continue;
+          const dismissedAt = this.dismissedReminders.get(o.id);
+          if (dismissedAt && now - dismissedAt < this.REMINDER_SNOOZE_MS) continue;
+          this.toasts.push({
+            uid: ++this.toastUidCounter,
+            orderId: o.id,
+            clientName: o.clientName ?? 'Client',
+            leaving: false,
+            sticky: true,
+          });
+          addedAny = true;
+        }
+        if (addedAny) this.playNewOrderSound();
+      },
+      error: () => {}
+    });
+  }
+
   private onPharmacienOrderEvent(event: PharmacienOrderEvent): void {
     if (event.status === 'PENDING') {
+      this.dismissedReminders.delete(event.orderId);
       this.playNewOrderSound();
-      this.addToast(event);
+      this.addToast(event, true);
+    } else {
+      // Order moved out of PENDING — clear any reminder toast
+      const reminder = this.toasts.find(t => t.orderId === event.orderId);
+      if (reminder) {
+        this.dismissedReminders.delete(event.orderId);
+        this.dismissToast(reminder.uid);
+      }
     }
 
     this.pharmacienNotifCount++;
@@ -203,15 +262,19 @@ export class LayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  private addToast(event: PharmacienOrderEvent): void {
+  private addToast(event: PharmacienOrderEvent, sticky = false): void {
+    if (this.toasts.some(t => t.orderId === event.orderId)) return;
     const uid = ++this.toastUidCounter;
-    this.toasts.push({ uid, orderId: event.orderId, clientName: event.clientName, leaving: false });
-    setTimeout(() => this.dismissToast(uid), 8000);
+    this.toasts.push({ uid, orderId: event.orderId, clientName: event.clientName, leaving: false, sticky });
+    if (!sticky) setTimeout(() => this.dismissToast(uid), 8000);
   }
 
   dismissToast(uid: number): void {
     const toast = this.toasts.find(t => t.uid === uid);
     if (!toast || toast.leaving) return;
+    if (toast.sticky) {
+      this.dismissedReminders.set(toast.orderId, Date.now());
+    }
     toast.leaving = true;
     setTimeout(() => {
       this.toasts = this.toasts.filter(t => t.uid !== uid);
@@ -254,7 +317,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
     };
 
     playOnce();
-    this.soundInterval = setInterval(playOnce, 2000);
+    let beeps = 1;
+    this.soundInterval = setInterval(() => {
+      playOnce();
+      if (++beeps >= 5) this.stopSound();
+    }, 2000);
   }
 
   private stopSound(): void {

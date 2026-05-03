@@ -80,15 +80,17 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   get filtered(): OrderDTO[] {
-    return this.allOrders.filter(o => {
-      const term = this.searchTerm.toLowerCase();
-      const matchSearch = !this.searchTerm ||
-        String(o.id).includes(term) ||
-        (o.clientName ?? '').toLowerCase().includes(term) ||
-        (o.pharmacyName ?? '').toLowerCase().includes(term);
-      const matchStatus = this.statusFilter === 'all' || o.status === this.statusFilter;
-      return matchSearch && matchStatus;
-    });
+    return this.allOrders
+      .filter(o => {
+        const term = this.searchTerm.toLowerCase();
+        const matchSearch = !this.searchTerm ||
+          String(o.id).includes(term) ||
+          (o.clientName ?? '').toLowerCase().includes(term) ||
+          (o.pharmacyName ?? '').toLowerCase().includes(term);
+        const matchStatus = this.statusFilter === 'all' || o.status === this.statusFilter;
+        return matchSearch && matchStatus;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   statusBadge(s: string) {

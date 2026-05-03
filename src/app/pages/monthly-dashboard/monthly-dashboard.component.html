@@ -5,18 +5,16 @@
     <div>
       <div class="page-title">Dashboard Mensuel</div>
       <div class="page-subtitle" *ngIf="dashboard">
-        {{ dashboard.monthLabel }} — aperçu complet du mois
+        {{ dashboard.monthLabel }} — performance financière de Pharix
       </div>
     </div>
     <div style="display:flex; gap:10px; align-items:center">
-      <!-- Month select -->
       <div class="input-wrap input-no-icon" style="width:130px">
         <select [(ngModel)]="selectedMonth" (ngModelChange)="onMonthChange($event)"
                 style="padding-left:12px; width:100%">
           <option *ngFor="let m of months" [ngValue]="m.value">{{ m.label }}</option>
         </select>
       </div>
-      <!-- Year select -->
       <div class="input-wrap input-no-icon" style="width:90px">
         <select [(ngModel)]="selectedYear" (ngModelChange)="onYearChange($event)"
                 style="padding-left:12px; width:100%">
@@ -34,15 +32,113 @@
     </div>
   </div>
 
-  <!-- ── KPI Cards ────────────────────────────────────────────────────────────── -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <!-- ── PHARIX REVENUE SECTION (the app's actual money) ─────────────────────── -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="section-banner">
+    <div class="section-tag" style="background:var(--primary-light);color:var(--primary)">PHARIX</div>
+    <h2 class="section-title">Revenus de la plateforme</h2>
+    <p class="section-sub">Frais de service · Commissions · Livraison · Abonnements</p>
+  </div>
+
+  <!-- Pharix KPI cards -->
+  <div class="pharix-stats-grid">
+    <div class="stat-card pharix-stat" *ngFor="let s of pharixStats; let i = index"
+         [style.animation-delay]="(i * 0.06) + 's'" style="animation: fadeInUp .4s both">
+      <div class="stat-icon" [style.background]="s.bg" [style.color]="s.color">
+        <svg *ngIf="s.icon==='wallet'"  width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>
+        <svg *ngIf="s.icon==='pill'"    width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-45 12 12)"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <svg *ngIf="s.icon==='percent'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+        <svg *ngIf="s.icon==='truck'"   width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        <svg *ngIf="s.icon==='repeat'"  width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+        <svg *ngIf="s.icon==='pharma'"  width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </div>
+      <div class="stat-body">
+        <div class="stat-value">{{ loading ? '—' : s.value }}</div>
+        <div class="stat-label">{{ s.label }}</div>
+        <div class="stat-sub" *ngIf="!loading && s.sub">{{ s.sub }}</div>
+        <div *ngIf="!loading && s.growth != null"
+             class="growth-badge" [ngClass]="growthClass(s.growth)">
+          {{ growthIcon(s.growth) }} {{ s.growth | number:'1.1-1' }}% vs mois préc.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero — Pharix daily revenue (stacked area) + breakdown donut side-by-side -->
+  <div class="charts-row" *ngIf="dashboard">
+
+    <div class="card chart-card chart-card-hero">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Revenus Pharix — évolution quotidienne</div>
+          <div class="card-sub">
+            Variable · {{ fmtRevenue(dashboard.companyRevenue?.variableTotal) }}
+            <span class="dot-sep">·</span>
+            Total mois : <strong>{{ fmtRevenue(dashboard.companyRevenue?.totalMonthly) }}</strong>
+            <span class="growth-inline" *ngIf="dashboard.companyRevenue?.growthPct != null"
+                  [ngClass]="growthClass(dashboard.companyRevenue?.growthPct)">
+              {{ growthIcon(dashboard.companyRevenue?.growthPct) }}
+              {{ dashboard.companyRevenue?.growthPct | number:'1.1-1' }}%
+            </span>
+          </div>
+        </div>
+      </div>
+      <apx-chart #pharixRevenueChart
+        [series]="pharixRevenueChartOptions.series!"
+        [chart]="pharixRevenueChartOptions.chart!"
+        [xaxis]="pharixRevenueChartOptions.xaxis!"
+        [yaxis]="pharixRevenueChartOptions.yaxis!"
+        [stroke]="pharixRevenueChartOptions.stroke!"
+        [fill]="pharixRevenueChartOptions.fill!"
+        [dataLabels]="pharixRevenueChartOptions.dataLabels!"
+        [tooltip]="pharixRevenueChartOptions.tooltip!"
+        [grid]="pharixRevenueChartOptions.grid!"
+        [colors]="pharixRevenueChartOptions.colors!"
+        [markers]="pharixRevenueChartOptions.markers!"
+        [legend]="pharixRevenueChartOptions.legend!">
+      </apx-chart>
+    </div>
+
+    <div class="card chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Composition du revenu</div>
+          <div class="card-sub">Sources de revenus Pharix</div>
+        </div>
+      </div>
+      <apx-chart #pharixBreakdownChart
+        [series]="pharixBreakdownChartOptions.series!"
+        [chart]="pharixBreakdownChartOptions.chart!"
+        [labels]="pharixBreakdownChartOptions.labels!"
+        [colors]="pharixBreakdownChartOptions.colors!"
+        [legend]="pharixBreakdownChartOptions.legend!"
+        [dataLabels]="pharixBreakdownChartOptions.dataLabels!"
+        [plotOptions]="pharixBreakdownChartOptions.plotOptions!"
+        [stroke]="pharixBreakdownChartOptions.stroke!"
+        [tooltip]="pharixBreakdownChartOptions.tooltip!"
+        [responsive]="pharixBreakdownChartOptions.responsive!">
+      </apx-chart>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <!-- ── ACTIVITY & GMV (volumes and pharmacies' revenue — secondary) ────────── -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="section-banner">
+    <div class="section-tag" style="background:#fff3ee;color:#fb6340">ACTIVITÉ</div>
+    <h2 class="section-title">Volumes & GMV</h2>
+    <p class="section-sub">Commandes, statuts et chiffre généré par les pharmacies</p>
+  </div>
+
+  <!-- GMV / activity KPI cards -->
   <div class="stats-grid">
-    <div class="stat-card" *ngFor="let s of stats; let i = index"
-         [style.animation-delay]="(i * 0.07) + 's'" style="animation: fadeInUp .4s both">
+    <div class="stat-card" *ngFor="let s of gmvStats; let i = index"
+         [style.animation-delay]="(i * 0.06) + 's'" style="animation: fadeInUp .4s both">
       <div class="stat-icon" [style.background]="s.bg" [style.color]="s.color">
         <svg *ngIf="s.icon==='bag'"   width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <svg *ngIf="s.icon==='check'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        <svg *ngIf="s.icon==='users'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-        <svg *ngIf="s.icon==='pharma'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         <svg *ngIf="s.icon==='money'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
         <svg *ngIf="s.icon==='avg'"   width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       </div>
@@ -57,59 +153,14 @@
     </div>
   </div>
 
-  <!-- ── Hero Revenue Chart (full-width) ──────────────────────────────────────── -->
-  <div class="card chart-card hero-chart" *ngIf="dashboard">
-    <div class="card-header">
-      <div>
-        <div class="card-title">Revenu mensuel — évolution quotidienne</div>
-        <div class="card-sub">
-          {{ dashboard.monthLabel }} · Total : <strong>{{ fmtRevenue(dashboard.totalRevenue) }}</strong>
-          <span class="growth-inline" *ngIf="dashboard.revenueGrowthPct != null"
-                [ngClass]="growthClass(dashboard.revenueGrowthPct)">
-            {{ growthIcon(dashboard.revenueGrowthPct) }} {{ dashboard.revenueGrowthPct | number:'1.1-1' }}%
-          </span>
-        </div>
-      </div>
-      <div class="hero-summary">
-        <div class="hero-stat">
-          <div class="hero-stat-label">Panier moyen</div>
-          <div class="hero-stat-value">{{ fmtRevenue(dashboard.averageOrderValue) }}</div>
-        </div>
-        <div class="hero-stat">
-          <div class="hero-stat-label">Livrées</div>
-          <div class="hero-stat-value">{{ dashboard.deliveredOrders }}</div>
-        </div>
-      </div>
-    </div>
-    <apx-chart #revenueChart
-      [series]="revenueChartOptions.series!"
-      [chart]="revenueChartOptions.chart!"
-      [xaxis]="revenueChartOptions.xaxis!"
-      [yaxis]="revenueChartOptions.yaxis!"
-      [stroke]="revenueChartOptions.stroke!"
-      [fill]="revenueChartOptions.fill!"
-      [dataLabels]="revenueChartOptions.dataLabels!"
-      [tooltip]="revenueChartOptions.tooltip!"
-      [grid]="revenueChartOptions.grid!"
-      [colors]="revenueChartOptions.colors!"
-      [markers]="revenueChartOptions.markers!">
-    </apx-chart>
-  </div>
-
-  <!-- ── Charts Row 1: Daily Orders + Weekly Mixed ────────────────────────────── -->
+  <!-- Daily orders + Weekly mixed -->
   <div class="charts-row" *ngIf="dashboard">
 
     <div class="card chart-card">
       <div class="card-header">
         <div>
           <div class="card-title">Commandes par jour</div>
-          <div class="card-sub">
-            {{ dashboard.totalOrders }} commandes ce mois
-            <span class="growth-inline" *ngIf="dashboard.orderGrowthPct != null"
-                  [ngClass]="growthClass(dashboard.orderGrowthPct)">
-              {{ growthIcon(dashboard.orderGrowthPct) }} {{ dashboard.orderGrowthPct | number:'1.1-1' }}%
-            </span>
-          </div>
+          <div class="card-sub">{{ dashboard.totalOrders }} commandes ce mois</div>
         </div>
       </div>
       <apx-chart #ordersChart
@@ -132,7 +183,7 @@
       <div class="card-header">
         <div>
           <div class="card-title">Performance hebdomadaire</div>
-          <div class="card-sub">Commandes & revenu par semaine</div>
+          <div class="card-sub">Commandes & GMV par semaine</div>
         </div>
       </div>
       <apx-chart #weeklyChart
@@ -153,7 +204,7 @@
 
   </div>
 
-  <!-- ── Charts Row 2: Outcomes + Status Donut + Type Donut ───────────────────── -->
+  <!-- Outcomes + Status + Type donut -->
   <div class="charts-grid-3" *ngIf="dashboard">
 
     <div class="card chart-card">
@@ -200,7 +251,7 @@
 
     <div class="card chart-card">
       <div class="card-header">
-        <div class="card-title">Revenu par type</div>
+        <div class="card-title">GMV par type</div>
         <span class="badge badge-gray">{{ fmtRevenue(dashboard.totalRevenue) }}</span>
       </div>
       <apx-chart #typeChart
@@ -223,12 +274,12 @@
 
   </div>
 
-  <!-- ── Top Pharmacies (full width list) ─────────────────────────────────────── -->
+  <!-- Top Pharmacies -->
   <div class="card top-pharma-card" *ngIf="dashboard">
     <div class="card-header">
       <div>
         <div class="card-title">Top Pharmacies — {{ dashboard.monthLabel }}</div>
-        <div class="card-sub">Classement par revenu généré</div>
+        <div class="card-sub">Classement par GMV (chiffre d'affaires généré)</div>
       </div>
     </div>
     <div class="pharma-list">

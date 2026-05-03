@@ -89,10 +89,6 @@ export class AdBannersComponent implements OnInit {
     return b.active ? 'badge-success' : 'badge-danger';
   }
 
-  imageUrl(b: AdvertisementBanner): string | null {
-    return b.image ? `data:image/jpeg;base64,${b.image}` : null;
-  }
-
   validate(banner: AdvertisementBanner): void {
     this.actionLoading = banner.id;
     this.admin.validateBanner(banner.id).subscribe({

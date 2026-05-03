@@ -3,6 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { AuthService } from '../../../services/auth.service';
 import {
   PharmacistParamedicalProductPayload,
   PharmacistProductFilters,
@@ -15,6 +16,7 @@ import {
 type AvailabilityFilter = 'all' | 'available' | 'unavailable';
 type FeedbackType = 'success' | 'error';
 type EditorMode = 'create' | 'edit';
+type OrderActionType = 'accept' | 'refuse';
 
 @Component({
   selector: 'app-pharmacist-products',
@@ -44,9 +46,16 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
   feedbackType: FeedbackType = 'success';
   orderContextLabel = '';
   orderId: number | null = null;
+  orderStatus = '';
   orderProductIds: number[] = [];
+  orderSearchTerms: string[] = [];
+  reviewedOrderTerms: string[] = [];
+  selectedOrderSearchTerm = '';
+  autoAdvanceOrderItems = true;
   clientName = '';
   hasOrderContext = false;
+  orderActionLoading: OrderActionType | null = null;
+  pharmacienEmail = '';
 
   editorOpen = false;
   editorMode: EditorMode = 'create';
@@ -67,12 +76,15 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly pharmacistService: PharmacistService,
+    private readonly authService: AuthService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly fb: FormBuilder
   ) {}
 
   ngOnInit(): void {
+    this.pharmacienEmail = this.authService.getCurrentUser()?.email || '';
+
     this.search$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -83,12 +95,21 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
 
     this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.orderId = params.get('orderId') ? Number(params.get('orderId')) : null;
+      this.orderStatus = (params.get('orderStatus') || '').trim();
       this.orderProductIds = this.extractProductIds(params.get('productIds'), params.get('productId'));
+      this.orderSearchTerms = this.extractOrderItemTerms(params.get('orderItems'));
+      if (this.orderSearchTerms.length === 0) {
+        this.orderSearchTerms = this.extractOrderTerms(params.get('orderDescription')?.trim() || '');
+      }
+
+      this.reviewedOrderTerms = [];
+      this.selectedOrderSearchTerm = '';
       this.clientName = params.get('clientName')?.trim() || '';
-      this.searchTerm = params.get('orderDescription')?.trim() || '';
-      this.hasOrderContext = this.orderProductIds.length > 0 || !!this.searchTerm;
+      this.searchTerm = '';
+      this.hasOrderContext = this.orderId != null || this.orderProductIds.length > 0 || this.orderSearchTerms.length > 0;
       this.pageSize = Math.max(25, this.orderProductIds.length || 25);
       this.page = 0;
+      this.orderActionLoading = null;
 
       if (this.orderProductIds.length > 0) {
         this.orderContextLabel = this.buildProductContextLabel();
@@ -160,6 +181,34 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
     return this.paramedicalSubCategories.length > 0;
   }
 
+  get canResolveOrderFromContext(): boolean {
+    return !!this.orderId && this.orderStatus === 'PENDING';
+  }
+
+  get contextOrderStatusLabel(): string {
+    const labels: Record<string, string> = {
+      PENDING: 'En attente',
+      ACCEPTED_FROM_PHARMACIEN: 'Acceptée',
+      REFUSED_FROM_PHARMACIEN: 'Refusée',
+      READY_FOR_DELIVERY: 'Prête',
+      DISPATCH_FAILED: 'Echec dispatch',
+      ASSIGNED: 'Assignée',
+      ASSIGNED_FROM_ADMIN: 'Assignée (admin)',
+      ACCEPTED_FROM_LIVREUR: 'Pris en charge',
+      REFUSED_FROM_LIVREUR: 'Refusée (livreur)',
+      PICKED_UP: 'Récupérée',
+      DELIVERING: 'En livraison',
+      DELIVERED: 'Livrée',
+      CANCELLED: 'Annulée'
+    };
+
+    return labels[this.orderStatus] || this.orderStatus || 'Commande';
+  }
+
+  isOrderTermReviewed(term: string): boolean {
+    return this.reviewedOrderTerms.includes(term);
+  }
+
   loadProducts(): void {
     this.loading = true;
     this.pharmacistService.getProducts({
@@ -196,6 +245,7 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
 
   onSearchChange(value: string): void {
     this.searchTerm = value;
+    this.selectedOrderSearchTerm = '';
     this.search$.next(value.trim().toLowerCase());
   }
 
@@ -217,16 +267,64 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
   }
 
   clearOrderContext(): void {
+    this.reviewedOrderTerms = [];
+    this.selectedOrderSearchTerm = '';
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
         orderId: null,
+        orderStatus: null,
         productIds: null,
+        orderItems: null,
         productId: null,
         orderDescription: null,
         clientName: null
       },
       queryParamsHandling: 'merge'
+    });
+  }
+
+  selectOrderSearchTerm(term: string): void {
+    this.selectedOrderSearchTerm = term;
+    this.searchTerm = term;
+    this.resetAndLoad();
+  }
+
+  acceptOrderFromContext(): void {
+    if (!this.orderId || !this.pharmacienEmail || this.orderActionLoading) {
+      return;
+    }
+
+    this.orderActionLoading = 'accept';
+    this.pharmacistService.acceptOrder(this.orderId, this.pharmacienEmail).subscribe({
+      next: updatedOrder => {
+        this.orderActionLoading = null;
+        this.orderStatus = updatedOrder.status;
+        this.setFeedback('success', `Commande #${updatedOrder.id} acceptee.`);
+      },
+      error: () => {
+        this.orderActionLoading = null;
+        this.setFeedback('error', 'Impossible d\'accepter la commande depuis cette page.');
+      }
+    });
+  }
+
+  refuseOrderFromContext(): void {
+    if (!this.orderId || !this.pharmacienEmail || this.orderActionLoading) {
+      return;
+    }
+
+    this.orderActionLoading = 'refuse';
+    this.pharmacistService.refuseOrder(this.orderId, this.pharmacienEmail).subscribe({
+      next: updatedOrder => {
+        this.orderActionLoading = null;
+        this.orderStatus = updatedOrder.status;
+        this.setFeedback('success', `Commande #${updatedOrder.id} refusee.`);
+      },
+      error: () => {
+        this.orderActionLoading = null;
+        this.setFeedback('error', 'Impossible de refuser la commande depuis cette page.');
+      }
     });
   }
 
@@ -238,6 +336,10 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
     this.pharmacistService.updateProductAvailability(product.productId, nextAvailability).subscribe({
       next: updated => {
         this.actionProductId = null;
+        this.markCurrentOrderTermReviewed();
+        if (this.autoAdvanceOrderItems) {
+          this.advanceToNextOrderTerm();
+        }
         this.setFeedback(
           'success',
           updated.available
@@ -449,11 +551,12 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
   }
 
   private loadProductsForOrderContext(): void {
-    const terms = this.extractOrderTerms(this.searchTerm);
+    const terms = this.selectedOrderSearchTerm
+      ? [this.selectedOrderSearchTerm]
+      : this.orderSearchTerms;
 
     if (terms.length === 0) {
-      this.hasOrderContext = false;
-      this.orderContextLabel = '';
+      this.orderContextLabel = this.buildProductContextLabel();
       this.loadProducts();
       return;
     }
@@ -505,6 +608,55 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
       .filter((term, index, all) => all.indexOf(term) === index);
   }
 
+  private extractOrderItemTerms(orderItemsParam: string | null): string[] {
+    if (!orderItemsParam) {
+      return [];
+    }
+
+    return orderItemsParam
+      .split('||')
+      .map(term => term.replace(/\s+/g, ' ').trim())
+      .filter(term => term.length >= 2)
+      .filter((term, index, all) => all.indexOf(term) === index);
+  }
+
+  private markCurrentOrderTermReviewed(): void {
+    const term = this.selectedOrderSearchTerm;
+    if (!term || this.reviewedOrderTerms.includes(term)) {
+      return;
+    }
+
+    this.reviewedOrderTerms = [...this.reviewedOrderTerms, term];
+  }
+
+  private advanceToNextOrderTerm(): void {
+    if (!this.selectedOrderSearchTerm || this.orderSearchTerms.length === 0) {
+      return;
+    }
+
+    const currentIndex = this.orderSearchTerms.indexOf(this.selectedOrderSearchTerm);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    const nextInSequence = this.orderSearchTerms.find((term, index) => {
+      return index > currentIndex && !this.reviewedOrderTerms.includes(term);
+    });
+
+    if (nextInSequence) {
+      this.selectOrderSearchTerm(nextInSequence);
+      return;
+    }
+
+    const firstPending = this.orderSearchTerms.find(term => !this.reviewedOrderTerms.includes(term));
+    if (firstPending) {
+      this.selectOrderSearchTerm(firstPending);
+      return;
+    }
+
+    this.selectOrderSearchTerm('');
+  }
+
   private buildOrderContextLabel(terms: string[]): string {
     const orderLabel = this.orderId ? `Commande #${this.orderId}` : 'Commande selectionnee';
     const clientLabel = this.clientName ? ` de ${this.clientName}` : '';
@@ -514,7 +666,12 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
   private buildProductContextLabel(): string {
     const orderLabel = this.orderId ? `Commande #${this.orderId}` : 'Commande selectionnee';
     const clientLabel = this.clientName ? ` de ${this.clientName}` : '';
-    return `${orderLabel}${clientLabel} - ${this.orderProductIds.length} produit${this.orderProductIds.length > 1 ? 's' : ''}`;
+    const totalItems = this.orderProductIds.length || this.orderSearchTerms.length;
+    if (totalItems > 0) {
+      return `${orderLabel}${clientLabel} - ${totalItems} produit${totalItems > 1 ? 's' : ''}`;
+    }
+
+    return `${orderLabel}${clientLabel}`;
   }
 
   private extractProductIds(productIdsParam: string | null, legacyProductIdParam: string | null): number[] {

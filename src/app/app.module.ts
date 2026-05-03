@@ -29,6 +29,7 @@ import { PharmacistNearbyPharmaciesComponent } from './pages/pharmacist-interfac
 import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/orders/pharmacist-orders.component';
 import { PharmacistProductsComponent }  from './pages/pharmacist-interface/products/pharmacist-products.component';
 import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/schedule/pharmacist-schedule.component';
+import { PharmacistBannersComponent }   from './pages/pharmacist-interface/banners/pharmacist-banners.component';
 import { MonthlyDashboardComponent } from './pages/monthly-dashboard/monthly-dashboard.component';
 
 @NgModule({
@@ -55,6 +56,7 @@ import { MonthlyDashboardComponent } from './pages/monthly-dashboard/monthly-das
     PharmacistOrdersComponent,
     PharmacistProductsComponent,
     PharmacistScheduleComponent,
+    PharmacistBannersComponent,
     MonthlyDashboardComponent,
   ],
   imports: [

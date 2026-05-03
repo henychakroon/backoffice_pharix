@@ -39,20 +39,65 @@
   </div>
 
   <div class="order-context-card card" *ngIf="hasOrderContext">
-    <div>
+    <div class="order-context-content">
       <div class="order-context-title">Verification depuis une commande</div>
       <div class="order-context-subtitle">{{ orderContextLabel }}</div>
       <div class="order-context-description">
-        <ng-container *ngIf="orderProductIds.length > 0; else descriptionContext">
-          Les produits lies a cette commande sont affiches directement pour verifier leur disponibilite
-          malgre la pagination du catalogue.
+        <ng-container *ngIf="orderProductIds.length > 0; else orderTermsContext">
+          Les produits lies a cette commande sont affiches directement. Utilisez les filtres ci-dessous
+          pour verifier la disponibilite de chaque item.
         </ng-container>
-        <ng-template #descriptionContext>
-          Les produits affiches correspondent aux elements detectes dans la description de la commande.
+        <ng-template #orderTermsContext>
+          Cliquez sur un item pour lancer une recherche ciblee et traiter la commande sans revenir a la page des ordres.
         </ng-template>
       </div>
+
+      <div class="order-item-chips" *ngIf="orderSearchTerms.length > 0">
+        <button
+          class="item-chip"
+          [class.item-chip-active]="!selectedOrderSearchTerm"
+          (click)="selectOrderSearchTerm('')">
+          Tous les items
+        </button>
+
+        <button
+          class="item-chip"
+          *ngFor="let term of orderSearchTerms"
+          [class.item-chip-done]="isOrderTermReviewed(term)"
+          [class.item-chip-active]="selectedOrderSearchTerm === term"
+          (click)="selectOrderSearchTerm(term)">
+          <span class="item-chip-check" *ngIf="isOrderTermReviewed(term)">OK</span>
+          {{ term }}
+        </button>
+      </div>
     </div>
-    <button class="btn btn-ghost btn-sm" (click)="clearOrderContext()">Voir tout le catalogue</button>
+
+    <div class="order-context-actions">
+      <div class="order-status-pill" *ngIf="orderStatus">Statut: {{ contextOrderStatusLabel }}</div>
+
+      <label class="order-auto-advance-toggle" *ngIf="orderSearchTerms.length > 1">
+        <input type="checkbox" [(ngModel)]="autoAdvanceOrderItems">
+        Auto-suivant apres verification
+      </label>
+
+      <button
+        class="btn btn-primary btn-sm"
+        *ngIf="canResolveOrderFromContext"
+        [disabled]="orderActionLoading !== null"
+        (click)="acceptOrderFromContext()">
+        {{ orderActionLoading === 'accept' ? 'Acceptation...' : 'Accepter la commande' }}
+      </button>
+
+      <button
+        class="btn btn-danger btn-sm"
+        *ngIf="canResolveOrderFromContext"
+        [disabled]="orderActionLoading !== null"
+        (click)="refuseOrderFromContext()">
+        {{ orderActionLoading === 'refuse' ? 'Refus...' : 'Refuser la commande' }}
+      </button>
+
+      <button class="btn btn-ghost btn-sm" (click)="clearOrderContext()">Voir tout le catalogue</button>
+    </div>
   </div>
 
   <div class="toolbar card">

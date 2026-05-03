@@ -134,7 +134,7 @@ export interface AdvertisementBanner {
   id: number;
   title: string;
   description: string;
-  image: string | null; // base64
+  imageUrl: string | null;
   validated: boolean;
   active: boolean;
   pharmacienId: number;
@@ -233,6 +233,46 @@ export interface MonthlyDashboard {
   revenueByType:      PharmacyTypeRevenue[];
   topPharmacies:      TopPharmacyM[];
   dailyOutcomes:      DailyOutcome[];
+
+  // Pharix's actual monthly revenue (the app's money, not pharmacies' GMV)
+  companyRevenue:      CompanyRevenueMonthly | null;
+  companyRevenueByDay: CompanyDailyRevenue[];
+}
+
+export interface CompanyRevenueMonthly {
+  // Variable revenue (orders-driven)
+  medicamentServiceFeeTotal:    number;
+  parapharmacieCommissionTotal: number;
+  deliveryRevenueTotal:         number;
+  variableTotal:                number;
+
+  // Recurring
+  subscriptionMonthly:          number;
+
+  // Grand total
+  totalMonthly:                 number;
+
+  // Configuration context
+  medicamentServiceFeeRate:        number;
+  parapharmacieCommissionPercent:  number;
+  pharmacistMonthlySubscription:   number;
+
+  // Underlying counts
+  medicamentOrders:    number;
+  parapharmacieSubtotal: number;
+  activePharmacyCount: number;
+
+  // Growth vs previous month
+  growthPct: number | null;
+}
+
+export interface CompanyDailyRevenue {
+  date:            string;
+  dayLabel:        string;
+  serviceFee:      number;
+  commission:      number;
+  deliveryRevenue: number;
+  total:           number;
 }
 
 export interface DayStatM {

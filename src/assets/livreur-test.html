@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Test — Livreur App</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #4f8ef7;
+      --primary-dark: #3a79e6;
+      --success: #22c55e;
+      --success-dark: #16a34a;
+      --danger: #ef4444;
+      --danger-dark: #dc2626;
+      --warning: #f59e0b;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-400: #94a3b8;
+      --gray-600: #475569;
+      --gray-800: #1e293b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-100);
+      min-height: 100vh;
+      color: var(--gray-800);
+    }
+
+    /* ── Login ── */
+    #loginView {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.10);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-logo {
+      width: 52px;
+      height: 52px;
+      background: var(--primary);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+
+    .login-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+
+    .login-sub {
+      font-size: 13px;
+      color: var(--gray-400);
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--gray-600);
+      margin-bottom: 6px;
+    }
+
+    input[type=email], input[type=password] {
+      width: 100%;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 14px;
+      color: var(--gray-800);
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 16px;
+      background: var(--gray-50);
+    }
+
+    input:focus { border-color: var(--primary); background: #fff; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      white-space: nowrap;
+    }
+
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--primary); color: #fff; width: 100%; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: var(--success-dark); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: var(--danger-dark); }
+    .btn-delivered { background: #8b5cf6; color: #fff; }
+    .btn-delivered:hover { background: #7c3aed; }
+    .btn-outline {
+      background: transparent;
+      color: var(--gray-600);
+      border: 1.5px solid var(--gray-200);
+    }
+    .btn-outline:hover { background: var(--gray-100); }
+    .btn-sm { padding: 7px 14px; font-size: 13px; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* ── App shell ── */
+    #appView { display: none; }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    .topbar-sub {
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .refresh-indicator {
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+
+    /* ── Stats strip ── */
+    .stats-strip {
+      display: flex;
+      gap: 10px;
+      padding: 16px 16px 0;
+      overflow-x: auto;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 18px;
+      min-width: 120px;
+      flex-shrink: 0;
+      border: 1px solid var(--gray-200);
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+
+    /* ── Orders ── */
+    .orders-section {
+      padding: 16px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .count-badge {
+      background: var(--primary);
+      color: #fff;
+      border-radius: 20px;
+      padding: 2px 9px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .order-card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1.5px solid var(--gray-200);
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .order-card.urgent {
+      border-color: var(--warning);
+      box-shadow: 0 0 0 3px rgba(245,158,11,.12);
+    }
+
+    .order-card.urgent .order-header::after {
+      content: '⏱ En attente d\'acceptation';
+      font-size: 11px;
+      color: var(--warning);
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .order-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .order-id {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    .status-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .status-ASSIGNED, .status-ASSIGNED_FROM_ADMIN {
+      background: #fef3c7; color: #92400e;
+    }
+    .status-ACCEPTED_FROM_LIVREUR {
+      background: #dcfce7; color: #166534;
+    }
+    .status-PICKED_UP {
+      background: #dbeafe; color: #1e40af;
+    }
+    .status-DELIVERING {
+      background: #ede9fe; color: #5b21b6;
+    }
+    .status-DELIVERED {
+      background: #d1fae5; color: #065f46;
+    }
+    .status-REFUSED_FROM_LIVREUR, .status-DISPATCH_FAILED, .status-CANCELLED {
+      background: #fee2e2; color: #991b1b;
+    }
+    .status-default {
+      background: var(--gray-100); color: var(--gray-600);
+    }
+
+    .order-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .info-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .info-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--gray-400);
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-size: 13px;
+      color: var(--gray-800);
+      font-weight: 500;
+    }
+
+    .info-value.mono {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+    }
+
+    .order-items {
+      border-top: 1px solid var(--gray-100);
+      padding-top: 10px;
+      margin-bottom: 12px;
+    }
+
+    .items-toggle {
+      font-size: 12px;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 600;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .items-list {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .items-list.open { display: flex; }
+
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--gray-600);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .item-row:last-child { border-bottom: none; }
+
+    .order-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-top: 1px solid var(--gray-100);
+      margin-bottom: 12px;
+    }
+
+    .total-label { font-size: 13px; color: var(--gray-600); }
+    .total-value { font-size: 15px; font-weight: 700; color: var(--gray-800); }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--gray-400);
+    }
+
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--gray-800);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: transform .3s;
+      z-index: 999;
+      white-space: nowrap;
+      max-width: 90vw;
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.success { background: var(--success-dark); }
+    #toast.error { background: var(--danger); }
+
+    /* ── Loading ── */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-overlay {
+      text-align: center;
+      padding: 40px;
+      color: var(--gray-400);
+    }
+
+    @media (max-width: 480px) {
+      .login-card { padding: 28px 20px; }
+      .order-info { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN VIEW ── -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="login-logo">🛵</div>
+    <div class="login-title">Espace Livreur</div>
+    <div class="login-sub">Connectez-vous pour gérer vos livraisons</div>
+
+    <label for="emailInput">Adresse email</label>
+    <input type="email" id="emailInput" placeholder="livreur@example.com" autocomplete="email" value="livreur.karim@pharix.tn" />
+
+    <label for="passwordInput">Mot de passe</label>
+    <input type="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password" value="password123" />
+
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">
+      Se connecter
+    </button>
+
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ── APP VIEW ── -->
+<div id="appView">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">🛵 Mes commandes</div>
+      <div class="topbar-sub" id="livreurName">Livreur</div>
+    </div>
+    <div class="topbar-right">
+      <span class="refresh-indicator" id="refreshCountdown"></span>
+      <button class="btn btn-outline btn-sm" onclick="loadOrders()">↺ Actualiser</button>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Déconnecter</button>
+    </div>
+  </div>
+
+  <div class="stats-strip" id="statsStrip">
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal">—</div>
+      <div class="stat-label">Total commandes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statPending">—</div>
+      <div class="stat-label">En attente</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statActive">—</div>
+      <div class="stat-label">En cours</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statDone">—</div>
+      <div class="stat-label">Livrées</div>
+    </div>
+  </div>
+
+  <div class="orders-section">
+    <div id="ordersContainer"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let token = null;
+  let orders = [];
+  let refreshTimer = null;
+  let countdown = 15;
+
+  const statusLabels = {
+    PENDING:                  'En attente',
+    ACCEPTED_FROM_PHARMACIEN: 'Accepté pharmacien',
+    REFUSED_FROM_PHARMACIEN:  'Refusé pharmacien',
+    READY_FOR_DELIVERY:       'Prêt pour livraison',
+    DISPATCH_FAILED:          'Échec affectation',
+    ASSIGNED:                 'Assigné (à accepter)',
+    ASSIGNED_FROM_ADMIN:      'Assigné par admin',
+    ACCEPTED_FROM_LIVREUR:    'Accepté',
+    REFUSED_FROM_LIVREUR:     'Refusé',
+    PICKED_UP:                'Récupéré',
+    DELIVERING:               'En livraison',
+    DELIVERED:                'Livré ✓',
+    CANCELLED:                'Annulé',
+  };
+
+  function statusClass(s) {
+    const map = {
+      ASSIGNED: 'status-ASSIGNED',
+      ASSIGNED_FROM_ADMIN: 'status-ASSIGNED_FROM_ADMIN',
+      ACCEPTED_FROM_LIVREUR: 'status-ACCEPTED_FROM_LIVREUR',
+      PICKED_UP: 'status-PICKED_UP',
+      DELIVERING: 'status-DELIVERING',
+      DELIVERED: 'status-DELIVERED',
+      REFUSED_FROM_LIVREUR: 'status-REFUSED_FROM_LIVREUR',
+      DISPATCH_FAILED: 'status-DISPATCH_FAILED',
+      CANCELLED: 'status-CANCELLED',
+    };
+    return map[s] || 'status-default';
+  }
+
+  function isUrgent(s) {
+    return s === 'ASSIGNED' || s === 'ASSIGNED_FROM_ADMIN';
+  }
+
+  // ── API helpers ────────────────────────────────────────────────────────────
+  async function api(method, path, body) {
+    const opts = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+      },
+      credentials: 'include'
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(path, opts);
+    if (res.status === 401) { logout(); throw new Error('Session expirée'); }
+    const text = await res.text();
+    if (!res.ok) throw new Error(text || res.statusText);
+    return text ? JSON.parse(text) : null;
+  }
+
+  // ── Login ──────────────────────────────────────────────────────────────────
+  async function doLogin() {
+    const email = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+    const errEl = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+
+    errEl.textContent = '';
+    if (!email || !password) { errEl.textContent = 'Veuillez remplir tous les champs.'; return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Connexion…';
+
+    try {
+      const data = await api('POST', '/api/v1/auth/login', { email, password });
+
+      if (data.role !== 'LIVREUR') {
+        errEl.textContent = 'Ce compte n\'est pas un compte livreur (rôle: ' + data.role + ').';
+        btn.disabled = false;
+        btn.textContent = 'Se connecter';
+        return;
+      }
+
+      token = data.access_token;
+      const profile = data.profile || {};
+      const name = profile.fullName || profile.ownerName || email;
+
+      document.getElementById('livreurName').textContent = name;
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('appView').style.display = 'block';
+
+      startRefresh();
+      loadOrders();
+    } catch (e) {
+      errEl.textContent = 'Erreur: ' + e.message;
+      btn.disabled = false;
+      btn.textContent = 'Se connecter';
+    }
+  }
+
+  function logout() {
+    token = null;
+    orders = [];
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+    document.getElementById('appView').style.display = 'none';
+    document.getElementById('loginView').style.display = 'flex';
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('passwordInput').value = '';
+  }
+
+  // ── Orders ─────────────────────────────────────────────────────────────────
+  async function loadOrders() {
+    const container = document.getElementById('ordersContainer');
+
+    try {
+      orders = await api('GET', '/api/v1/livreur/orders');
+      renderOrders();
+      updateStats();
+      resetCountdown();
+    } catch (e) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">' + e.message + '</div></div>';
+    }
+  }
+
+  function renderOrders() {
+    const container = document.getElementById('ordersContainer');
+
+    // Sort: urgent (ASSIGNED/ASSIGNED_FROM_ADMIN) first, then by date desc
+    const sorted = [...orders].sort((a, b) => {
+      const ua = isUrgent(a.status) ? 0 : 1;
+      const ub = isUrgent(b.status) ? 0 : 1;
+      if (ua !== ub) return ua - ub;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    if (!sorted.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Aucune commande assignée pour le moment.</div></div>';
+      return;
+    }
+
+    // Group label sections
+    const urgent = sorted.filter(o => isUrgent(o.status));
+    const active = sorted.filter(o => ['ACCEPTED_FROM_LIVREUR','PICKED_UP','DELIVERING'].includes(o.status));
+    const done   = sorted.filter(o => ['DELIVERED','REFUSED_FROM_LIVREUR','DISPATCH_FAILED','CANCELLED'].includes(o.status));
+    const other  = sorted.filter(o => !isUrgent(o.status) && !['ACCEPTED_FROM_LIVREUR','PICKED_UP','DELIVERING','DELIVERED','REFUSED_FROM_LIVREUR','DISPATCH_FAILED','CANCELLED'].includes(o.status));
+
+    let html = '';
+
+    if (urgent.length) {
+      html += sectionHtml('⏱ À accepter', urgent.length);
+      urgent.forEach(o => { html += orderCardHtml(o); });
+    }
+    if (active.length) {
+      html += sectionHtml('🚴 En cours', active.length);
+      active.forEach(o => { html += orderCardHtml(o); });
+    }
+    if (other.length) {
+      html += sectionHtml('📋 Autres', other.length);
+      other.forEach(o => { html += orderCardHtml(o); });
+    }
+    if (done.length) {
+      html += sectionHtml('✓ Terminées', done.length);
+      done.forEach(o => { html += orderCardHtml(o); });
+    }
+
+    container.innerHTML = html;
+  }
+
+  function sectionHtml(title, count) {
+    return `<div class="section-header">
+      <div class="section-title">${title}</div>
+      <div class="count-badge">${count}</div>
+    </div>`;
+  }
+
+  function orderCardHtml(o) {
+    const urgent = isUrgent(o.status);
+    const fmt = v => v != null ? Number(v).toFixed(2) + ' TND' : '—';
+    const fmtDate = d => d ? new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+
+    const itemCount = (o.orderItems || []).length;
+    const itemsHtml = (o.orderItems || []).map(item =>
+      `<div class="item-row">
+        <span>${item.productName || 'Produit'} × ${item.quantity}</span>
+        <span>${fmt(item.lineTotal)}</span>
+      </div>`
+    ).join('');
+
+    let actionsHtml = '';
+    if (o.status === 'ASSIGNED' || o.status === 'ASSIGNED_FROM_ADMIN') {
+      actionsHtml = `
+        <button class="btn btn-success btn-sm" onclick="acceptOrder(${o.id})">✓ Accepter</button>
+        <button class="btn btn-danger btn-sm" onclick="refuseOrder(${o.id})">✗ Refuser</button>
+      `;
+    } else if (o.status === 'ACCEPTED_FROM_LIVREUR') {
+      actionsHtml = `
+        <button class="btn btn-sm" style="background:#0ea5e9;color:#fff;" onclick="scanPickup(${o.id})">📷 Simuler scan pickup</button>
+        <span style="font-size:11px;color:var(--gray-400);align-self:center;">→ PICKED_UP</span>
+      `;
+    } else if (o.status === 'PICKED_UP') {
+      actionsHtml = `<button class="btn btn-delivered btn-sm" onclick="markDelivered(${o.id})">📦 Marquer Livré</button>`;
+    } else if (o.status === 'DELIVERING') {
+      actionsHtml = `<button class="btn btn-delivered btn-sm" onclick="markDelivered(${o.id})">✓ Livraison confirmée</button>`;
+    }
+
+    return `<div class="order-card${urgent ? ' urgent' : ''}" id="card-${o.id}">
+      <div class="order-header">
+        <div class="order-id">Commande #${o.id}</div>
+        <div class="status-badge ${statusClass(o.status)}">${statusLabels[o.status] || o.status}</div>
+      </div>
+      <div class="order-info">
+        <div class="info-row">
+          <div class="info-label">Pharmacie</div>
+          <div class="info-value">${o.pharmacyName || '—'}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Client</div>
+          <div class="info-value">${o.clientName || '—'}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Tél. client</div>
+          <div class="info-value">${o.clientPhone || '—'}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Date</div>
+          <div class="info-value">${fmtDate(o.createdAt)}</div>
+        </div>
+      </div>
+      <div class="total-row">
+        <span class="total-label">Total commande</span>
+        <span class="total-value">${fmt(o.total)}</span>
+      </div>
+      ${itemCount ? `<div class="order-items">
+        <button class="items-toggle" onclick="toggleItems(${o.id})">▸ ${itemCount} article${itemCount > 1 ? 's' : ''}</button>
+        <div class="items-list" id="items-${o.id}">${itemsHtml}</div>
+      </div>` : ''}
+      <div class="order-actions">${actionsHtml}</div>
+    </div>`;
+  }
+
+  function toggleItems(orderId) {
+    const el = document.getElementById('items-' + orderId);
+    const btn = el.previousElementSibling;
+    const open = el.classList.toggle('open');
+    const count = el.children.length;
+    btn.textContent = (open ? '▾ ' : '▸ ') + count + ' article' + (count > 1 ? 's' : '');
+  }
+
+  function updateStats() {
+    document.getElementById('statTotal').textContent = orders.length;
+    document.getElementById('statPending').textContent = orders.filter(o => isUrgent(o.status)).length;
+    document.getElementById('statActive').textContent = orders.filter(o => ['ACCEPTED_FROM_LIVREUR','PICKED_UP','DELIVERING'].includes(o.status)).length;
+    document.getElementById('statDone').textContent = orders.filter(o => o.status === 'DELIVERED').length;
+  }
+
+  // ── Order actions ──────────────────────────────────────────────────────────
+  async function acceptOrder(id) {
+    const card = document.getElementById('card-' + id);
+    const btn = card.querySelector('.btn-success');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    try {
+      await api('POST', '/api/v1/livreur/orders/' + id + '/accept');
+      showToast('Commande #' + id + ' acceptée !', 'success');
+      await loadOrders();
+    } catch (e) {
+      showToast('Erreur: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = '✓ Accepter';
+    }
+  }
+
+  async function refuseOrder(id) {
+    if (!confirm('Refuser la commande #' + id + ' ? Elle sera réassignée à un autre livreur.')) return;
+    const card = document.getElementById('card-' + id);
+    const btn = card.querySelector('.btn-danger');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    try {
+      await api('POST', '/api/v1/livreur/orders/' + id + '/refuse');
+      showToast('Commande #' + id + ' refusée.', 'error');
+      await loadOrders();
+    } catch (e) {
+      showToast('Erreur: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = '✗ Refuser';
+    }
+  }
+
+  async function markDelivered(id) {
+    if (!confirm('Confirmer la livraison de la commande #' + id + ' ?')) return;
+    const card = document.getElementById('card-' + id);
+    const btn = card.querySelector('.btn-delivered');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    try {
+      await api('POST', '/api/v1/livreur/orders/' + id + '/delivered');
+      showToast('Commande #' + id + ' marquée Livrée !', 'success');
+      await loadOrders();
+    } catch (e) {
+      showToast('Erreur: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = '✓ Livraison confirmée';
+    }
+  }
+
+  // ── Scan pickup ────────────────────────────────────────────────────────────
+  async function scanPickup(id) {
+    const card = document.getElementById('card-' + id);
+    const btn = card.querySelector('[onclick="scanPickup(' + id + ')"]');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; }
+
+    try {
+      await api('POST', '/api/v1/livreur/orders/' + id + '/scan-pickup');
+      showToast('Commande #' + id + ' — pickup scanné, statut: PICKED_UP', 'success');
+      await loadOrders();
+    } catch (e) {
+      showToast('Erreur scan: ' + e.message, 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '📷 Simuler scan pickup'; }
+    }
+  }
+
+  // ── Auto-refresh ───────────────────────────────────────────────────────────
+  function startRefresh() {
+    clearInterval(refreshTimer);
+    countdown = 15;
+    refreshTimer = setInterval(() => {
+      countdown--;
+      document.getElementById('refreshCountdown').textContent = 'Actualisation dans ' + countdown + 's';
+      if (countdown <= 0) {
+        countdown = 15;
+        loadOrders();
+      }
+    }, 1000);
+  }
+
+  function resetCountdown() {
+    countdown = 15;
+    document.getElementById('refreshCountdown').textContent = 'Actualisation dans ' + countdown + 's';
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  let toastTimer = null;
+  function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'show' + (type ? ' ' + type : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+  }
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') {
+      doLogin();
+    }
+  });
+</script>
+</body>
+</html>
