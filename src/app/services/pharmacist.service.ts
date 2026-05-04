@@ -12,6 +12,56 @@ export interface PharmacienDashboard {
   refusedOrders: number;
   cancelledOrders: number;
   totalRevenue: number;
+  totalCouponsRedeemed: number;
+  totalDiscountGiven: number;
+}
+
+export type CouponType = 'PERCENT' | 'FIXED';
+export type CouponScope = 'PRODUCT' | 'CATEGORY' | 'PHARMACY_WIDE';
+
+export interface CouponRefItem { id: number; name: string; }
+
+export interface Coupon {
+  id: number;
+  code: string;
+  pharmacyId: number;
+  pharmacyName?: string;
+  type: CouponType;
+  value: number;
+  scope: CouponScope;
+  products?: CouponRefItem[];
+  categories?: CouponRefItem[];
+  minSubtotal?: number | null;
+  maxDiscount?: number | null;
+  validFrom: string;
+  validTo: string;
+  maxRedemptions?: number | null;
+  maxRedemptionsPerClient?: number | null;
+  active: boolean;
+  createdAt: string;
+  redemptionCount?: number;
+  totalDiscountGiven?: number;
+}
+
+export interface CouponUpsert {
+  code: string;
+  type: CouponType;
+  value: number;
+  scope: CouponScope;
+  productIds?: number[];
+  categoryIds?: number[];
+  minSubtotal?: number | null;
+  maxDiscount?: number | null;
+  validFrom: string;          // ISO local datetime
+  validTo: string;
+  maxRedemptions?: number | null;
+  maxRedemptionsPerClient?: number | null;
+  active?: boolean;
+}
+
+export interface CouponScopeOptions {
+  products: CouponRefItem[];
+  categories: CouponRefItem[];
 }
 
 export interface CreateReportPayload {
@@ -345,6 +395,31 @@ export class PharmacistService {
 
   deleteBanner(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/banners/${id}`);
+  }
+
+  // ── Coupons ─────────────────────────────────────────────────────────────
+  listCoupons(): Observable<Coupon[]> {
+    return this.http.get<Coupon[]>(`${this.BASE}/coupons`);
+  }
+
+  getCouponScopeOptions(): Observable<CouponScopeOptions> {
+    return this.http.get<CouponScopeOptions>(`${this.BASE}/coupons/scope-options`);
+  }
+
+  createCoupon(payload: CouponUpsert): Observable<Coupon> {
+    return this.http.post<Coupon>(`${this.BASE}/coupons`, payload);
+  }
+
+  updateCoupon(id: number, payload: CouponUpsert): Observable<Coupon> {
+    return this.http.put<Coupon>(`${this.BASE}/coupons/${id}`, payload);
+  }
+
+  toggleCoupon(id: number): Observable<Coupon> {
+    return this.http.patch<Coupon>(`${this.BASE}/coupons/${id}/toggle`, {});
+  }
+
+  deleteCoupon(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.BASE}/coupons/${id}`);
   }
 
   private buildProductFormData(

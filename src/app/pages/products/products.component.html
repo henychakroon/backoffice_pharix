@@ -3,10 +3,16 @@
   <!-- ── Page header ──────────────────────────────────────────────────────── -->
   <div class="page-header">
     <div>
-      <div class="page-title">Catalogue médicaments</div>
-      <div class="page-subtitle">Importez, gérez et exportez le catalogue de référence</div>
+      <div class="page-title">
+        {{ productType === 'medicament' ? 'Catalogue médicaments' : 'Catalogue parapharmacie' }}
+      </div>
+      <div class="page-subtitle">
+        {{ productType === 'medicament'
+          ? 'Importez, gérez et exportez le catalogue de référence'
+          : 'Ajoutez et gérez les produits parapharmacie' }}
+      </div>
     </div>
-    <div class="header-actions">
+    <div class="header-actions" *ngIf="productType === 'medicament'">
       <button class="tab-btn" [class.active]="activeTab === 'import'" (click)="setTab('import')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Import CSV
@@ -16,6 +22,16 @@
         Médicaments
       </button>
     </div>
+  </div>
+
+  <!-- ── Product type toggle ─────────────────────────────────────────────────── -->
+  <div class="type-toggle">
+    <button class="type-btn" [class.active]="productType === 'medicament'" (click)="setProductType('medicament')">
+      Médicaments
+    </button>
+    <button class="type-btn" [class.active]="productType === 'parapharmacie'" (click)="setProductType('parapharmacie')">
+      Parapharmacie
+    </button>
   </div>
 
   <!-- ── Toast ──────────────────────────────────────────────────────────────── -->
@@ -35,6 +51,8 @@
       </button>
     </div>
   </div>
+
+  <ng-container *ngIf="productType === 'medicament'">
 
   <!-- ════════════════  IMPORT TAB  ════════════════════════════════════════ -->
   <div *ngIf="activeTab === 'import'" class="tab-panel">
@@ -321,6 +339,180 @@
     </div>
   </div>
 
+  </ng-container>
+
+  <!-- ════════════════  PARAPHARMACIE PANEL  ══════════════════════════════════ -->
+  <div *ngIf="productType === 'parapharmacie'" class="tab-panel">
+
+    <!-- Toolbar -->
+    <div class="toolbar card">
+      <div class="toolbar-left">
+        <div class="input-wrap search-input">
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Rechercher par nom ou marque…"
+            [value]="paraSearchTerm" (input)="onParaSearchChange($any($event.target).value)">
+        </div>
+
+        <select class="filter-select" [(ngModel)]="paraSelectedCategory" (change)="applyParaFilters()">
+          <option value="">Toutes les catégories</option>
+          <option *ngFor="let c of paraCategoriesFromList" [value]="c">{{ c }}</option>
+        </select>
+
+        <label class="toggle-label">
+          <input type="checkbox" [(ngModel)]="paraShowInactive" (change)="applyParaFilters()">
+          Inclure inactifs
+        </label>
+
+        <button class="btn btn-ghost btn-xs" *ngIf="hasActiveParaFilters" (click)="clearParaFilters()">
+          &times; Réinitialiser
+        </button>
+      </div>
+
+      <div class="toolbar-right">
+        <span class="result-count">
+          {{ filteredParaProducts.length | number }} résultat{{ filteredParaProducts.length !== 1 ? 's' : '' }}
+        </span>
+        <button class="btn btn-primary btn-sm" (click)="openParaCreate()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter un produit
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-card card" *ngIf="paraLoading">
+      <div class="spinner-wrap"><div class="spinner"></div><p>Chargement des produits…</p></div>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-card card" *ngIf="!paraLoading && filteredParaProducts.length === 0">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <p *ngIf="paraProducts.length === 0">Aucun produit parapharmacie. Cliquez sur «&nbsp;Ajouter un produit&nbsp;».</p>
+      <p *ngIf="paraProducts.length > 0">Aucun résultat pour ces filtres.</p>
+      <button class="btn btn-ghost btn-sm" *ngIf="hasActiveParaFilters" (click)="clearParaFilters()">
+        Réinitialiser les filtres
+      </button>
+    </div>
+
+    <!-- Cards grid -->
+    <div class="para-grid" *ngIf="!paraLoading && filteredParaProducts.length > 0">
+      <div class="para-card"
+           *ngFor="let p of filteredParaProducts; trackBy: trackByParaId"
+           [class.para-card-inactive]="!p.isActive"
+           (click)="openParaEdit(p)">
+        <div class="para-img">
+          <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name">
+          <div class="para-img-placeholder" *ngIf="!p.imageUrl">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+        </div>
+        <div class="para-body">
+          <div class="para-name" [title]="p.name">{{ p.name }}</div>
+          <div class="para-brand" *ngIf="p.brand">{{ p.brand }}</div>
+          <div class="para-cat" *ngIf="p.categoryName">{{ p.categoryName }}</div>
+          <div class="para-price">
+            {{ p.referencePrice != null ? (p.referencePrice | number:'1.3-3') + ' TND' : '—' }}
+          </div>
+          <div class="para-foot">
+            <span class="badge"
+                  [class.badge-active]="p.isActive"
+                  [class.badge-inactive]="!p.isActive"
+                  (click)="toggleParaActive(p, $event)">
+              {{ p.isActive ? 'Actif' : 'Inactif' }}
+            </span>
+            <button class="icon-btn icon-btn-danger" title="Supprimer" (click)="askDeletePara(p, $event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════  PARA DRAWER  ══════════════════════════════════════════ -->
+<div class="drawer-overlay" [class.open]="paraDrawerOpen" (click)="closeParaDrawer()"></div>
+<aside class="drawer" [class.open]="paraDrawerOpen" *ngIf="paraDrawerOpen">
+  <div class="drawer-header">
+    <div class="drawer-title">
+      {{ paraEditingId != null ? 'Modifier le produit' : 'Ajouter un produit parapharmacie' }}
+    </div>
+    <button class="btn btn-ghost btn-icon" (click)="closeParaDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="drawer-body edit-body">
+    <div class="para-image-upload">
+      <div class="para-image-preview" [class.has-image]="paraImagePreview">
+        <img *ngIf="paraImagePreview" [src]="paraImagePreview" alt="Aperçu">
+        <div *ngIf="!paraImagePreview" class="para-image-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Aucune image</span>
+        </div>
+      </div>
+      <label class="btn btn-secondary btn-sm" for="paraImageInput">
+        {{ paraImagePreview ? 'Changer l\'image' : 'Ajouter une image' }}
+      </label>
+      <input id="paraImageInput" type="file" accept="image/*" (change)="onParaImageSelected($event)" style="display:none">
+    </div>
+
+    <div class="edit-grid">
+      <div class="edit-field edit-field-full">
+        <label class="edit-label">Nom *</label>
+        <input class="edit-input" type="text" [(ngModel)]="paraDraft.name" placeholder="Nom du produit">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Marque</label>
+        <input class="edit-input" type="text" [(ngModel)]="paraDraft.brand" placeholder="ex. Avène">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Catégorie *</label>
+        <input class="edit-input" type="text" list="paraCatOptions"
+               [(ngModel)]="paraDraft.categoryName" placeholder="ex. Soins du visage">
+        <datalist id="paraCatOptions">
+          <option *ngFor="let c of paraCategoriesFromList" [value]="c"></option>
+        </datalist>
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Prix réf. (TND)</label>
+        <input class="edit-input" type="number" step="0.001" [(ngModel)]="paraDraft.referencePrice">
+      </div>
+      <div class="edit-field edit-field-full">
+        <label class="edit-label">Description</label>
+        <textarea class="edit-input edit-textarea" rows="4" [(ngModel)]="paraDraft.description"
+                  placeholder="Indications, composition, conseils d'utilisation…"></textarea>
+      </div>
+    </div>
+
+    <div class="edit-actions">
+      <button class="btn btn-ghost" (click)="closeParaDrawer()" [disabled]="paraSaving">Annuler</button>
+      <button class="btn btn-primary" (click)="saveParapharmacie()" [disabled]="paraSaving">
+        <span *ngIf="!paraSaving">{{ paraEditingId != null ? 'Enregistrer' : 'Ajouter' }}</span>
+        <span *ngIf="paraSaving" class="btn-spinner">
+          <div class="spinner spinner-sm"></div> Enregistrement…
+        </span>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ════════════════  PARA DELETE CONFIRM ══════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="paraDeleteTarget" (click)="cancelDeletePara()"></div>
+<div class="modal-dialog" *ngIf="paraDeleteTarget">
+  <div class="modal-icon danger">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+  </div>
+  <h3 class="modal-title">Supprimer ce produit ?</h3>
+  <p class="modal-body">Le produit <strong>{{ paraDeleteTarget.name }}</strong> sera définitivement supprimé.</p>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" (click)="cancelDeletePara()" [disabled]="paraDeleteLoading">Annuler</button>
+    <button class="btn btn-danger" (click)="confirmDeletePara()" [disabled]="paraDeleteLoading">
+      <span *ngIf="!paraDeleteLoading">Confirmer</span>
+      <span *ngIf="paraDeleteLoading" class="btn-spinner"><div class="spinner spinner-sm"></div> Suppression…</span>
+    </button>
+  </div>
 </div>
 
 <!-- ════════════════  DETAIL DRAWER  ════════════════════════════════════════ -->

@@ -9,7 +9,9 @@ import {
   ImportConfirmData,
   MappingNeededData,
   MedicationDTO,
-  MedicationUpdateRequest
+  MedicationUpdateRequest,
+  ParapharmacieProductDTO,
+  ParapharmaciePayload
 } from '../../services/catalog.service';
 
 type ToastType = 'success' | 'error';
@@ -22,6 +24,9 @@ interface Toast { type: ToastType; message: string; }
   changeDetection: ChangeDetectionStrategy.Default
 })
 export class ProductsComponent implements OnInit, OnDestroy {
+
+  // ── Page-level product type toggle ──────────────────────────────────────────
+  productType: 'medicament' | 'parapharmacie' = 'medicament';
 
   // ── Tabs ────────────────────────────────────────────────────────────────────
   activeTab: 'import' | 'medications' = 'medications';
@@ -68,6 +73,25 @@ export class ProductsComponent implements OnInit, OnDestroy {
   showDeleteAllConfirm = false;
   deleteAllLoading = false;
 
+  // ── Parapharmacie state ─────────────────────────────────────────────────────
+  paraProducts: ParapharmacieProductDTO[] = [];
+  filteredParaProducts: ParapharmacieProductDTO[] = [];
+  paraLoading = false;
+  paraSearchTerm = '';
+  paraSelectedCategory = '';
+  paraShowInactive = false;
+  paraCategoryOptions: string[] = [];
+
+  paraDrawerOpen = false;
+  paraEditingId: number | null = null;
+  paraDraft: ParapharmaciePayload = { name: '', categoryName: '' };
+  paraImageFile: File | null = null;
+  paraImagePreview: string | null = null;
+  paraSaving = false;
+
+  paraDeleteTarget: ParapharmacieProductDTO | null = null;
+  paraDeleteLoading = false;
+
   // ── Toast notifications ─────────────────────────────────────────────────────
   toast: Toast | null = null;
   private toastTimer: any;
@@ -103,6 +127,17 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   setTab(tab: 'import' | 'medications'): void {
     this.activeTab = tab;
+  }
+
+  setProductType(type: 'medicament' | 'parapharmacie'): void {
+    if (this.productType === type) return;
+    this.productType = type;
+    if (type === 'parapharmacie') {
+      if (this.paraProducts.length === 0) this.loadParapharmacie();
+      if (this.paraCategoryOptions.length === 0) this.loadParapharmacieCategories();
+    } else if (this.allMedications.length === 0) {
+      this.loadMedications();
+    }
   }
 
   // ── Import ──────────────────────────────────────────────────────────────────
@@ -484,6 +519,215 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   trackByAmm(_index: number, item: MedicationDTO): string {
     return item.amm;
+  }
+
+  trackByParaId(_index: number, item: ParapharmacieProductDTO): number {
+    return item.id;
+  }
+
+  // ── Parapharmacie ─────────────────────────────────────────────────────────────
+
+  loadParapharmacie(): void {
+    this.paraLoading = true;
+    this.catalogService.listParapharmacie().subscribe({
+      next: list => {
+        this.paraProducts = list;
+        this.applyParaFilters();
+        this.paraLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.paraLoading = false;
+        this.showToast('error', 'Impossible de charger les produits parapharmacie.');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadParapharmacieCategories(): void {
+    this.catalogService.listParapharmacieCategories().subscribe({
+      next: cats => {
+        this.paraCategoryOptions = cats;
+        this.cdr.detectChanges();
+      },
+      error: () => { /* silent — categories are optional UX hint */ }
+    });
+  }
+
+  applyParaFilters(): void {
+    const term = this.paraSearchTerm.toLowerCase().trim();
+    this.filteredParaProducts = this.paraProducts.filter(p => {
+      if (term && !(
+        (p.name  || '').toLowerCase().includes(term) ||
+        (p.brand || '').toLowerCase().includes(term)
+      )) return false;
+      if (this.paraSelectedCategory && p.categoryName !== this.paraSelectedCategory) return false;
+      if (!this.paraShowInactive && !p.isActive) return false;
+      return true;
+    });
+  }
+
+  onParaSearchChange(value: string): void {
+    this.paraSearchTerm = value;
+    this.applyParaFilters();
+  }
+
+  clearParaFilters(): void {
+    this.paraSearchTerm = '';
+    this.paraSelectedCategory = '';
+    this.paraShowInactive = false;
+    this.applyParaFilters();
+  }
+
+  get hasActiveParaFilters(): boolean {
+    return !!(this.paraSearchTerm || this.paraSelectedCategory || this.paraShowInactive);
+  }
+
+  get paraCategoriesFromList(): string[] {
+    const set = new Set<string>();
+    for (const p of this.paraProducts) {
+      if (p.categoryName) set.add(p.categoryName);
+    }
+    for (const c of this.paraCategoryOptions) set.add(c);
+    return Array.from(set).sort();
+  }
+
+  openParaCreate(): void {
+    this.paraEditingId = null;
+    this.paraDraft = { name: '', brand: '', categoryName: '', description: '', referencePrice: null };
+    this.paraImageFile = null;
+    this.paraImagePreview = null;
+    this.paraDrawerOpen = true;
+  }
+
+  openParaEdit(p: ParapharmacieProductDTO): void {
+    this.paraEditingId = p.id;
+    this.paraDraft = {
+      name: p.name || '',
+      brand: p.brand || '',
+      categoryName: p.categoryName || '',
+      description: p.description || '',
+      referencePrice: p.referencePrice
+    };
+    this.paraImageFile = null;
+    this.paraImagePreview = p.imageUrl || null;
+    this.paraDrawerOpen = true;
+  }
+
+  closeParaDrawer(): void {
+    this.paraDrawerOpen = false;
+    this.paraEditingId = null;
+    this.paraImageFile = null;
+    this.paraImagePreview = null;
+  }
+
+  onParaImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    input.value = '';
+    this.paraImageFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.paraImagePreview = reader.result as string;
+      this.cdr.detectChanges();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  saveParapharmacie(): void {
+    if (this.paraSaving) return;
+    if (!this.paraDraft.name?.trim()) {
+      this.showToast('error', 'Le nom est obligatoire.');
+      return;
+    }
+    if (!this.paraDraft.categoryName?.trim()) {
+      this.showToast('error', 'La catégorie est obligatoire.');
+      return;
+    }
+
+    const payload: ParapharmaciePayload = {
+      name: this.paraDraft.name.trim(),
+      brand: this.paraDraft.brand?.trim() || null,
+      categoryName: this.paraDraft.categoryName.trim(),
+      description: this.paraDraft.description?.trim() || null,
+      referencePrice: this.paraDraft.referencePrice,
+      image: this.paraImageFile
+    };
+
+    this.paraSaving = true;
+    const obs = this.paraEditingId != null
+      ? this.catalogService.updateParapharmacie(this.paraEditingId, payload)
+      : this.catalogService.createParapharmacie(payload);
+
+    obs.subscribe({
+      next: saved => {
+        this.paraSaving = false;
+        if (this.paraEditingId != null) {
+          const idx = this.paraProducts.findIndex(p => p.id === saved.id);
+          if (idx !== -1) this.paraProducts[idx] = saved;
+          this.showToast('success', 'Produit mis à jour.');
+        } else {
+          this.paraProducts = [...this.paraProducts, saved];
+          this.showToast('success', 'Produit ajouté.');
+        }
+        this.applyParaFilters();
+        this.loadParapharmacieCategories();
+        this.closeParaDrawer();
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        this.paraSaving = false;
+        const msg = err.error?.message || err.error?.error || err.message || 'Erreur serveur.';
+        this.showToast('error', msg);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  toggleParaActive(p: ParapharmacieProductDTO, event: Event): void {
+    event.stopPropagation();
+    const next = !p.isActive;
+    this.catalogService.toggleParapharmacieActive(p.id, next).subscribe({
+      next: () => {
+        p.isActive = next;
+        this.applyParaFilters();
+        this.cdr.detectChanges();
+      },
+      error: () => this.showToast('error', 'Impossible de modifier le statut.')
+    });
+  }
+
+  askDeletePara(p: ParapharmacieProductDTO, event: Event): void {
+    event.stopPropagation();
+    this.paraDeleteTarget = p;
+  }
+
+  cancelDeletePara(): void {
+    if (this.paraDeleteLoading) return;
+    this.paraDeleteTarget = null;
+  }
+
+  confirmDeletePara(): void {
+    if (!this.paraDeleteTarget || this.paraDeleteLoading) return;
+    const target = this.paraDeleteTarget;
+    this.paraDeleteLoading = true;
+    this.catalogService.deleteParapharmacie(target.id).subscribe({
+      next: () => {
+        this.paraProducts = this.paraProducts.filter(p => p.id !== target.id);
+        this.applyParaFilters();
+        this.paraDeleteLoading = false;
+        this.paraDeleteTarget = null;
+        this.showToast('success', 'Produit supprimé.');
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        this.paraDeleteLoading = false;
+        const msg = err.error?.message || err.error?.error || err.message || 'Suppression échouée.';
+        this.showToast('error', msg);
+        this.cdr.detectChanges();
+      }
+    });
   }
 }
 

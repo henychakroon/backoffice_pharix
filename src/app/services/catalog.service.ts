@@ -101,9 +101,30 @@ export interface MedicationUpdateRequest {
   referencePrice?: number | null;
 }
 
+export interface ParapharmacieProductDTO {
+  id: number;
+  name: string;
+  brand: string | null;
+  description: string | null;
+  categoryName: string | null;
+  referencePrice: number | null;
+  imageUrl: string | null;
+  isActive: boolean;
+}
+
+export interface ParapharmaciePayload {
+  name: string;
+  brand?: string | null;
+  categoryName: string;
+  description?: string | null;
+  referencePrice?: number | null;
+  image?: File | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
   private readonly BASE = '/api/catalog';
+  private readonly PARA_BASE = '/api/v1/admin/products/parapharmacie';
 
   constructor(private http: HttpClient) {}
 
@@ -161,5 +182,42 @@ export class CatalogService {
 
   deleteAllMedications(): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.BASE}/medications`);
+  }
+
+  // ── Parapharmacie (admin-managed manual catalog) ────────────────────────────
+
+  listParapharmacie(): Observable<ParapharmacieProductDTO[]> {
+    return this.http.get<ParapharmacieProductDTO[]>(this.PARA_BASE);
+  }
+
+  listParapharmacieCategories(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.PARA_BASE}/categories`);
+  }
+
+  createParapharmacie(payload: ParapharmaciePayload): Observable<ParapharmacieProductDTO> {
+    return this.http.post<ParapharmacieProductDTO>(this.PARA_BASE, this.buildParaForm(payload));
+  }
+
+  updateParapharmacie(id: number, payload: ParapharmaciePayload): Observable<ParapharmacieProductDTO> {
+    return this.http.put<ParapharmacieProductDTO>(`${this.PARA_BASE}/${id}`, this.buildParaForm(payload));
+  }
+
+  deleteParapharmacie(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.PARA_BASE}/${id}`);
+  }
+
+  toggleParapharmacieActive(id: number, active: boolean): Observable<void> {
+    return this.http.patch<void>(`${this.PARA_BASE}/${id}/active`, { active });
+  }
+
+  private buildParaForm(payload: ParapharmaciePayload): FormData {
+    const fd = new FormData();
+    fd.append('name', payload.name);
+    fd.append('categoryName', payload.categoryName);
+    if (payload.brand) fd.append('brand', payload.brand);
+    if (payload.description) fd.append('description', payload.description);
+    if (payload.referencePrice != null) fd.append('referencePrice', String(payload.referencePrice));
+    if (payload.image) fd.append('image', payload.image);
+    return fd;
   }
 }

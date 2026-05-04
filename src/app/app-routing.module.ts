@@ -20,6 +20,7 @@ import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/order
 import { PharmacistProductsComponent }  from './pages/pharmacist-interface/products/pharmacist-products.component';
 import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/schedule/pharmacist-schedule.component';
 import { PharmacistBannersComponent }   from './pages/pharmacist-interface/banners/pharmacist-banners.component';
+import { PharmacistCouponsComponent }   from './pages/pharmacist-interface/coupons/pharmacist-coupons.component';
 import { AuthGuard }           from './guards/auth.guard';
 import { MonthlyDashboardComponent } from './pages/monthly-dashboard/monthly-dashboard.component';
 
@@ -58,6 +59,7 @@ const routes: Routes = [
       { path: 'products',  component: PharmacistProductsComponent  },
       { path: 'schedule',  component: PharmacistScheduleComponent  },
       { path: 'banners',   component: PharmacistBannersComponent   },
+      { path: 'coupons',   component: PharmacistCouponsComponent   },
     ]
   },
   { path: '**', redirectTo: 'dashboard' }

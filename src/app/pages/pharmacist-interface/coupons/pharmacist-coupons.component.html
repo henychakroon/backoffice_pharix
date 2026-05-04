@@ -1,0 +1,201 @@
+<div class="coupons-page">
+  <header class="page-header">
+    <div>
+      <h1>Codes promo</h1>
+      <p class="muted">
+        Créez et gérez vos coupons pour les articles parapharmaceutiques.
+        Les coupons ne s'appliquent jamais aux médicaments.
+      </p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">+ Nouveau coupon</button>
+  </header>
+
+  <div class="feedback" *ngIf="feedbackMessage" [class.feedback-error]="feedbackType === 'error'">
+    {{ feedbackMessage }}
+  </div>
+
+  <div class="loading" *ngIf="loading">Chargement…</div>
+
+  <div class="empty" *ngIf="!loading && coupons.length === 0">
+    <p>Aucun coupon pour l'instant.</p>
+    <button class="btn btn-primary" (click)="openCreate()">Créer un coupon</button>
+  </div>
+
+  <table class="coupon-table" *ngIf="!loading && coupons.length > 0">
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Réduction</th>
+        <th>Portée</th>
+        <th>Validité</th>
+        <th>Utilisations</th>
+        <th>Statut</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of coupons">
+        <td><code class="code-chip">{{ c.code }}</code></td>
+        <td>{{ formatValue(c) }}</td>
+        <td>
+          <div class="scope-cell">
+            <span class="scope-tag">{{ scopeLabel(c.scope) }}</span>
+            <span class="scope-detail muted">{{ scopeSummary(c) }}</span>
+          </div>
+        </td>
+        <td>
+          <div class="dates">
+            <span>{{ c.validFrom | date:'dd MMM yyyy HH:mm' }}</span>
+            <span class="muted">→ {{ c.validTo | date:'dd MMM yyyy HH:mm' }}</span>
+          </div>
+        </td>
+        <td>
+          {{ c.redemptionCount ?? 0 }}<ng-container *ngIf="c.maxRedemptions"> / {{ c.maxRedemptions }}</ng-container>
+        </td>
+        <td>
+          <span class="badge" [class]="statusBadge(c).className">{{ statusBadge(c).label }}</span>
+        </td>
+        <td class="actions">
+          <button class="btn btn-ghost" (click)="toggle(c)" [disabled]="togglingId === c.id">
+            {{ c.active ? 'Désactiver' : 'Activer' }}
+          </button>
+          <button class="btn btn-ghost" (click)="openEdit(c)">Modifier</button>
+          <button class="btn btn-danger-ghost" (click)="askDelete(c)">Supprimer</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Delete confirmation -->
+  <div class="modal-backdrop" *ngIf="pendingDelete" (click)="cancelDelete()">
+    <div class="modal modal-small" (click)="$event.stopPropagation()">
+      <h2>Supprimer le coupon « {{ pendingDelete.code }} » ?</h2>
+      <p class="muted">
+        Cette action est irréversible. Les coupons déjà utilisés ne peuvent pas être supprimés
+        (désactivez-les plutôt).
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" (click)="cancelDelete()" [disabled]="deletingId !== null">Annuler</button>
+        <button class="btn btn-danger" (click)="confirmDelete()" [disabled]="deletingId !== null">
+          {{ deletingId !== null ? 'Suppression…' : 'Supprimer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create / Edit modal -->
+  <div class="modal-backdrop" *ngIf="modalOpen" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>{{ form.id ? 'Modifier le coupon' : 'Nouveau coupon' }}</h2>
+
+      <div class="form-grid">
+        <label class="field">
+          <span>Code</span>
+          <input type="text" [(ngModel)]="form.code" maxlength="32" placeholder="ETE25"
+                 [readonly]="form.id !== null" />
+        </label>
+
+        <label class="field">
+          <span>Type</span>
+          <select [(ngModel)]="form.type">
+            <option [ngValue]="'PERCENT'">Pourcentage (%)</option>
+            <option [ngValue]="'FIXED'">Montant fixe (TND)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Valeur</span>
+          <input type="number" [(ngModel)]="form.value" min="0" step="0.001" />
+        </label>
+
+        <label class="field">
+          <span>Réduction max. (TND)</span>
+          <input type="number" [(ngModel)]="form.maxDiscount" min="0" step="0.001"
+                 [disabled]="form.type !== 'PERCENT'" placeholder="Optionnel" />
+        </label>
+
+        <label class="field">
+          <span>Sous-total minimum (TND)</span>
+          <input type="number" [(ngModel)]="form.minSubtotal" min="0" step="0.001" placeholder="Optionnel" />
+        </label>
+
+        <label class="field">
+          <span>Portée</span>
+          <select [(ngModel)]="form.scope">
+            <option [ngValue]="'PHARMACY_WIDE'">Toute la parapharmacie</option>
+            <option [ngValue]="'CATEGORY'">Catégories spécifiques</option>
+            <option [ngValue]="'PRODUCT'">Produits spécifiques</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Valide à partir du</span>
+          <input type="datetime-local" [(ngModel)]="form.validFrom" />
+        </label>
+
+        <label class="field">
+          <span>Jusqu'au</span>
+          <input type="datetime-local" [(ngModel)]="form.validTo" />
+        </label>
+
+        <label class="field">
+          <span>Limite totale</span>
+          <input type="number" [(ngModel)]="form.maxRedemptions" min="1" placeholder="Illimitée" />
+        </label>
+
+        <label class="field">
+          <span>Limite par client</span>
+          <input type="number" [(ngModel)]="form.maxRedemptionsPerClient" min="1" placeholder="1" />
+        </label>
+
+        <label class="field field-checkbox">
+          <input type="checkbox" [(ngModel)]="form.active" />
+          <span>Coupon actif</span>
+        </label>
+      </div>
+
+      <!-- Scope: products -->
+      <div class="scope-picker" *ngIf="form.scope === 'PRODUCT'">
+        <div class="scope-header">
+          <strong>Produits parapharmaceutiques éligibles</strong>
+          <input type="text" placeholder="Rechercher un produit…" [(ngModel)]="productSearch" />
+        </div>
+        <div class="picker-list">
+          <label class="picker-item" *ngFor="let p of filteredProducts()">
+            <input type="checkbox"
+                   [checked]="form.productIds.includes(p.id)"
+                   (change)="toggleProductSelection(p.id)" />
+            <span>{{ p.name }}</span>
+          </label>
+          <p class="muted" *ngIf="filteredProducts().length === 0">Aucun produit ne correspond.</p>
+        </div>
+        <p class="picker-summary muted">{{ form.productIds.length }} produit(s) sélectionné(s)</p>
+      </div>
+
+      <!-- Scope: categories -->
+      <div class="scope-picker" *ngIf="form.scope === 'CATEGORY'">
+        <div class="scope-header">
+          <strong>Catégories parapharmaceutiques éligibles</strong>
+          <input type="text" placeholder="Rechercher une catégorie…" [(ngModel)]="categorySearch" />
+        </div>
+        <div class="picker-list">
+          <label class="picker-item" *ngFor="let c of filteredCategories()">
+            <input type="checkbox"
+                   [checked]="form.categoryIds.includes(c.id)"
+                   (change)="toggleCategorySelection(c.id)" />
+            <span>{{ c.name }}</span>
+          </label>
+          <p class="muted" *ngIf="filteredCategories().length === 0">Aucune catégorie ne correspond.</p>
+        </div>
+        <p class="picker-summary muted">{{ form.categoryIds.length }} catégorie(s) sélectionnée(s)</p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" (click)="closeModal()" [disabled]="saving">Annuler</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving">
+          {{ saving ? 'Enregistrement…' : (form.id ? 'Mettre à jour' : 'Créer') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,287 @@
+.coupons-page {
+  padding: 24px 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 18px;
+
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .muted { margin: 0; color: var(--gray-500); font-size: 13px; }
+  }
+
+  .feedback {
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(34, 197, 94, 0.08);
+    color: #166534;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    font-size: 13px;
+
+    &.feedback-error {
+      background: rgba(239, 68, 68, 0.08);
+      color: #991b1b;
+      border-color: rgba(239, 68, 68, 0.25);
+    }
+  }
+
+  .loading,
+  .empty {
+    padding: 48px 16px;
+    text-align: center;
+    color: var(--gray-500);
+
+    .btn { margin-top: 12px; }
+  }
+}
+
+.coupon-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 13px;
+    border-bottom: 1px solid var(--gray-100, #f1f5f9);
+  }
+
+  thead th {
+    background: var(--gray-50, #f8fafc);
+    font-weight: 600;
+    color: var(--gray-600, #475569);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  .code-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--gray-100, #f1f5f9);
+    color: var(--primary, #0d9488);
+    font-family: monospace;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .scope-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .scope-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 5px;
+      background: rgba(13, 148, 136, 0.08);
+      color: var(--primary, #0d9488);
+      font-size: 11px;
+      font-weight: 600;
+      width: fit-content;
+    }
+    .scope-detail { font-size: 12px; }
+  }
+
+  .dates {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    .muted { font-size: 11px; color: var(--gray-500); }
+  }
+
+  .actions {
+    text-align: right;
+    white-space: nowrap;
+
+    .btn { margin-left: 6px; }
+  }
+}
+
+.muted { color: var(--gray-500, #64748b); }
+
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+
+  &.badge-success { background: rgba(34, 197, 94, 0.12); color: #166534; }
+  &.badge-warn    { background: rgba(234, 179, 8, 0.12); color: #92400e; }
+  &.badge-danger  { background: rgba(239, 68, 68, 0.12); color: #991b1b; }
+  &.badge-muted   { background: var(--gray-100, #f1f5f9); color: var(--gray-600, #475569); }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  &.btn-primary {
+    background: var(--primary, #0d9488);
+    color: #fff;
+    &:hover:not(:disabled) { background: #0b7e72; }
+  }
+
+  &.btn-ghost {
+    background: transparent;
+    color: var(--gray-700, #334155);
+    border-color: var(--gray-200, #e2e8f0);
+    &:hover:not(:disabled) { background: var(--gray-50, #f8fafc); }
+  }
+
+  &.btn-danger {
+    background: #dc2626;
+    color: #fff;
+    &:hover:not(:disabled) { background: #b91c1c; }
+  }
+
+  &.btn-danger-ghost {
+    background: transparent;
+    color: #b91c1c;
+    border-color: rgba(239, 68, 68, 0.3);
+    &:hover:not(:disabled) { background: rgba(239, 68, 68, 0.06); }
+  }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow: auto;
+
+  h2 { margin: 0 0 16px; font-size: 18px; }
+
+  &.modal-small { max-width: 440px; }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 18px;
+    margin-bottom: 18px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--gray-600, #475569);
+
+    input, select {
+      padding: 8px 10px;
+      border: 1px solid var(--gray-200, #e2e8f0);
+      border-radius: 6px;
+      font-size: 13px;
+      background: #fff;
+      &:focus { outline: 2px solid rgba(13, 148, 136, 0.25); border-color: var(--primary, #0d9488); }
+      &:read-only, &:disabled { background: var(--gray-50, #f8fafc); cursor: not-allowed; }
+    }
+
+    &.field-checkbox {
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      span { color: var(--gray-700, #334155); font-weight: 500; }
+      input { width: auto; }
+    }
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 6px;
+  }
+}
+
+.scope-picker {
+  margin: 8px 0 18px;
+  padding: 14px;
+  background: var(--gray-50, #f8fafc);
+  border-radius: 10px;
+
+  .scope-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    strong { font-size: 13px; color: var(--gray-700, #334155); }
+    input {
+      padding: 6px 10px;
+      border: 1px solid var(--gray-200, #e2e8f0);
+      border-radius: 6px;
+      font-size: 12px;
+      width: 220px;
+    }
+  }
+
+  .picker-list {
+    max-height: 220px;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200, #e2e8f0);
+    padding: 6px;
+  }
+
+  .picker-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    &:hover { background: var(--gray-50, #f8fafc); }
+    span { color: var(--gray-700, #334155); }
+  }
+
+  .picker-summary {
+    margin-top: 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 700px) {
+  .modal .form-grid { grid-template-columns: 1fr; }
+  .coupon-table { display: block; overflow-x: auto; }
+}

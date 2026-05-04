@@ -96,6 +96,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
         { label: 'Pharmacies proches', icon: 'map-pin',     route: '/ph/nearby-pharmacies' },
         { label: 'Mes commandes',     icon: 'shopping-bag', route: '/ph/orders'   },
         { label: 'Mes produits',      icon: 'package',      route: '/ph/products' },
+        { label: 'Codes promo',       icon: 'tag',          route: '/ph/coupons'  },
         { label: 'Mes bannières',     icon: 'image',        route: '/ph/banners'  },
         { label: 'Horaires',          icon: 'clock',        route: '/ph/schedule' },
       ]

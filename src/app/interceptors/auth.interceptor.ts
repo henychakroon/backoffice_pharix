@@ -11,6 +11,7 @@ import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
+const API_ORIGIN = 'http://localhost:8082';
 const NGINX_BASIC_AUTH = btoa('admin:GREG321BRO342103324EF');
 
 @Injectable()
@@ -30,6 +31,7 @@ export class AuthInterceptor implements HttpInterceptor {
       }
 
       req = req.clone({
+        url: `${API_ORIGIN}${req.url}`,
         setHeaders: headers,
         withCredentials: true
       });

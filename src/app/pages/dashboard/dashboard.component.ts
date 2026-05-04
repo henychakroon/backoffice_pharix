@@ -10,14 +10,17 @@ export class DashboardComponent implements OnInit {
 
   selectedDate: string = new Date().toISOString().split('T')[0];
 
-  stats = [
-    { label: 'Total Orders',       value: '—', icon: 'bag',    color: '#4f6ef7', bg: '#eef1ff' },
-    { label: 'Active Clients',     value: '—', icon: 'users',  color: '#2dce89', bg: '#e3faf1' },
-    { label: 'Partner Pharmacies', value: '—', icon: 'pharma', color: '#00c9a7', bg: '#e0faf5' },
-    { label: 'Pending Orders',     value: '—', icon: 'clock',  color: '#f5365c', bg: '#fde8ed' },
-    { label: 'Revenue',            value: '—', icon: 'money',  color: '#fb6340', bg: '#fff3ee' },
-  ];
+ 
 
+
+stats = [
+  { label: 'Total Orders',       value: '—', icon: 'bag',    color: '#4f6ef7', bg: '#eef1ff' },
+  { label: 'Active Clients',     value: '—', icon: 'users',  color: '#2dce89', bg: '#e3faf1' },
+  { label: 'Partner Pharmacies', value: '—', icon: 'pharma', color: '#00c9a7', bg: '#e0faf5' },
+  { label: 'Pending Orders',     value: '—', icon: 'clock',  color: '#f5365c', bg: '#fde8ed' },
+  { label: 'Daily Revenue',      value: '—', icon: 'money',  color: '#fb6340', bg: '#fff3ee' },
+  { label: 'Monthly Revenue',    value: '—', icon: 'money',  color: '#11cdef', bg: '#e6f9ff' },
+];
   dashboard: AdminDashboard | null = null;
   loading = true;
 
@@ -53,6 +56,7 @@ export class DashboardComponent implements OnInit {
         this.stats[2].value = String(data.activePharmacies);
         this.stats[3].value = String(data.pendingOrders);
         this.stats[4].value = this.fmtRevenue(data.totalRevenue);
+this.stats[5].value = this.fmtRevenue(data.monthlyRevenue);
 
         this.chartMaxOrders  = Math.max(...data.ordersByDay.map(d => d.orderCount), 1);
         this.chartMaxRevenue = Math.max(...data.ordersByDay.map(d => Number(d.revenue) || 0), 1);
