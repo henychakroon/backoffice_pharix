@@ -21,18 +21,35 @@ export interface AdminOrderEvent {
 /** Same shape as AdminOrderDTO — reused for pharmacien topic */
 export type PharmacienOrderEvent = AdminOrderEvent;
 
+export interface ChatMessageEvent {
+  id: number;
+  conversationId: number;
+  orderId: number;
+  revisionNumber?: number | null;
+  senderId: number;
+  senderRole: string;
+  messageType: string;
+  content: string;
+  timestamp: string;
+  seen: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class WebSocketService implements OnDestroy {
 
   private client: Client | null = null;
   private _orderEvents = new Subject<AdminOrderEvent>();
   private _pharmacienOrderEvents = new Subject<PharmacienOrderEvent>();
+  private _chatMessages = new Subject<ChatMessageEvent>();
 
   /** Stream of live order events for admin dashboard */
   orderEvents$ = this._orderEvents.asObservable();
 
   /** Stream of live order events for pharmacien interface */
   pharmacienOrderEvents$ = this._pharmacienOrderEvents.asObservable();
+
+  /** Stream of live chat messages for the current authenticated user */
+  chatMessages$ = this._chatMessages.asObservable();
 
   /** Connect for admin — subscribes to /topic/admin/orders */
   connect(token: string): void {
@@ -79,6 +96,7 @@ export class WebSocketService implements OnDestroy {
           }
         }
       );
+      this.subscribePharmacienChat(pharmacienId);
       return;
     }
 
@@ -99,6 +117,7 @@ export class WebSocketService implements OnDestroy {
             }
           }
         );
+        this.subscribePharmacienChat(pharmacienId);
       },
       onStompError: (frame) => {
         console.error('[WS] STOMP error (pharmacien)', frame);
@@ -120,5 +139,16 @@ export class WebSocketService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.disconnect();
+  }
+
+  private subscribePharmacienChat(pharmacienId: number): void {
+    this.client!.subscribe(`/queue/chat/pharmacien/${pharmacienId}`, (msg: IMessage) => {
+      try {
+        const event: ChatMessageEvent = JSON.parse(msg.body);
+        this._chatMessages.next(event);
+      } catch {
+        console.warn('[WS] Failed to parse chat message', msg.body);
+      }
+    });
   }
 }

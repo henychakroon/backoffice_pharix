@@ -293,4 +293,149 @@
     </div>
   </div>
 
+  <!-- Programme de parrainage -->
+  <div *ngIf="!loading" class="settings-card">
+    <div class="card-header">
+      <div class="card-icon">🎁</div>
+      <div>
+        <div class="card-title">Programme de parrainage</div>
+        <div class="card-subtitle">Paramètres du coupon récompense accordé au parrain</div>
+      </div>
+    </div>
+
+    <div class="fields">
+      <div class="field-group">
+        <label class="field-label" for="referralRewardThreshold">Seuil de parrainages qualifiés</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">#</span>
+          <input
+            id="referralRewardThreshold"
+            type="number"
+            min="1"
+            step="1"
+            class="field-input"
+            [(ngModel)]="referralRewardThreshold"
+            placeholder="ex: 1"
+          />
+        </div>
+        <p class="field-hint">Un coupon est généré à chaque tranche de N filleuls qualifiés (OTP vérifié + 1re commande livrée).</p>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="field-group">
+        <label class="field-label" for="referralRewardPercent">Réduction du coupon (%)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">%</span>
+          <input
+            id="referralRewardPercent"
+            type="number"
+            min="0.01"
+            max="100"
+            step="0.01"
+            class="field-input"
+            [(ngModel)]="referralRewardPercent"
+            placeholder="ex: 10"
+          />
+        </div>
+        <p class="field-hint">S'applique uniquement aux articles parapharmacie éligibles.</p>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="field-group">
+        <label class="field-label" for="referralRewardMinSubtotal">Sous-total minimum éligible (DT)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">DT</span>
+          <input
+            id="referralRewardMinSubtotal"
+            type="number"
+            min="0"
+            step="0.001"
+            class="field-input"
+            [(ngModel)]="referralRewardMinSubtotal"
+            placeholder="ex: 20.000"
+          />
+        </div>
+        <p class="field-hint">Le panier parapharmacie doit atteindre ce montant pour appliquer le coupon.</p>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="field-group">
+        <label class="field-label" for="referralRewardMaxDiscount">Plafond de remise (DT)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">DT</span>
+          <input
+            id="referralRewardMaxDiscount"
+            type="number"
+            min="0.001"
+            step="0.001"
+            class="field-input"
+            [(ngModel)]="referralRewardMaxDiscount"
+            placeholder="ex: 15.000"
+          />
+        </div>
+        <p class="field-hint">Montant maximum de remise accordé par coupon de parrainage.</p>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="field-group">
+        <label class="field-label" for="referralRewardValidityDays">Validité du coupon (jours)</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">J</span>
+          <input
+            id="referralRewardValidityDays"
+            type="number"
+            min="1"
+            step="1"
+            class="field-input"
+            [(ngModel)]="referralRewardValidityDays"
+            placeholder="ex: 30"
+          />
+        </div>
+        <p class="field-hint">Durée de validité à partir de la génération du coupon.</p>
+      </div>
+
+      <div class="field-divider"></div>
+
+      <div class="field-group">
+        <label class="field-label" for="referralRewardMaxUses">Nombre d'utilisations max</label>
+        <div class="input-wrapper">
+          <span class="input-prefix">#</span>
+          <input
+            id="referralRewardMaxUses"
+            type="number"
+            min="1"
+            step="1"
+            class="field-input"
+            [(ngModel)]="referralRewardMaxUses"
+            placeholder="ex: 1"
+          />
+        </div>
+        <p class="field-hint">Nombre d'utilisations autorisées pour chaque coupon de parrainage.</p>
+      </div>
+    </div>
+
+    <div class="preview-row" *ngIf="referralRewardPercent !== null">
+      <div class="preview-chip">
+        <span class="preview-label">Réduction</span>
+        <span class="preview-value">{{ referralRewardPercent | number:'1.0-2' }} %</span>
+      </div>
+      <div class="preview-chip">
+        <span class="preview-label">Seuil</span>
+        <span class="preview-value">1 coupon / {{ referralRewardThreshold }} qualifiés</span>
+      </div>
+      <div class="preview-chip">
+        <span class="preview-label">Plafond</span>
+        <span class="preview-value">{{ referralRewardMaxDiscount | number:'1.2-3' }} DT</span>
+      </div>
+      <div class="preview-chip">
+        <span class="preview-label">Validité</span>
+        <span class="preview-value">{{ referralRewardValidityDays }} jour(s)</span>
+      </div>
+    </div>
+  </div>
+
 </div>

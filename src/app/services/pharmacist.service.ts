@@ -18,6 +18,7 @@ export interface PharmacienDashboard {
 
 export type CouponType = 'PERCENT' | 'FIXED';
 export type CouponScope = 'PRODUCT' | 'CATEGORY' | 'PHARMACY_WIDE';
+export type CouponApprovalStatus = 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
 
 export interface CouponRefItem { id: number; name: string; }
 
@@ -38,6 +39,10 @@ export interface Coupon {
   maxRedemptions?: number | null;
   maxRedemptionsPerClient?: number | null;
   active: boolean;
+  approvalStatus?: CouponApprovalStatus | null;
+  approvalNote?: string | null;
+  approvalReviewedBy?: string | null;
+  approvalReviewedAt?: string | null;
   createdAt: string;
   redemptionCount?: number;
   totalDiscountGiven?: number;
@@ -62,6 +67,24 @@ export interface CouponUpsert {
 export interface CouponScopeOptions {
   products: CouponRefItem[];
   categories: CouponRefItem[];
+}
+
+export interface CouponNotificationRecipient {
+  id: number;
+  fullName: string;
+  phone?: string | null;
+  email?: string | null;
+}
+
+export interface CouponNotificationRequest {
+  notifyAllClients: boolean;
+  clientIds?: number[];
+  title?: string;
+  message?: string;
+}
+
+export interface CouponNotificationResult {
+  sentCount: number;
 }
 
 export interface CreateReportPayload {
@@ -208,10 +231,52 @@ export interface ClientHealthProfile {
   hasHealthProblems?: boolean | null;
   hasPathologicalHistory?: boolean | null;
   hasOngoingTreatment?: boolean | null;
+  ongoingTreatments?: string[] | null;
   hasAllergicHistory?: boolean | null;
+  allergies?: string[] | null;
   hasReducedMobility?: boolean | null;
+  ordonnanceUrl?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+}
+
+export type PharmacienReviewDecision = 'ACCEPT_UNCHANGED' | 'REVISE' | 'REFUSE';
+
+export interface PharmacienReviewDecisionRequest {
+  decision: PharmacienReviewDecision;
+  note?: string;
+  reason?: string;
+  expiresInMinutes?: number;
+  couponCode?: string | null;
+  sendViaChat?: boolean;
+  chatMessage?: string;
+  items?: Array<{ productId: number; quantity: number }>;
+}
+
+export interface OrderChatMessage {
+  id: number;
+  conversationId: number;
+  orderId: number;
+  revisionNumber?: number | null;
+  senderId: number;
+  senderRole: string;
+  messageType: 'TEXT' | 'REVIEW_REQUEST' | string;
+  content: string;
+  timestamp: string;
+  seen: boolean;
+}
+
+export interface OrderChatThread {
+  conversationId: number;
+  orderId: number;
+  clientId: number;
+  pharmacienId: number;
+  clientName?: string | null;
+  pharmacyName?: string | null;
+  orderStatus?: string | null;
+  activeRevisionNumber?: number | null;
+  revisionExpiresAt?: string | null;
+  messages: OrderChatMessage[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -234,20 +299,34 @@ export class PharmacistService {
     return this.http.get<OrdonnanceAccess>(`${this.BASE}/orders/${orderId}/ordonnance-access`);
   }
 
+  getClientProfileOrdonnanceAccess(orderId: number): Observable<OrdonnanceAccess> {
+    return this.http.get<OrdonnanceAccess>(`${this.BASE}/orders/${orderId}/client-profile/ordonnance-access`);
+  }
+
   getClientHealthProfile(orderId: number): Observable<ClientHealthProfile> {
     return this.http.get<ClientHealthProfile>(`${this.BASE}/orders/${orderId}/client-profile`);
   }
 
+  reviewDecision(orderId: number, payload: PharmacienReviewDecisionRequest): Observable<OrderDTO> {
+    return this.http.post<OrderDTO>(`${this.BASE}/orders/${orderId}/review/decision`, payload);
+  }
+
+  getOrderChat(orderId: number): Observable<OrderChatThread> {
+    return this.http.get<OrderChatThread>(`/api/v1/chat/orders/${orderId}`);
+  }
+
+  sendOrderChatMessage(orderId: number, content: string): Observable<OrderChatMessage> {
+    return this.http.post<OrderChatMessage>(`/api/v1/chat/orders/${orderId}/messages`, { content });
+  }
+
   acceptOrder(orderId: number, email: string): Observable<OrderDTO> {
-    return this.http.put<OrderDTO>(`${this.BASE}/orders/${orderId}/accept`, {}, {
-      params: new HttpParams().set('email', email)
-    });
+    void email;
+    return this.reviewDecision(orderId, { decision: 'ACCEPT_UNCHANGED' });
   }
 
   refuseOrder(orderId: number, email: string): Observable<OrderDTO> {
-    return this.http.put<OrderDTO>(`${this.BASE}/orders/${orderId}/refuse`, {}, {
-      params: new HttpParams().set('email', email)
-    });
+    void email;
+    return this.reviewDecision(orderId, { decision: 'REFUSE' });
   }
 
   markReady(orderId: number, email: string): Observable<OrderDTO> {
@@ -260,10 +339,6 @@ export class PharmacistService {
     return this.http.put<OrderDTO>(`${this.BASE}/orders/${orderId}/ready/undo`, {}, {
       params: new HttpParams().set('email', email)
     });
-  }
-
-  pickupOrder(orderId: number): Observable<OrderDTO> {
-    return this.http.put<OrderDTO>(`${this.BASE}/orders/${orderId}/pickup`, {});
   }
 
   deliverOrder(orderId: number): Observable<OrderDTO> {
@@ -406,6 +481,10 @@ export class PharmacistService {
     return this.http.get<CouponScopeOptions>(`${this.BASE}/coupons/scope-options`);
   }
 
+  getCouponNotificationRecipients(): Observable<CouponNotificationRecipient[]> {
+    return this.http.get<CouponNotificationRecipient[]>(`${this.BASE}/coupons/notification-recipients`);
+  }
+
   createCoupon(payload: CouponUpsert): Observable<Coupon> {
     return this.http.post<Coupon>(`${this.BASE}/coupons`, payload);
   }
@@ -418,8 +497,16 @@ export class PharmacistService {
     return this.http.patch<Coupon>(`${this.BASE}/coupons/${id}/toggle`, {});
   }
 
+  submitCouponForReview(id: number): Observable<Coupon> {
+    return this.http.patch<Coupon>(`${this.BASE}/coupons/${id}/submit`, {});
+  }
+
   deleteCoupon(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/coupons/${id}`);
+  }
+
+  sendCouponNotification(id: number, payload: CouponNotificationRequest): Observable<CouponNotificationResult> {
+    return this.http.post<CouponNotificationResult>(`${this.BASE}/coupons/${id}/notify`, payload);
   }
 
   private buildProductFormData(

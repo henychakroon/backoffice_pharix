@@ -25,6 +25,14 @@ export class SettingsComponent implements OnInit {
   nightStartHour: number | null = null;
   nightEndHour: number | null = null;
 
+  // Referral reward
+  referralRewardPercent: number | null = null;
+  referralRewardMinSubtotal: number | null = null;
+  referralRewardMaxDiscount: number | null = null;
+  referralRewardValidityDays: number | null = null;
+  referralRewardMaxUses: number | null = null;
+  referralRewardThreshold: number | null = null;
+
   constructor(private admin: AdminService) {}
 
   ngOnInit(): void {
@@ -42,6 +50,12 @@ export class SettingsComponent implements OnInit {
         this.nightDeliveryPrice = revenue.nightDeliveryPrice;
         this.nightStartHour = revenue.nightStartHour;
         this.nightEndHour = revenue.nightEndHour;
+        this.referralRewardPercent = revenue.referralRewardPercent;
+        this.referralRewardMinSubtotal = revenue.referralRewardMinSubtotal;
+        this.referralRewardMaxDiscount = revenue.referralRewardMaxDiscount;
+        this.referralRewardValidityDays = revenue.referralRewardValidityDays;
+        this.referralRewardMaxUses = revenue.referralRewardMaxUses;
+        this.referralRewardThreshold = revenue.referralRewardThreshold;
 
         this.loading = false;
       },
@@ -66,7 +80,13 @@ export class SettingsComponent implements OnInit {
       pharmacistMonthlySubscription: this.pharmacistMonthlySubscription ?? 0,
       nightDeliveryPrice: this.nightDeliveryPrice ?? 0,
       nightStartHour: this.nightStartHour ?? 21,
-      nightEndHour: this.nightEndHour ?? 5
+      nightEndHour: this.nightEndHour ?? 5,
+      referralRewardPercent: this.referralRewardPercent ?? 10,
+      referralRewardMinSubtotal: this.referralRewardMinSubtotal ?? 20,
+      referralRewardMaxDiscount: this.referralRewardMaxDiscount ?? 15,
+      referralRewardValidityDays: this.referralRewardValidityDays ?? 30,
+      referralRewardMaxUses: this.referralRewardMaxUses ?? 1,
+      referralRewardThreshold: this.referralRewardThreshold ?? 1
     };
 
     forkJoin({
@@ -83,6 +103,12 @@ export class SettingsComponent implements OnInit {
         this.nightDeliveryPrice = revenue.nightDeliveryPrice;
         this.nightStartHour = revenue.nightStartHour;
         this.nightEndHour = revenue.nightEndHour;
+        this.referralRewardPercent = revenue.referralRewardPercent;
+        this.referralRewardMinSubtotal = revenue.referralRewardMinSubtotal;
+        this.referralRewardMaxDiscount = revenue.referralRewardMaxDiscount;
+        this.referralRewardValidityDays = revenue.referralRewardValidityDays;
+        this.referralRewardMaxUses = revenue.referralRewardMaxUses;
+        this.referralRewardThreshold = revenue.referralRewardThreshold;
 
         this.saving = false;
         this.saved = true;

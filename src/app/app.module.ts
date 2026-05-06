@@ -22,6 +22,7 @@ import { SettingsComponent }   from './pages/settings/settings.component';
 import { ZonesComponent }      from './pages/zones/zones.component';
 import { UsersComponent }      from './pages/users/users.component';
 import { ReportsComponent }    from './pages/reports/reports.component';
+import { CouponsComponent }    from './pages/coupons/coupons.component';
 import { FilterStatusPipe }    from './shared/pipes/filter-status.pipe';
 import { AdBannersComponent }  from './pages/zones/ad-banners/ad-banners.component';
 import { PharmacistDashboardComponent } from './pages/pharmacist-interface/dashboard/pharmacist-dashboard.component';
@@ -32,6 +33,7 @@ import { PharmacistScheduleComponent }  from './pages/pharmacist-interface/sched
 import { PharmacistBannersComponent }   from './pages/pharmacist-interface/banners/pharmacist-banners.component';
 import { PharmacistCouponsComponent }   from './pages/pharmacist-interface/coupons/pharmacist-coupons.component';
 import { MonthlyDashboardComponent } from './pages/monthly-dashboard/monthly-dashboard.component';
+import { PaymentResultComponent } from './pages/payment-result/payment-result.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +44,7 @@ import { MonthlyDashboardComponent } from './pages/monthly-dashboard/monthly-das
     OrdersComponent,
     UsersComponent,
     ReportsComponent,
+    CouponsComponent,
     ClientsComponent,
     PharmaciesComponent,
     AgentsComponent,
@@ -60,6 +63,7 @@ import { MonthlyDashboardComponent } from './pages/monthly-dashboard/monthly-das
     PharmacistBannersComponent,
     PharmacistCouponsComponent,
     MonthlyDashboardComponent,
+    PaymentResultComponent,
   ],
   imports: [
     BrowserModule,

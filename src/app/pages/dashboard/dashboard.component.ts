@@ -110,7 +110,6 @@ this.stats[5].value = this.fmtRevenue(data.monthlyRevenue);
     const map: Record<string, string> = {
       DELIVERED:               'badge-success',
       DELIVERING:              'badge-info',
-      PICKED_UP:               'badge-info',
       PENDING:                 'badge-warning',
       ACCEPTED_FROM_PHARMACIEN:'badge-primary',
       ACCEPTED_FROM_LIVREUR:   'badge-primary',
@@ -135,7 +134,6 @@ this.stats[5].value = this.fmtRevenue(data.monthlyRevenue);
       ASSIGNED_FROM_ADMIN:      'Assignée (admin)',
       ACCEPTED_FROM_LIVREUR:    'Livreur en route',
       REFUSED_FROM_LIVREUR:     'Refusée livreur',
-      PICKED_UP:                'Récupérée',
       DELIVERING:               'En livraison',
       DELIVERED:                'Livrée',
       CANCELLED:                'Annulée',

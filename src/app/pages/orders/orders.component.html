@@ -4,7 +4,7 @@
   <div class="page-header">
     <div>
       <div class="page-title">Commandes</div>
-      <div class="page-subtitle">{{ allOrders.length }} commandes � {{ countByStatus('PENDING') }} en attente d'action</div>
+      <div class="page-subtitle">{{ allOrders.length }} commandes � {{ countByStatus('PENDING') + countByStatus('AWAITING_CLIENT_ACCEPTANCE') + countByStatus('AWAITING_PAYMENT') }} en attente d'action</div>
     </div>
   </div>
 
@@ -15,10 +15,13 @@
   <div class="status-tabs" *ngIf="!loading">
     <button class="tab-btn" [class.active]="statusFilter==='all'"             (click)="statusFilter='all'">Tout <span class="tab-count">{{ allOrders.length }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='PENDING'"         (click)="statusFilter='PENDING'">En attente <span class="tab-count warn">{{ countByStatus('PENDING') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='AWAITING_CLIENT_ACCEPTANCE'" (click)="statusFilter='AWAITING_CLIENT_ACCEPTANCE'">Attente client <span class="tab-count warn">{{ countByStatus('AWAITING_CLIENT_ACCEPTANCE') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='AWAITING_PAYMENT'" (click)="statusFilter='AWAITING_PAYMENT'">Attente paiement <span class="tab-count warn">{{ countByStatus('AWAITING_PAYMENT') }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='ASSIGNED'"        (click)="statusFilter='ASSIGNED'">Assigne <span class="tab-count primary">{{ countByStatus('ASSIGNED') }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='DELIVERING'"      (click)="statusFilter='DELIVERING'">En livraison <span class="tab-count info">{{ countByStatus('DELIVERING') }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='DELIVERED'"       (click)="statusFilter='DELIVERED'">Livre <span class="tab-count success">{{ countByStatus('DELIVERED') }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='CANCELLED'"       (click)="statusFilter='CANCELLED'">Annule <span class="tab-count danger">{{ countByStatus('CANCELLED') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='ACCEPTANCE_EXPIRED'" (click)="statusFilter='ACCEPTANCE_EXPIRED'">Expirées <span class="tab-count danger">{{ countByStatus('ACCEPTANCE_EXPIRED') }}</span></button>
     <button class="tab-btn" [class.active]="statusFilter==='DISPATCH_FAILED'" (click)="statusFilter='DISPATCH_FAILED'">⚠ Echec dispatch <span class="tab-count warn">{{ countByStatus('DISPATCH_FAILED') }}</span></button>
   </div>
 
@@ -170,9 +173,23 @@
       <div class="detail-section">
         <div class="detail-label">Montant</div>
         <div style="display:flex;flex-direction:column;gap:4px">
+          <div *ngIf="selectedOrder.discountAmount != null && selectedOrder.discountAmount > 0" style="display:flex;justify-content:space-between"><span class="text-muted">Remise</span><span>-{{ selectedOrder.discountAmount | currency:'TND':'symbol':'1.2-2' }}</span></div>
           <div style="display:flex;justify-content:space-between"><span class="text-muted">Sous-total</span><span>{{ selectedOrder.subtotal | currency:'TND':'symbol':'1.2-2' }}</span></div>
           <div style="display:flex;justify-content:space-between"><span class="text-muted">Livraison</span><span>{{ selectedOrder.deliveryPrice | currency:'TND':'symbol':'1.2-2' }}</span></div>
           <div style="display:flex;justify-content:space-between;margin-top:6px;border-top:1px solid var(--gray-100);padding-top:6px"><span class="fw-600">Total</span><span class="fw-600 text-primary" style="font-size:18px">{{ selectedOrder.total | currency:'TND':'symbol':'1.2-2' }}</span></div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Paiement</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Méthode</span><span>{{ selectedOrder.paymentMethod || 'CASH' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Statut</span><span>{{ selectedOrder.paymentStatus || 'NOT_REQUIRED' }}</span></div>
+          <div *ngIf="selectedOrder.paymentProviderReference" style="display:flex;justify-content:space-between;gap:12px"><span class="text-muted">Référence provider</span><span style="text-align:right;word-break:break-all">{{ selectedOrder.paymentProviderReference }}</span></div>
+          <div *ngIf="selectedOrder.paymentGatewayOrderId" style="display:flex;justify-content:space-between;gap:12px"><span class="text-muted">Référence gateway</span><span style="text-align:right;word-break:break-all">{{ selectedOrder.paymentGatewayOrderId }}</span></div>
+          <div *ngIf="selectedOrder.finalizedAt" style="display:flex;justify-content:space-between"><span class="text-muted">Finalisé le</span><span>{{ selectedOrder.finalizedAt | date:'dd MMM yyyy HH:mm' }}</span></div>
+          <div *ngIf="selectedOrder.revisionExpiresAt" style="display:flex;justify-content:space-between"><span class="text-muted">Révision expire le</span><span>{{ selectedOrder.revisionExpiresAt | date:'dd MMM yyyy HH:mm' }}</span></div>
+          <div *ngIf="selectedOrder.cancellationReason" style="display:flex;justify-content:space-between;gap:12px"><span class="text-muted">Motif</span><span style="text-align:right">{{ selectedOrder.cancellationReason }}</span></div>
         </div>
       </div>
     </div>

@@ -54,10 +54,16 @@
         </td>
         <td>
           <span class="badge" [class]="statusBadge(c).className">{{ statusBadge(c).label }}</span>
+          <div class="approval-note muted" *ngIf="c.approvalNote">{{ c.approvalNote }}</div>
         </td>
         <td class="actions">
-          <button class="btn btn-ghost" (click)="toggle(c)" [disabled]="togglingId === c.id">
+          <button class="btn btn-ghost" (click)="openNotify(c)" [disabled]="!isApproved(c)">Notifier</button>
+          <button class="btn btn-ghost" (click)="toggle(c)" [disabled]="togglingId === c.id || !isApproved(c)">
             {{ c.active ? 'Désactiver' : 'Activer' }}
+          </button>
+          <button class="btn btn-ghost" *ngIf="c.approvalStatus === 'REJECTED'"
+                  (click)="submitForReview(c)" [disabled]="submittingId === c.id">
+            {{ submittingId === c.id ? 'Envoi…' : 'Renvoyer' }}
           </button>
           <button class="btn btn-ghost" (click)="openEdit(c)">Modifier</button>
           <button class="btn btn-danger-ghost" (click)="askDelete(c)">Supprimer</button>
@@ -194,6 +200,75 @@
         <button class="btn btn-ghost" (click)="closeModal()" [disabled]="saving">Annuler</button>
         <button class="btn btn-primary" (click)="save()" [disabled]="saving">
           {{ saving ? 'Enregistrement…' : (form.id ? 'Mettre à jour' : 'Créer') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="notifyModalOpen" (click)="closeNotifyModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Envoyer le coupon {{ notifyForm.couponCode }}</h2>
+
+      <div class="notify-summary">
+        <span class="scope-tag">Notification client</span>
+        <p class="muted">
+          La notification sera envoyée par push, WebSocket et enregistrée dans l'historique client.
+        </p>
+      </div>
+
+      <div class="notify-mode">
+        <label class="picker-item">
+          <input type="radio" name="recipientMode" [value]="true" [(ngModel)]="notifyForm.notifyAllClients" />
+          <span>Tous mes clients</span>
+        </label>
+        <label class="picker-item">
+          <input type="radio" name="recipientMode" [value]="false" [(ngModel)]="notifyForm.notifyAllClients" />
+          <span>Clients spécifiques</span>
+        </label>
+      </div>
+
+      <div class="scope-picker" *ngIf="!notifyForm.notifyAllClients">
+        <div class="scope-header">
+          <strong>Choisir les destinataires</strong>
+          <input type="text" placeholder="Rechercher un client…" [(ngModel)]="recipientSearch" />
+        </div>
+        <div class="picker-list" *ngIf="!recipientsLoading; else recipientsLoadingTpl">
+          <label class="picker-item" *ngFor="let client of filteredRecipients()">
+            <input type="checkbox"
+                   [checked]="notifyForm.clientIds.includes(client.id)"
+                   (change)="toggleRecipientSelection(client.id)" />
+            <span>
+              {{ client.fullName }}
+              <small class="muted" *ngIf="client.phone || client.email">
+                · {{ client.phone || client.email }}
+              </small>
+            </span>
+          </label>
+          <p class="muted" *ngIf="filteredRecipients().length === 0">Aucun client trouvé.</p>
+        </div>
+        <ng-template #recipientsLoadingTpl>
+          <div class="picker-loading muted">Chargement des clients…</div>
+        </ng-template>
+        <p class="picker-summary muted">{{ notifyForm.clientIds.length }} client(s) sélectionné(s)</p>
+      </div>
+
+      <div class="form-grid notify-grid">
+        <label class="field">
+          <span>Titre</span>
+          <input type="text" [(ngModel)]="notifyForm.title" maxlength="120" placeholder="Titre de la notification" />
+        </label>
+
+        <label class="field field-full">
+          <span>Message</span>
+          <textarea [(ngModel)]="notifyForm.message" rows="4" maxlength="500"
+                    placeholder="Texte envoyé aux clients"></textarea>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" (click)="closeNotifyModal()" [disabled]="notifying">Annuler</button>
+        <button class="btn btn-primary" (click)="sendNotification()" [disabled]="notifying || recipientsLoading">
+          {{ notifying ? 'Envoi…' : 'Envoyer la notification' }}
         </button>
       </div>
     </div>

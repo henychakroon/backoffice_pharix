@@ -508,51 +508,75 @@
 }
 
 /* ═══════════════════════════════════════════
-   ORDER TOAST NOTIFICATIONS
+   ORDER ROULETTE (topbar pending-order carousel)
 ═══════════════════════════════════════════ */
-.toast-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1200;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  pointer-events: none;
-}
-
-.order-toast {
-  pointer-events: all;
+.order-roulette {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08);
-  padding: 14px 16px;
-  min-width: 300px;
-  max-width: 360px;
-  border-left: 4px solid var(--warning, #f6a623);
-  animation: toastIn .35s cubic-bezier(.21,1.02,.73,1) forwards;
+  gap: 6px;
+  margin-right: 4px;
+}
 
-  &.order-toast-leaving {
-    animation: toastOut .3s ease-in forwards;
+.roulette-arrow {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--gray-100, #f7fafc);
+  color: var(--gray-600, #4a5568);
+  border: 1px solid var(--gray-200, #edf2f7);
+  cursor: pointer;
+  transition: background .15s, color .15s, transform .1s;
+
+  &:hover:not(:disabled) {
+    background: var(--gray-200, #edf2f7);
+    color: var(--gray-800, #1a202c);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(.92);
+  }
+
+  &:disabled {
+    opacity: .35;
+    cursor: not-allowed;
   }
 }
 
-@keyframes toastIn {
-  from { transform: translateX(calc(100% + 28px)); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+.roulette-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 6px 10px 6px 8px;
+  min-width: 240px;
+  max-width: 320px;
+  border: 1px solid var(--gray-200, #edf2f7);
+  border-left: 3px solid var(--warning, #f6a623);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  animation: rouletteIn .25s cubic-bezier(.21,1.02,.73,1) forwards;
+
+  &.roulette-card-leaving {
+    animation: rouletteOut .2s ease-in forwards;
+  }
 }
 
-@keyframes toastOut {
-  from { transform: translateX(0); opacity: 1; }
-  to   { transform: translateX(calc(100% + 28px)); opacity: 0; }
+@keyframes rouletteIn {
+  from { transform: translateY(-6px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
 }
 
-.toast-bell {
-  width: 36px;
-  height: 36px;
+@keyframes rouletteOut {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(-6px); opacity: 0; }
+}
+
+.roulette-bell {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--warning-light, #fff7ed);
   color: var(--warning, #f6a623);
@@ -562,50 +586,63 @@
   flex-shrink: 0;
 }
 
-.toast-body {
+.roulette-body {
   flex: 1;
   min-width: 0;
+  cursor: pointer;
 }
 
-.toast-title {
-  font-size: 13px;
+.roulette-title {
+  font-size: 12px;
   font-weight: 700;
   color: var(--gray-800, #1a202c);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
-.toast-sub {
-  font-size: 12px;
+.roulette-sub {
+  font-size: 11px;
   color: var(--gray-500, #718096);
-  margin-top: 2px;
+  margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
-.toast-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.roulette-counter {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-500, #718096);
+  background: var(--gray-100, #f7fafc);
+  padding: 2px 6px;
+  border-radius: 999px;
   flex-shrink: 0;
 }
 
-.toast-close {
-  width: 26px;
-  height: 26px;
+.roulette-close {
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
   color: var(--gray-400, #a0aec0);
   background: transparent;
+  flex-shrink: 0;
   transition: background .15s, color .15s;
 
   &:hover {
     background: var(--gray-100, #f7fafc);
     color: var(--gray-700, #2d3748);
+  }
+}
+
+@media (max-width: 900px) {
+  .order-roulette {
+    display: none;
   }
 }
 

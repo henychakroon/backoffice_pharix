@@ -196,7 +196,6 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
       ASSIGNED_FROM_ADMIN: 'Assignée (admin)',
       ACCEPTED_FROM_LIVREUR: 'Pris en charge',
       REFUSED_FROM_LIVREUR: 'Refusée (livreur)',
-      PICKED_UP: 'Récupérée',
       DELIVERING: 'En livraison',
       DELIVERED: 'Livrée',
       CANCELLED: 'Annulée'

@@ -1,0 +1,134 @@
+<div class="admin-coupons-page">
+  <header class="page-header">
+    <div>
+      <h1>Validation des coupons</h1>
+      <p class="muted">Validez les coupons des pharmacies avant leur mise en ligne.</p>
+    </div>
+    <button class="btn btn-ghost" (click)="load()" [disabled]="loading">Actualiser</button>
+  </header>
+
+  <div class="feedback" *ngIf="feedbackMessage" [class.feedback-error]="feedbackType === 'error'">
+    {{ feedbackMessage }}
+  </div>
+
+  <section class="kpis" *ngIf="!loading">
+    <div class="kpi-card">
+      <span class="kpi-label">En attente</span>
+      <strong>{{ countByStatus('PENDING_REVIEW') }}</strong>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Approuvés</span>
+      <strong>{{ countByStatus('APPROVED') }}</strong>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Rejetés</span>
+      <strong>{{ countByStatus('REJECTED') }}</strong>
+    </div>
+  </section>
+
+  <section class="filters" *ngIf="!loading">
+    <label class="field">
+      <span>Statut</span>
+      <select [(ngModel)]="statusFilter">
+        <option [ngValue]="'ALL'">Tous</option>
+        <option [ngValue]="'PENDING_REVIEW'">En attente</option>
+        <option [ngValue]="'APPROVED'">Approuvés</option>
+        <option [ngValue]="'REJECTED'">Rejetés</option>
+      </select>
+    </label>
+
+    <label class="field field-search">
+      <span>Recherche</span>
+      <input type="text" [(ngModel)]="search" placeholder="Code, pharmacie, admin…" />
+    </label>
+  </section>
+
+  <div class="loading" *ngIf="loading">Chargement…</div>
+
+  <div class="empty" *ngIf="!loading && filteredCoupons.length === 0">
+    Aucun coupon ne correspond aux filtres.
+  </div>
+
+  <table class="coupon-table" *ngIf="!loading && filteredCoupons.length > 0">
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Pharmacie</th>
+        <th>Réduction</th>
+        <th>Portée</th>
+        <th>Validité</th>
+        <th>Statut</th>
+        <th>Admin</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let coupon of filteredCoupons">
+        <td><code class="code-chip">{{ coupon.code }}</code></td>
+        <td>{{ coupon.pharmacyName || '-' }}</td>
+        <td>{{ formatValue(coupon) }}</td>
+        <td>
+          <div class="scope-cell">
+            <span class="scope-tag">{{ scopeLabel(coupon.scope) }}</span>
+            <span class="scope-detail muted">{{ scopeSummary(coupon) }}</span>
+          </div>
+        </td>
+        <td>
+          <div class="dates">
+            <span>{{ coupon.validFrom | date:'dd MMM yyyy HH:mm' }}</span>
+            <span class="muted">→ {{ coupon.validTo | date:'dd MMM yyyy HH:mm' }}</span>
+          </div>
+        </td>
+        <td>
+          <span class="badge" [class]="statusBadge(coupon).className">{{ statusBadge(coupon).label }}</span>
+          <div class="approval-note muted" *ngIf="coupon.approvalNote">{{ coupon.approvalNote }}</div>
+        </td>
+        <td>
+          <div class="admin-review muted" *ngIf="coupon.approvalReviewedBy; else noReview">
+            <span>{{ coupon.approvalReviewedBy }}</span>
+            <small *ngIf="coupon.approvalReviewedAt">{{ coupon.approvalReviewedAt | date:'dd/MM/yyyy HH:mm' }}</small>
+          </div>
+          <ng-template #noReview>-</ng-template>
+        </td>
+        <td class="actions">
+          <button
+            class="btn btn-primary"
+            (click)="openDecision(coupon, 'approve')"
+            [disabled]="actingId === coupon.id || (coupon.approvalStatus ?? 'APPROVED') === 'APPROVED'">
+            Approuver
+          </button>
+          <button
+            class="btn btn-danger-ghost"
+            (click)="openDecision(coupon, 'reject')"
+            [disabled]="actingId === coupon.id || (coupon.approvalStatus ?? 'APPROVED') === 'REJECTED'">
+            Rejeter
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="modal-backdrop" *ngIf="decisionModalOpen" (click)="closeDecisionModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>{{ decisionType === 'approve' ? 'Approuver' : 'Rejeter' }} le coupon {{ decisionCoupon?.code }} ?</h2>
+      <p class="muted" *ngIf="decisionCoupon?.pharmacyName">Pharmacie: {{ decisionCoupon?.pharmacyName }}</p>
+
+      <label class="field">
+        <span>Note admin (optionnelle)</span>
+        <textarea [(ngModel)]="decisionNote" rows="4" maxlength="500" placeholder="Commentaire interne ou motif de rejet"></textarea>
+      </label>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" (click)="closeDecisionModal()" [disabled]="actingId !== null">Annuler</button>
+        <button
+          class="btn"
+          [class.btn-primary]="decisionType === 'approve'"
+          [class.btn-danger]="decisionType === 'reject'"
+          (click)="submitDecision()"
+          [disabled]="actingId !== null">
+          {{ actingId !== null ? 'Traitement…' : (decisionType === 'approve' ? 'Confirmer l\'approbation' : 'Confirmer le rejet') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,29 @@
+<div class="payment-result-shell">
+  <div class="payment-result-card">
+    <div class="payment-result-badge" [class.is-success]="isSuccess" [class.is-failed]="!isSuccess">
+      {{ isSuccess ? 'Succès' : 'Échec' }}
+    </div>
+
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+
+    <div class="payment-result-meta">
+      <div class="payment-result-row" *ngIf="orderId">
+        <span>Commande</span>
+        <strong>#{{ orderId }}</strong>
+      </div>
+      <div class="payment-result-row" *ngIf="paymentStatus">
+        <span>Statut paiement</span>
+        <strong>{{ paymentStatus }}</strong>
+      </div>
+      <div class="payment-result-row" *ngIf="gatewayOrderId">
+        <span>Référence gateway</span>
+        <strong>{{ gatewayOrderId }}</strong>
+      </div>
+    </div>
+
+    <div class="payment-result-note">
+      Cette page sert de retour temporaire ClickToPay. Remplacez-la ensuite par votre écran client final ou votre deep link mobile.
+    </div>
+  </div>
+</div>

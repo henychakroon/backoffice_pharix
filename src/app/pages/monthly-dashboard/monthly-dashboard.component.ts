@@ -557,7 +557,7 @@ export class MonthlyDashboardComponent implements OnInit {
 
   statusLabel(status: string): string {
     const map: Record<string, string> = {
-      DELIVERED: 'Livrées', DELIVERING: 'En livraison', PICKED_UP: 'Récupérées',
+      DELIVERED: 'Livrées', DELIVERING: 'En livraison',
       PENDING: 'En attente', CANCELLED: 'Annulées',
       REFUSED_FROM_PHARMACIEN: 'Refusées (pharma)', REFUSED_FROM_LIVREUR: 'Refusées (livreur)',
       DISPATCH_FAILED: 'Dispatch échoué', ACCEPTED_FROM_PHARMACIEN: 'Acceptées',
@@ -569,7 +569,7 @@ export class MonthlyDashboardComponent implements OnInit {
 
   statusColorHex(status: string): string {
     const map: Record<string, string> = {
-      DELIVERED: '#2dce89', DELIVERING: '#11cdef', PICKED_UP: '#5e72e4',
+      DELIVERED: '#2dce89', DELIVERING: '#11cdef',
       PENDING: '#fb6340', CANCELLED: '#f5365c',
       REFUSED_FROM_PHARMACIEN: '#f5365c', REFUSED_FROM_LIVREUR: '#f5365c',
       DISPATCH_FAILED: '#adb5bd', ACCEPTED_FROM_PHARMACIEN: '#4f6ef7',

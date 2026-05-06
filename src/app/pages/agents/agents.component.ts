@@ -160,4 +160,9 @@ export class AgentsComponent implements OnInit {
   countOnline()      { return this.livreurs.filter(l => l.online).length; }
   countOffline()     { return this.livreurs.filter(l => !l.online).length; }
   countWithoutZone() { return this.livreurs.filter(l => !this.hasDeliveryZone(l)).length; }
+
+  ratingStars(value: number | null | undefined): string {
+    const rounded = Math.round(Number(value || 0));
+    return Array.from({ length: 5 }, (_, index) => index < rounded ? '★' : '☆').join('');
+  }
 }

@@ -229,6 +229,14 @@
     .product-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
     .prod-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
     .prod-cat  { font-size: 11px; color: var(--gray-400); }
+    .prod-rating {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--gray-500);
+      min-height: 18px;
+    }
+    .stars-inline {
+      letter-spacing: 1px; color: #f59e0b; font-size: 12px; font-weight: 700;
+    }
     .prod-price { font-size: 15px; font-weight: 700; color: var(--primary); }
     .prod-actions { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
     .qty-ctrl { display: flex; align-items: center; gap: 4px; }
@@ -315,6 +323,29 @@
     }
     .estimate-loading { text-align: center; color: var(--gray-400); padding: 20px; }
 
+    .coupon-box {
+      display: flex; gap: 8px; align-items: stretch;
+    }
+    .coupon-box input { flex: 1; text-transform: uppercase; }
+    .coupon-status {
+      margin-top: 10px; font-size: 12px;
+      color: var(--gray-500);
+    }
+    .coupon-status.ok { color: var(--success-dark); }
+    .coupon-status.err { color: var(--danger); }
+    .reward-chip-list {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+    }
+    .reward-chip {
+      border: 1.5px dashed var(--primary); color: var(--primary);
+      background: var(--primary-light); border-radius: 999px;
+      padding: 6px 10px; font-size: 12px; font-weight: 700;
+      cursor: pointer;
+    }
+    .reward-chip.active {
+      background: var(--primary); color: #fff; border-style: solid;
+    }
+
     /* ─── STEP 4: SUCCESS ─────────────────────────────────────────────────── */
     #successStep { display: none; text-align: center; padding: 40px 20px; max-width: 420px; margin: 0 auto; }
     #successStep.active { display: block; }
@@ -325,6 +356,429 @@
     /* ─── ORDERS TAB ──────────────────────────────────────────────────────── */
     #ordersTab { display: none; padding: 20px; overflow-y: auto; flex: 1; }
     #ordersTab.active { display: block; }
+
+    /* ─── REVIEWS TAB ─────────────────────────────────────────────────────── */
+    #reviewsTab { display: none; padding: 20px; overflow-y: auto; flex: 1; }
+    #reviewsTab.active { display: block; }
+
+    #referralTab { display: none; padding: 20px; overflow-y: auto; flex: 1; }
+    #referralTab.active { display: block; }
+    .referral-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .referral-card {
+      background: #fff; border-radius: 14px; border: 1.5px solid var(--gray-200);
+      padding: 16px;
+    }
+    .referral-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .referral-code {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 700; letter-spacing: .08em;
+      border: 1.5px dashed var(--primary); background: var(--primary-light);
+      color: var(--primary); border-radius: 10px; padding: 8px 12px;
+    }
+    .reward-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .reward-item {
+      border: 1px solid var(--gray-200); border-radius: 10px; padding: 10px;
+      background: #fff;
+    }
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .profile-form-card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1.5px solid var(--gray-200);
+      padding: 16px;
+    }
+    .profile-form-card.full {
+      grid-column: 1 / -1;
+    }
+    .profile-inline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .profile-file-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      border: 1px dashed var(--gray-300);
+      border-radius: 10px;
+      background: var(--gray-50);
+      margin-top: 10px;
+    }
+    .profile-help {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 8px;
+      line-height: 1.45;
+    }
+    .reward-row {
+      display: flex; justify-content: space-between; gap: 8px; align-items: center;
+      font-size: 12px; color: var(--gray-600);
+    }
+    .review-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .review-card {
+      background: #fff; border-radius: 14px;
+      border: 1.5px solid var(--gray-200); padding: 16px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .review-head {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .review-thumb {
+      width: 56px; height: 56px; border-radius: 12px; background: var(--gray-100);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0; font-size: 24px;
+    }
+    .review-thumb img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .review-title { font-size: 14px; font-weight: 700; line-height: 1.35; }
+    .review-sub { font-size: 12px; color: var(--gray-500); margin-top: 3px; }
+    .review-meta {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+      font-size: 12px; color: var(--gray-500);
+    }
+    .star-picker {
+      display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    }
+    .star-btn {
+      width: 34px; height: 34px; border-radius: 10px;
+      border: 1.5px solid var(--gray-200); background: #fff;
+      color: var(--gray-300); font-size: 18px; cursor: pointer;
+      transition: all .15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .star-btn:hover,
+    .star-btn.active {
+      border-color: #f59e0b; color: #f59e0b; background: #fff7ed;
+    }
+    .review-actions {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      flex-wrap: wrap;
+    }
+    .review-status {
+      font-size: 12px; color: var(--gray-500);
+    }
+    .review-status.success { color: var(--success-dark); }
+
+    .section-card {
+      background: #fff; border-radius: 14px;
+      border: 1.5px solid var(--gray-200); padding: 16px;
+      margin-top: 18px;
+    }
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .section-title {
+      font-size: 15px; font-weight: 700;
+    }
+    .section-sub {
+      font-size: 12px; color: var(--gray-500); margin-top: 3px;
+    }
+    .notification-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .notification-card {
+      border: 1px solid var(--gray-200); border-radius: 12px;
+      padding: 14px; background: var(--gray-50);
+    }
+    .notification-card.review-request {
+      border-color: #fcd34d; background: #fffaf0;
+    }
+    .notification-top {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; margin-bottom: 8px;
+    }
+    .notification-title {
+      font-size: 14px; font-weight: 700;
+    }
+    .notification-body {
+      font-size: 13px; color: var(--gray-600); line-height: 1.45; margin-bottom: 10px;
+    }
+    .notification-meta {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .notification-payload {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px; font-size: 12px; color: var(--gray-600);
+      margin-bottom: 10px;
+    }
+    .payload-chip {
+      background: #fff; border: 1px solid var(--gray-200); border-radius: 10px; padding: 8px 10px;
+    }
+    .payload-chip strong {
+      display: block; font-size: 11px; color: var(--gray-400); text-transform: uppercase; letter-spacing: .04em;
+      margin-bottom: 3px;
+    }
+    .notification-actions {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    }
+    .notification-state {
+      font-size: 12px; color: var(--gray-500);
+    }
+
+    .revision-panel {
+      margin-top: 12px;
+      border: 1px solid #fed7aa;
+      background: #fff7ed;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .revision-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .revision-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #9a3412;
+    }
+    .revision-note {
+      font-size: 13px;
+      color: var(--gray-700);
+      line-height: 1.45;
+    }
+    .revision-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+    }
+    .revision-metric {
+      border: 1px solid rgba(251, 146, 60, .22);
+      border-radius: 10px;
+      background: rgba(255,255,255,.72);
+      padding: 10px;
+    }
+    .revision-metric-label {
+      font-size: 11px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 4px;
+    }
+    .revision-metric-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+    .revision-items {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .revision-item-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--gray-700);
+      border-bottom: 1px solid rgba(148, 163, 184, .18);
+      padding-bottom: 6px;
+    }
+    .revision-item-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .revision-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .order-actions-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .chat-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .58);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1100;
+    }
+    .chat-modal-backdrop.show {
+      display: flex;
+    }
+    .chat-modal {
+      width: min(760px, 100%);
+      max-height: 88vh;
+      background: #fff;
+      border-radius: 18px;
+      border: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 22px 70px rgba(15, 23, 42, .24);
+    }
+    .chat-modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .chat-modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    .chat-modal-sub {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+    .chat-modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 16px 20px 18px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .chat-thread-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: var(--gray-50);
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+    .chat-thread-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+    }
+    .chat-empty {
+      text-align: center;
+      border: 1px dashed var(--gray-200);
+      border-radius: 12px;
+      background: var(--gray-50);
+      color: var(--gray-500);
+      padding: 28px 16px;
+      font-size: 13px;
+    }
+    .chat-bubble {
+      align-self: flex-start;
+      max-width: 82%;
+      border: 1px solid var(--gray-200);
+      background: #fff;
+      border-radius: 16px 16px 16px 6px;
+      padding: 10px 12px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+    }
+    .chat-bubble.mine {
+      align-self: flex-end;
+      background: var(--primary-light);
+      border-color: #c7ddff;
+      border-radius: 16px 16px 6px 16px;
+    }
+    .chat-bubble.review {
+      border-left: 4px solid var(--warning);
+    }
+    .chat-bubble-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: var(--gray-500);
+    }
+    .chat-bubble-sender {
+      font-weight: 700;
+      color: var(--gray-700);
+    }
+    .chat-bubble-text {
+      white-space: pre-wrap;
+      line-height: 1.45;
+      font-size: 14px;
+      color: var(--gray-800);
+    }
+    .chat-compose {
+      border-top: 1px solid var(--gray-200);
+      padding-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chat-compose textarea {
+      min-height: 96px;
+      resize: vertical;
+      background: #fff;
+    }
+    .chat-compose-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .chat-inline-status {
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+    .chat-inline-status.error {
+      color: var(--danger);
+    }
+    .chat-revision-box {
+      border: 1px solid #fed7aa;
+      background: #fff7ed;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chat-revision-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #9a3412;
+    }
+    .chat-revision-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
 
     .order-card {
       background: #fff; border-radius: 14px;
@@ -384,8 +838,12 @@
       .cart-sidebar { width: 100%; }
       .product-grid { grid-template-columns: repeat(2, 1fr); }
       .order-body { grid-template-columns: 1fr; }
+      .chat-bubble { max-width: 100%; }
+      .chat-compose-actions { flex-direction: column; align-items: stretch; }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
 </head>
 <body>
 
@@ -394,17 +852,60 @@
   <div class="login-card">
     <div class="login-logo">🛒</div>
     <div class="login-title">Espace Client</div>
-    <div class="login-sub">Connectez-vous pour passer une commande</div>
-    <div class="field">
-      <label>Adresse email</label>
-      <input type="email" id="loginEmail" placeholder="client@example.com" autocomplete="email" value="client5@example.com"/>
+    <div class="login-sub">Connectez-vous ou créez un compte pour tester le parrainage</div>
+
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <button class="btn btn-outline btn-sm" id="authModeLoginBtn" style="flex:1;" onclick="switchAuthMode('login')">Connexion</button>
+      <button class="btn btn-outline btn-sm" id="authModeRegisterBtn" style="flex:1;" onclick="switchAuthMode('register')">Inscription test</button>
     </div>
-    <div class="field">
-      <label>Mot de passe</label>
-      <input type="password" id="loginPwd" placeholder="••••••••" autocomplete="current-password" value="password123"/>
+
+    <div id="loginForm">
+      <div class="field">
+        <label>Adresse email</label>
+        <input type="email" id="loginEmail" placeholder="client@example.com" autocomplete="email" value="client5@example.com"/>
+      </div>
+      <div class="field">
+        <label>Mot de passe</label>
+        <input type="password" id="loginPwd" placeholder="••••••••" autocomplete="current-password" value="password123"/>
+      </div>
+      <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">Se connecter</button>
+      <div class="error-msg" id="loginErr"></div>
     </div>
-    <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">Se connecter</button>
-    <div class="error-msg" id="loginErr"></div>
+
+    <div id="registerForm" style="display:none;">
+      <div class="field">
+        <label>Nom complet</label>
+        <input type="text" id="regFullName" placeholder="Client Test" autocomplete="name"/>
+      </div>
+      <div class="field">
+        <label>Adresse email</label>
+        <input type="email" id="regEmail" placeholder="newclient@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Téléphone</label>
+        <input type="text" id="regPhone" placeholder="216XXXXXXXX" autocomplete="tel"/>
+      </div>
+      <div class="field">
+        <label>Mot de passe</label>
+        <input type="password" id="regPwd" placeholder="••••••••" autocomplete="new-password"/>
+      </div>
+      <div class="field">
+        <label>Code de parrainage (à utiliser à l'inscription)</label>
+        <input type="text" id="regReferralCode" placeholder="Ex: ABC12345"/>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="registerBtn" onclick="doRegisterClient()">Créer le compte</button>
+
+      <div style="margin-top:12px; padding:10px; border-radius:10px; background:var(--gray-50); border:1px solid var(--gray-200);">
+        <div style="font-size:12px; font-weight:700; color:var(--gray-600); margin-bottom:6px;">Vérification OTP</div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="regOtp" placeholder="Code OTP" style="flex:1;"/>
+          <button class="btn btn-outline btn-sm" id="verifyOtpBtn" onclick="verifyOtpForSignup()">Vérifier</button>
+        </div>
+      </div>
+
+      <div class="error-msg" id="registerErr"></div>
+    </div>
   </div>
 </div>
 
@@ -422,6 +923,9 @@
   <div class="tabs">
     <button class="tab-btn active" id="tabBtnOrder" onclick="switchTab('order')">➕ Nouvelle commande</button>
     <button class="tab-btn" id="tabBtnOrders" onclick="switchTab('orders')">📦 Mes commandes</button>
+    <button class="tab-btn" id="tabBtnReviews" onclick="switchTab('reviews')">⭐ Avis produits</button>
+    <button class="tab-btn" id="tabBtnReferral" onclick="switchTab('referral')">🎁 Parrainage</button>
+    <button class="tab-btn" id="tabBtnProfile" onclick="switchTab('profile')">👤 Mon profil</button>
   </div>
 
   <!-- ─── NEW ORDER TAB ────────────────────────────────────────────────────── -->
@@ -510,6 +1014,17 @@
           <textarea id="orderNote" rows="3" placeholder="Instructions spéciales, ordonnance…" style="resize:vertical;"></textarea>
         </div>
 
+        <div class="checkout-card">
+          <div class="checkout-title">Coupon récompense</div>
+          <div class="coupon-box">
+            <input type="text" id="couponCodeInput" placeholder="Ex: RWD12345" oninput="onCouponInputChanged()" />
+            <button class="btn btn-outline" onclick="applyCouponCode()">Appliquer</button>
+            <button class="btn btn-ghost" onclick="clearCouponCode()">Retirer</button>
+          </div>
+          <div class="coupon-status" id="couponStatus">Aucun code appliqué.</div>
+          <div class="reward-chip-list" id="rewardChipList"></div>
+        </div>
+
         <button class="btn btn-success btn-full" id="placeBtn" onclick="placeOrder()" style="font-size:15px; padding:13px;">
           ✓ Confirmer la commande
         </button>
@@ -538,6 +1053,235 @@
     <div id="ordersList"></div>
   </div>
 
+  <div id="reviewsTab" style="padding:20px; overflow-y:auto; flex:1; display:none;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:16px; font-weight:700;">Avis produits</div>
+        <div style="font-size:12px; color:var(--gray-500); margin-top:3px;">Vérifie les demandes d'avis générées après une livraison.</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="loadPendingReviews()">↺ Actualiser</button>
+    </div>
+    <div id="reviewsLoading" class="loading"><span class="spinner spinner-dark"></span></div>
+    <div id="reviewsList"></div>
+
+    <div class="section-card">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Avis livreur</div>
+          <div class="section-sub">Vérifie les demandes d'avis livreur générées après la livraison.</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="loadPendingLivreurReviews()">↺ Actualiser</button>
+      </div>
+      <div id="livreurReviewsLoading" class="loading" style="display:none;"><span class="spinner spinner-dark"></span></div>
+      <div id="livreurReviewsList"></div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Notifications client</div>
+          <div class="section-sub">Contrôle la présence et le payload des notifications `product_review_request`.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span class="tag tag-orange" id="notifUnreadBadge">0 non lues</span>
+          <button class="btn btn-outline btn-sm" onclick="loadNotifications()">↺ Actualiser</button>
+          <button class="btn btn-outline btn-sm" onclick="markAllNotificationsRead()">Tout marquer lu</button>
+        </div>
+      </div>
+      <div id="notifLoading" class="loading" style="display:none;"><span class="spinner spinner-dark"></span></div>
+      <div id="notifList"></div>
+    </div>
+  </div>
+
+  <div id="referralTab" style="padding:20px; overflow-y:auto; flex:1; display:none;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:16px; font-weight:700;">Programme de parrainage</div>
+        <div style="font-size:12px; color:var(--gray-500); margin-top:3px;">Suivez votre code de parrainage et vos coupons récompense.</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="loadReferralData(true)">↺ Actualiser</button>
+    </div>
+
+    <div class="referral-grid">
+      <div class="referral-card">
+        <div class="referral-title">Mon code de parrainage</div>
+        <div class="referral-code" id="myReferralCode">—</div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-outline btn-sm" onclick="copyReferralCode()">Copier le code</button>
+        </div>
+        <div style="margin-top:12px; font-size:12px; color:var(--gray-500);" id="referralStats">Chargement…</div>
+      </div>
+
+      <div class="referral-card">
+        <div class="referral-title">Mes coupons récompense</div>
+        <div id="rewardCouponsList" class="reward-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="profileTab" style="padding:20px; overflow-y:auto; flex:1; display:none;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:16px; font-weight:700;">Mon profil santé</div>
+        <div style="font-size:12px; color:var(--gray-500); margin-top:3px;">Mettez à jour vos informations santé, vos traitements en cours et l'ordonnance de profil.</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="loadClientProfile(true)">↺ Actualiser</button>
+    </div>
+
+    <div id="profileLoading" class="loading" style="display:none;"><span class="spinner spinner-dark"></span></div>
+
+    <div class="profile-grid">
+      <div class="profile-form-card">
+        <div class="section-title" style="margin-bottom:12px;">Identité</div>
+        <div class="field">
+          <label>Nom complet</label>
+          <input type="text" id="profileFullName" placeholder="Nom complet" />
+        </div>
+        <div class="profile-inline-grid">
+          <div class="field">
+            <label>Âge</label>
+            <input type="text" id="profileAge" placeholder="Ex: 34" />
+          </div>
+          <div class="field">
+            <label>Genre</label>
+            <input type="text" id="profileGender" placeholder="Ex: Femme" />
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-form-card">
+        <div class="section-title" style="margin-bottom:12px;">Coordonnées et mesures</div>
+        <div class="profile-inline-grid">
+          <div class="field">
+            <label>Latitude</label>
+            <input type="text" id="profileLatitude" placeholder="36.8065" />
+          </div>
+          <div class="field">
+            <label>Longitude</label>
+            <input type="text" id="profileLongitude" placeholder="10.1815" />
+          </div>
+          <div class="field">
+            <label>Taille (cm)</label>
+            <input type="text" id="profileHeight" placeholder="170" />
+          </div>
+          <div class="field">
+            <label>Poids (kg)</label>
+            <input type="text" id="profileWeight" placeholder="70" />
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-form-card full">
+        <div class="section-title" style="margin-bottom:12px;">Conditions de santé</div>
+        <div class="profile-inline-grid">
+          <div class="field">
+            <label>Problèmes de santé</label>
+            <select id="profileHasHealthProblems">
+              <option value="">Non renseigné</option>
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Antécédents pathologiques</label>
+            <select id="profileHasPathologicalHistory">
+              <option value="">Non renseigné</option>
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Traitement en cours</label>
+            <select id="profileHasOngoingTreatment">
+              <option value="">Non renseigné</option>
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Antécédents allergiques</label>
+            <select id="profileHasAllergicHistory">
+              <option value="">Non renseigné</option>
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Mobilité réduite</label>
+            <select id="profileHasReducedMobility">
+              <option value="">Non renseigné</option>
+              <option value="true">Oui</option>
+              <option value="false">Non</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Traitements en cours</label>
+          <textarea id="profileOngoingTreatments" rows="4" placeholder="Un traitement par ligne"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Allergies</label>
+          <textarea id="profileAllergies" rows="3" placeholder="Une allergie par ligne"></textarea>
+        </div>
+      </div>
+
+      <div class="profile-form-card full">
+        <div class="section-title" style="margin-bottom:12px;">Ordonnance de profil</div>
+        <div class="field">
+          <label>Importer une ordonnance</label>
+          <input type="file" id="profileOrdonnance" accept="application/pdf,image/*" />
+        </div>
+        <div class="profile-file-row">
+          <div>
+            <div style="font-size:13px; font-weight:700;">Ordonnance actuellement enregistrée</div>
+            <div style="font-size:12px; color:var(--gray-500);" id="profileOrdonnanceStatus">Aucune ordonnance de profil.</div>
+          </div>
+          <button id="profileOrdonnanceLink" class="btn btn-outline btn-sm" type="button" onclick="openClientProfileOrdonnance()" style="display:none;">Ouvrir</button>
+        </div>
+        <div class="profile-help">Cette ordonnance est liée au profil client. Elle est distincte de l'ordonnance éventuellement jointe lors de la création d'une commande.</div>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:18px; flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="loadClientProfile(false)">Réinitialiser</button>
+      <button class="btn btn-primary" id="saveProfileBtn" onclick="saveClientProfile()">Enregistrer le profil</button>
+    </div>
+    <div class="error-msg" id="profileErr"></div>
+  </div>
+
+</div>
+
+<div class="chat-modal-backdrop" id="chatModalBackdrop" onclick="closeOrderChat(event)">
+  <div class="chat-modal" onclick="event.stopPropagation()">
+    <div class="chat-modal-head">
+      <div>
+        <div class="chat-modal-title">Chat commande</div>
+        <div class="chat-modal-sub" id="chatModalSub">Commande</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeOrderChat()">Fermer</button>
+    </div>
+
+    <div class="chat-modal-body">
+      <div class="chat-thread-meta">
+        <div id="chatThreadMeta">Chargement…</div>
+        <div id="chatSocketState" class="tag tag-gray">WS déconnecté</div>
+      </div>
+
+      <div id="chatThreadList" class="chat-thread-list">
+        <div class="chat-empty">Aucune conversation chargée.</div>
+      </div>
+
+      <div class="chat-compose">
+        <textarea id="chatInput" placeholder="Écrire un message au pharmacien…" onkeydown="handleChatKeydown(event)"></textarea>
+        <div class="chat-compose-actions">
+          <div id="chatInlineStatus" class="chat-inline-status">Ctrl+Entrée pour envoyer</div>
+          <button class="btn btn-primary btn-sm" id="chatSendBtn" onclick="sendOrderChatMessage()">Envoyer</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -545,6 +1289,7 @@
 <script>
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let token = null;
+let clientProfileId = null;
 let currentStep = 1;
 let pharmacyType = 'MEDICAMENT';
 let allPharmacies = [];
@@ -554,6 +1299,21 @@ let totalPages = 0;
 let cart = {};         // { productId: { product, qty } }
 let estimate = null;
 let searchTimeout = null;
+let clientOrders = [];
+let pendingReviews = [];
+let selectedReviewStars = {};
+let pendingLivreurReviews = [];
+let selectedLivreurReviewStars = {};
+let notifications = [];
+let referralSummary = null;
+let rewardCoupons = [];
+let selectedCouponCode = '';
+let chatClient = null;
+let chatConnected = false;
+let activeChatOrderId = null;
+let activeChatThread = null;
+let clientProfileData = null;
+let clientProfileOrdonnanceAvailable = false;
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 async function api(method, path, body) {
@@ -566,6 +1326,26 @@ async function api(method, path, body) {
     credentials: 'include'
   };
   if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  if (res.status === 401) { logout(); throw new Error('Session expirée'); }
+  const text = await res.text();
+  if (!res.ok) {
+    let msg = text;
+    try { msg = JSON.parse(text).message || JSON.parse(text).error || text; } catch(_) {}
+    throw new Error(msg || res.statusText);
+  }
+  return text ? JSON.parse(text) : null;
+}
+
+async function apiMultipart(method, path, formData) {
+  const opts = {
+    method,
+    headers: {
+      ...(token ? { Authorization: 'Bearer ' + token } : {})
+    },
+    body: formData,
+    credentials: 'include'
+  };
   const res = await fetch(path, opts);
   if (res.status === 401) { logout(); throw new Error('Session expirée'); }
   const text = await res.text();
@@ -595,20 +1375,114 @@ async function doLogin() {
     }
     token = data.access_token;
     const profile = data.profile || {};
+    clientProfileId = profile.id ?? null;
     const name = profile.fullName || profile.name || email;
     document.getElementById('userLabel').textContent = name;
     document.getElementById('loginView').style.display = 'none';
     document.getElementById('appView').style.display = 'flex';
+    connectChatSocket();
     switchTab('order');
     loadPharmacies();
+    loadReferralData(false);
+    loadClientProfile(false);
   } catch(e) {
     errEl.textContent = 'Erreur: ' + e.message;
     btn.disabled = false; btn.textContent = 'Se connecter';
   }
 }
 
+function switchAuthMode(mode) {
+  const isLogin = mode === 'login';
+  document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = isLogin ? 'none' : 'block';
+
+  document.getElementById('authModeLoginBtn').classList.toggle('btn-primary', isLogin);
+  document.getElementById('authModeLoginBtn').classList.toggle('btn-outline', !isLogin);
+  document.getElementById('authModeRegisterBtn').classList.toggle('btn-primary', !isLogin);
+  document.getElementById('authModeRegisterBtn').classList.toggle('btn-outline', isLogin);
+
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('registerErr').textContent = '';
+}
+
+async function doRegisterClient() {
+  const fullName = document.getElementById('regFullName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const password = document.getElementById('regPwd').value;
+  const referralCodeUsed = document.getElementById('regReferralCode').value.trim().toUpperCase();
+
+  const errEl = document.getElementById('registerErr');
+  const btn = document.getElementById('registerBtn');
+  errEl.textContent = '';
+
+  if (!fullName || !email || !phone || !password) {
+    errEl.textContent = 'Nom, email, téléphone et mot de passe sont obligatoires.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Création…';
+
+  try {
+    await api('POST', '/api/v1/auth/register-client', {
+      fullName,
+      email,
+      phone,
+      password,
+      referralCodeUsed: referralCodeUsed || undefined,
+      latitude: 36.8065,
+      longitude: 10.1815
+    });
+
+    document.getElementById('loginEmail').value = email;
+    document.getElementById('loginPwd').value = password;
+    showToast('Compte créé. Vérifiez l\'OTP pour activer le compte.', 'success');
+  } catch (e) {
+    errEl.textContent = 'Erreur inscription: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Créer le compte';
+  }
+}
+
+async function verifyOtpForSignup() {
+  const phone = document.getElementById('regPhone').value.trim();
+  const otp = document.getElementById('regOtp').value.trim();
+  const errEl = document.getElementById('registerErr');
+  const btn = document.getElementById('verifyOtpBtn');
+  errEl.textContent = '';
+
+  if (!phone || !otp) {
+    errEl.textContent = 'Téléphone et OTP sont obligatoires pour vérifier le compte.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-dark"></span> Vérification…';
+
+  try {
+    await api('POST', '/api/v1/auth/verify', { phone, otp });
+    showToast('OTP vérifié. Vous pouvez maintenant vous connecter.', 'success');
+    switchAuthMode('login');
+  } catch (e) {
+    errEl.textContent = 'Erreur OTP: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Vérifier';
+  }
+}
+
 function logout() {
   token = null; cart = {}; selectedPharmacy = null;
+  clientProfileId = null;
+  selectedCouponCode = '';
+  referralSummary = null;
+  rewardCoupons = [];
+  clientOrders = [];
+  clientProfileData = null;
+  disconnectChatSocket();
+  closeOrderChat();
   document.getElementById('appView').style.display = 'none';
   document.getElementById('loginView').style.display = 'flex';
   document.getElementById('loginErr').textContent = '';
@@ -619,14 +1493,196 @@ function logout() {
 function switchTab(tab) {
   document.getElementById('tabBtnOrder').classList.toggle('active', tab === 'order');
   document.getElementById('tabBtnOrders').classList.toggle('active', tab === 'orders');
+  document.getElementById('tabBtnReviews').classList.toggle('active', tab === 'reviews');
+  document.getElementById('tabBtnReferral').classList.toggle('active', tab === 'referral');
+  document.getElementById('tabBtnProfile').classList.toggle('active', tab === 'profile');
 
   const orderTab  = document.getElementById('orderTab');
   const ordersTab = document.getElementById('ordersTab');
+  const reviewsTab = document.getElementById('reviewsTab');
+  const referralTab = document.getElementById('referralTab');
+  const profileTab = document.getElementById('profileTab');
 
   orderTab.style.display  = tab === 'order'  ? 'flex'  : 'none';
   ordersTab.style.display = tab === 'orders' ? 'block' : 'none';
+  reviewsTab.style.display = tab === 'reviews' ? 'block' : 'none';
+  referralTab.style.display = tab === 'referral' ? 'block' : 'none';
+  profileTab.style.display = tab === 'profile' ? 'block' : 'none';
 
   if (tab === 'orders') loadOrders();
+  if (tab === 'reviews') {
+    loadPendingReviews();
+    loadPendingLivreurReviews();
+    loadNotifications();
+  }
+  if (tab === 'referral') {
+    loadReferralData(true);
+  }
+  if (tab === 'profile') {
+    loadClientProfile(false);
+  }
+}
+
+// ─── CLIENT PROFILE ─────────────────────────────────────────────────────────
+async function loadClientProfile(showToastOnError) {
+  const loadingEl = document.getElementById('profileLoading');
+  const errEl = document.getElementById('profileErr');
+  if (loadingEl) loadingEl.style.display = 'flex';
+  if (errEl) errEl.textContent = '';
+  try {
+    clientProfileData = await api('GET', '/api/v1/client-profile/me');
+    populateClientProfileForm(clientProfileData || {});
+  } catch (e) {
+    if (errEl) errEl.textContent = 'Erreur profil: ' + e.message;
+    if (showToastOnError) showToast('Erreur chargement profil: ' + e.message, 'error');
+  } finally {
+    if (loadingEl) loadingEl.style.display = 'none';
+  }
+}
+
+function populateClientProfileForm(profile) {
+  const data = profile || {};
+  document.getElementById('profileFullName').value = data.fullName || '';
+  document.getElementById('profileAge').value = data.age != null ? String(data.age) : '';
+  document.getElementById('profileGender').value = data.gender || '';
+  document.getElementById('profileLatitude').value = data.latitude != null ? String(data.latitude) : '';
+  document.getElementById('profileLongitude').value = data.longitude != null ? String(data.longitude) : '';
+  document.getElementById('profileHeight').value = data.height != null ? String(data.height) : '';
+  document.getElementById('profileWeight').value = data.weight != null ? String(data.weight) : '';
+  document.getElementById('profileHasHealthProblems').value = booleanSelectValue(data.hasHealthProblems);
+  document.getElementById('profileHasPathologicalHistory').value = booleanSelectValue(data.hasPathologicalHistory);
+  document.getElementById('profileHasOngoingTreatment').value = booleanSelectValue(data.hasOngoingTreatment);
+  document.getElementById('profileHasAllergicHistory').value = booleanSelectValue(data.hasAllergicHistory);
+  document.getElementById('profileHasReducedMobility').value = booleanSelectValue(data.hasReducedMobility);
+  document.getElementById('profileOngoingTreatments').value = Array.isArray(data.ongoingTreatments) ? data.ongoingTreatments.join('\n') : '';
+  document.getElementById('profileAllergies').value = Array.isArray(data.allergies) ? data.allergies.join('\n') : '';
+  document.getElementById('profileOrdonnance').value = '';
+
+  const ordonnanceStatus = document.getElementById('profileOrdonnanceStatus');
+  const ordonnanceLink = document.getElementById('profileOrdonnanceLink');
+  if (data.ordonnanceUrl) {
+    ordonnanceStatus.textContent = 'Ordonnance de profil enregistrée.';
+    clientProfileOrdonnanceAvailable = true;
+    ordonnanceLink.style.display = 'inline-flex';
+  } else {
+    ordonnanceStatus.textContent = 'Aucune ordonnance de profil.';
+    clientProfileOrdonnanceAvailable = false;
+    ordonnanceLink.style.display = 'none';
+  }
+}
+
+async function openClientProfileOrdonnance() {
+  if (!clientProfileOrdonnanceAvailable) return;
+
+  const errEl = document.getElementById('profileErr');
+  errEl.textContent = '';
+
+  const popup = window.open('about:blank', '_blank');
+  if (popup) {
+    try { popup.opener = null; } catch(_) {}
+    popup.document.write('<p style="font-family:Arial,sans-serif;padding:16px">Chargement de l\'ordonnance profil...</p>');
+  }
+
+  try {
+    const access = await api('GET', '/api/v1/client-profile/me/ordonnance-access');
+    if (popup) {
+      popup.location.href = access.url;
+    } else {
+      window.open(access.url, '_blank', 'noopener');
+    }
+  } catch (e) {
+    if (popup) {
+      popup.close();
+    }
+    errEl.textContent = 'Erreur profil: ' + e.message;
+    showToast('Erreur ouverture ordonnance profil: ' + e.message, 'error');
+  }
+}
+
+async function saveClientProfile() {
+  const btn = document.getElementById('saveProfileBtn');
+  const errEl = document.getElementById('profileErr');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Enregistrement…';
+
+  try {
+    const payload = {
+      fullName: getTextValue('profileFullName') || undefined,
+      age: parseNumberValue('profileAge'),
+      gender: getTextValue('profileGender') || undefined,
+      latitude: parseFloatValue('profileLatitude'),
+      longitude: parseFloatValue('profileLongitude'),
+      height: parseFloatValue('profileHeight'),
+      weight: parseFloatValue('profileWeight'),
+      hasHealthProblems: parseBooleanField('profileHasHealthProblems'),
+      hasPathologicalHistory: parseBooleanField('profileHasPathologicalHistory'),
+      hasOngoingTreatment: parseBooleanField('profileHasOngoingTreatment'),
+      hasAllergicHistory: parseBooleanField('profileHasAllergicHistory'),
+      hasReducedMobility: parseBooleanField('profileHasReducedMobility'),
+      ongoingTreatments: parseLines('profileOngoingTreatments'),
+      allergies: parseLines('profileAllergies')
+    };
+
+    const ordonnanceFile = document.getElementById('profileOrdonnance').files[0];
+    let updated;
+    if (ordonnanceFile) {
+      const formData = new FormData();
+      formData.append('data', JSON.stringify(payload));
+      formData.append('ordonnance', ordonnanceFile);
+      updated = await apiMultipart('PUT', '/api/v1/client-profile/me', formData);
+    } else {
+      updated = await api('PUT', '/api/v1/client-profile/me', payload);
+    }
+
+    clientProfileData = updated || payload;
+    populateClientProfileForm(clientProfileData);
+    showToast('Profil client mis à jour.', 'success');
+  } catch (e) {
+    errEl.textContent = 'Erreur profil: ' + e.message;
+    showToast('Erreur mise à jour profil: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer le profil';
+  }
+}
+
+function booleanSelectValue(value) {
+  if (value === true) return 'true';
+  if (value === false) return 'false';
+  return '';
+}
+
+function parseBooleanField(id) {
+  const value = document.getElementById(id).value;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return null;
+}
+
+function parseLines(id) {
+  return (document.getElementById(id).value || '')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean);
+}
+
+function getTextValue(id) {
+  return (document.getElementById(id).value || '').trim();
+}
+
+function parseNumberValue(id) {
+  const raw = getTextValue(id);
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
+}
+
+function parseFloatValue(id) {
+  const raw = getTextValue(id);
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 // ─── WIZARD STEPS ─────────────────────────────────────────────────────────────
@@ -749,11 +1805,17 @@ function renderProducts(products) {
       ? `<img src="${p.imageUrl}" alt="${p.productName}" onerror="this.parentElement.innerHTML='💊'"/>`
       : '💊';
     const priceStr = p.price != null ? Number(p.price).toFixed(2) + ' TND' : '—';
+    const reviewCount = Number(p.reviewCount || 0);
+    const averageRating = Number(p.averageRating || 0);
+    const ratingHtml = reviewCount > 0
+      ? `<div class="prod-rating"><span class="stars-inline">${renderStars(averageRating)}</span><span>${averageRating.toFixed(1)} · ${reviewCount} avis</span></div>`
+      : `<div class="prod-rating"><span class="tag tag-gray">Aucun avis</span></div>`;
     return `
       <div class="product-card" id="pc-${p.productId}">
         <div class="product-img">${imgHtml}</div>
         <div class="prod-name">${p.productName}</div>
         <div class="prod-cat">${p.categoryName || p.displayGroup || ''}</div>
+        ${ratingHtml}
         <div class="prod-price">${priceStr}</div>
         <div class="prod-actions">
           ${inCart === 0
@@ -881,14 +1943,26 @@ async function prepareCheckout() {
   document.getElementById('placeErr').textContent = '';
   document.getElementById('placeBtn').disabled = true;
 
+  renderRewardChips();
+  document.getElementById('couponCodeInput').value = selectedCouponCode || '';
+  updateCouponStatus('Aucun code appliqué.', '');
+
   try {
     estimate = await api('POST', '/api/v1/client/orders/estimate-delivery', {
-      pharmasienId: selectedPharmacy.id,
+      pharmacienId: selectedPharmacy.id,
+      couponCode: selectedCouponCode || undefined,
       items: items.map(({ product, qty }) => ({ productId: product.productId, quantity: qty }))
     });
 
+    const discount = Number(estimate.discountAmount || 0);
+    const subtotalAfterDiscount = Number(estimate.subtotalAfterDiscount || estimate.subtotal || 0);
+    const rejection = estimate.couponRejectionReason;
+    const effectiveCode = estimate.couponCode || selectedCouponCode;
+
     document.getElementById('estimateResult').innerHTML = `
       <div class="checkout-line"><span>Sous-total</span><span>${Number(estimate.subtotal).toFixed(2)} TND</span></div>
+      ${discount > 0 ? `<div class="checkout-line"><span>Réduction (${effectiveCode || 'coupon'})</span><span>− ${discount.toFixed(2)} TND</span></div>` : ''}
+      ${discount > 0 ? `<div class="checkout-line"><span>Sous-total après remise</span><span>${subtotalAfterDiscount.toFixed(2)} TND</span></div>` : ''}
       <div class="checkout-line">
         <span>Livraison</span>
         <span>${estimate.freeDelivery
@@ -898,6 +1972,16 @@ async function prepareCheckout() {
       <div class="checkout-line total">
         <span>Total</span><span>${Number(estimate.total).toFixed(2)} TND</span>
       </div>`;
+
+    if (discount > 0) {
+      selectedCouponCode = effectiveCode || selectedCouponCode;
+      updateCouponStatus(`Code appliqué: ${selectedCouponCode} (− ${discount.toFixed(2)} TND)`, 'ok');
+      document.getElementById('couponCodeInput').value = selectedCouponCode;
+    } else if (rejection) {
+      updateCouponStatus(`Code refusé: ${rejection}`, 'err');
+    } else if (selectedCouponCode) {
+      updateCouponStatus(`Code saisi: ${selectedCouponCode}`, '');
+    }
 
     document.getElementById('estimateLoading').style.display = 'none';
     document.getElementById('estimateResult').style.display = 'block';
@@ -919,14 +2003,17 @@ async function placeOrder() {
   btn.innerHTML = '<span class="spinner"></span> Envoi…';
   try {
     const order = await api('POST', '/api/v1/client/orders/create', {
-      pharmasienId: selectedPharmacy.id,
+      pharmacienId: selectedPharmacy.id,
+      couponCode: selectedCouponCode || undefined,
       description: document.getElementById('orderNote').value.trim() || undefined,
       items: items.map(({ product, qty }) => ({ productId: product.productId, quantity: qty }))
     });
     document.getElementById('successSub').textContent =
       `Commande #${order.id} envoyée à ${selectedPharmacy.pharmacyName}. En attente de confirmation.`;
     cart = {};
+    selectedCouponCode = '';
     renderCart();
+    loadReferralData(false);
     goStep(4);
   } catch(e) {
     errEl.textContent = 'Erreur: ' + e.message;
@@ -937,14 +2024,139 @@ async function placeOrder() {
 
 function newOrder() {
   cart = {}; selectedPharmacy = null;
+  selectedCouponCode = '';
   document.getElementById('prodSearch').value = '';
   document.getElementById('pharmSearch').value = '';
   goStep(1);
 }
 
+function onCouponInputChanged() {
+  const code = (document.getElementById('couponCodeInput').value || '').trim().toUpperCase();
+  selectedCouponCode = code;
+  if (!code) updateCouponStatus('Aucun code appliqué.', '');
+}
+
+function applyCouponCode() {
+  onCouponInputChanged();
+  if (!selectedCouponCode) {
+    updateCouponStatus('Entrez un code à appliquer.', 'err');
+    return;
+  }
+  if (currentStep === 3) {
+    prepareCheckout();
+  } else {
+    updateCouponStatus(`Code prêt: ${selectedCouponCode}. Passez à l'étape commande pour tester.`, '');
+  }
+}
+
+function clearCouponCode() {
+  selectedCouponCode = '';
+  document.getElementById('couponCodeInput').value = '';
+  updateCouponStatus('Aucun code appliqué.', '');
+  if (currentStep === 3) prepareCheckout();
+}
+
+function chooseRewardCoupon(code) {
+  selectedCouponCode = (code || '').trim().toUpperCase();
+  document.getElementById('couponCodeInput').value = selectedCouponCode;
+  renderRewardChips();
+  applyCouponCode();
+}
+
+function updateCouponStatus(message, level) {
+  const el = document.getElementById('couponStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.className = 'coupon-status' + (level ? ' ' + level : '');
+}
+
+function renderRewardChips() {
+  const el = document.getElementById('rewardChipList');
+  if (!el) return;
+  if (!rewardCoupons.length) {
+    el.innerHTML = '<span class="tag tag-gray">Aucun coupon récompense disponible</span>';
+    return;
+  }
+  el.innerHTML = rewardCoupons.map(c => {
+    const active = selectedCouponCode && selectedCouponCode === c.code;
+    return `<button class="reward-chip${active ? ' active' : ''}" onclick="chooseRewardCoupon('${c.code}')">${c.code}</button>`;
+  }).join('');
+}
+
+async function loadReferralData(showToastOnError) {
+  try {
+    const [summary, rewards] = await Promise.all([
+      api('GET', '/api/v1/client/referral/me'),
+      api('GET', '/api/v1/client/referral/rewards')
+    ]);
+    referralSummary = summary;
+    rewardCoupons = rewards || [];
+    renderReferralSummary();
+    renderRewardCoupons();
+    renderRewardChips();
+  } catch (e) {
+    if (showToastOnError) showToast('Erreur chargement parrainage: ' + e.message, 'error');
+  }
+}
+
+function renderReferralSummary() {
+  const codeEl = document.getElementById('myReferralCode');
+  const statsEl = document.getElementById('referralStats');
+  if (!codeEl || !statsEl) return;
+  if (!referralSummary) {
+    codeEl.textContent = '—';
+    statsEl.textContent = 'Données indisponibles.';
+    return;
+  }
+  codeEl.textContent = referralSummary.referralCode || '—';
+  statsEl.textContent = `Parrainages: ${Number(referralSummary.totalReferrals || 0)} • Récompensés: ${Number(referralSummary.rewardedReferrals || 0)}`;
+}
+
+function renderRewardCoupons() {
+  const list = document.getElementById('rewardCouponsList');
+  if (!list) return;
+  if (!rewardCoupons.length) {
+    list.innerHTML = '<div class="empty" style="padding:16px 8px;">Aucun coupon récompense actif.</div>';
+    return;
+  }
+  list.innerHTML = rewardCoupons.map(c => {
+    const value = Number(c.value || 0);
+    const reduction = c.type === 'PERCENT' ? `${value.toFixed(2)} %` : `${value.toFixed(2)} TND`;
+    const validTo = c.validTo ? formatDate(c.validTo) : '—';
+    const used = Number(c.usedCount || 0);
+    const maxUses = Number(c.maxUses || 0);
+    return `
+      <div class="reward-item">
+        <div class="reward-row"><strong>${c.code}</strong><span class="tag tag-purple">${reduction}</span></div>
+        <div class="reward-row"><span>Min panier</span><span>${Number(c.minSubtotal || 0).toFixed(2)} TND</span></div>
+        <div class="reward-row"><span>Plafond remise</span><span>${Number(c.maxDiscount || 0).toFixed(2)} TND</span></div>
+        <div class="reward-row"><span>Validité</span><span>${validTo}</span></div>
+        <div class="reward-row"><span>Utilisations</span><span>${used}/${maxUses}</span></div>
+        <div style="margin-top:8px;">
+          <button class="btn btn-outline btn-sm" onclick="chooseRewardCoupon('${c.code}')">Utiliser ce coupon</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function copyReferralCode() {
+  const code = referralSummary && referralSummary.referralCode;
+  if (!code) {
+    showToast('Code parrainage indisponible.', 'error');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(code);
+    showToast('Code parrainage copié.', 'success');
+  } catch (_) {
+    showToast('Impossible de copier automatiquement le code.', 'error');
+  }
+}
+
 // ─── MY ORDERS ────────────────────────────────────────────────────────────────
 const statusLabels = {
-  PENDING: 'En attente', ACCEPTED_FROM_PHARMACIEN: 'Accepté', REFUSED_FROM_PHARMACIEN: 'Refusé',
+  PENDING: 'En attente', AWAITING_CLIENT_ACCEPTANCE: 'En attente client', AWAITING_PAYMENT: 'Paiement attendu',
+  ACCEPTANCE_EXPIRED: 'Révision expirée', ACCEPTED_FROM_PHARMACIEN: 'Accepté', REFUSED_FROM_PHARMACIEN: 'Refusé',
   READY_FOR_DELIVERY: 'Prêt', ASSIGNED: 'Livreur assigné', ASSIGNED_FROM_ADMIN: 'Assigné (admin)',
   ACCEPTED_FROM_LIVREUR: 'Livreur en route', REFUSED_FROM_LIVREUR: 'Refus livreur',
   PICKED_UP: 'Récupéré', DELIVERING: 'En livraison', DELIVERED: 'Livré ✓',
@@ -956,46 +2168,368 @@ async function loadOrders() {
   document.getElementById('ordersList').innerHTML = '';
   try {
     const orders = await api('GET', '/api/v1/client/orders');
-    document.getElementById('ordersLoading').style.display = 'none';
-    if (!orders.length) {
-      document.getElementById('ordersList').innerHTML =
-        '<div class="empty"><div class="empty-icon">📦</div>Aucune commande pour le moment.</div>';
-      return;
-    }
-    const sorted = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    document.getElementById('ordersList').innerHTML = sorted.map(o => {
-      const fmt = v => v != null ? Number(v).toFixed(2) + ' TND' : '—';
-      const fmtDate = d => d ? new Date(d).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
-      const itemCount = (o.orderItems || []).length;
-      const itemsHtml = (o.orderItems || []).map(i =>
-        `<div class="item-row"><span>${i.productName || 'Produit'} × ${i.quantity}</span><span>${fmt(i.lineTotal)}</span></div>`
-      ).join('');
-      return `
-        <div class="order-card">
-          <div class="order-head">
-            <div class="order-id">Commande #${o.id}</div>
-            <div class="status-badge s-${o.status}">${statusLabels[o.status] || o.status}</div>
-            <div class="order-date">${fmtDate(o.createdAt)}</div>
-          </div>
-          <div class="order-body">
-            <div><div class="ob-label">Pharmacie</div><div class="ob-value">${o.pharmacyName || '—'}</div></div>
-            <div><div class="ob-label">Articles</div><div class="ob-value">${itemCount}</div></div>
-          </div>
-          ${itemCount ? `<div style="margin-bottom:10px;">
-            <button class="items-toggle" onclick="toggleItems(${o.id})">▸ ${itemCount} article${itemCount > 1 ? 's' : ''}</button>
-            <div class="items-list" id="oi-${o.id}">${itemsHtml}</div>
-          </div>` : ''}
-          <div class="order-total-row">
-            <span class="ot-label">Total</span>
-            <span class="ot-value">${fmt(o.total)}</span>
-          </div>
-        </div>`;
-    }).join('');
+    clientOrders = Array.isArray(orders) ? orders : [];
+    renderOrdersFromState();
   } catch(e) {
-    document.getElementById('ordersLoading').style.display = 'none';
     document.getElementById('ordersList').innerHTML =
       '<div class="empty">Erreur: ' + e.message + '</div>';
+  } finally {
+    document.getElementById('ordersLoading').style.display = 'none';
   }
+}
+
+// ─── PRODUCT REVIEWS ───────────────────────────────────────────────────────
+async function loadPendingReviews() {
+  document.getElementById('reviewsLoading').style.display = 'flex';
+  document.getElementById('reviewsList').innerHTML = '';
+  try {
+    pendingReviews = await api('GET', '/api/v1/client/reviews/pending');
+    document.getElementById('reviewsLoading').style.display = 'none';
+    renderPendingReviews();
+  } catch (e) {
+    document.getElementById('reviewsLoading').style.display = 'none';
+    document.getElementById('reviewsList').innerHTML = '<div class="empty">Erreur: ' + e.message + '</div>';
+  }
+}
+
+async function loadPendingLivreurReviews() {
+  document.getElementById('livreurReviewsLoading').style.display = 'flex';
+  document.getElementById('livreurReviewsList').innerHTML = '';
+  try {
+    pendingLivreurReviews = await api('GET', '/api/v1/client/livreur-reviews/pending');
+    renderPendingLivreurReviews();
+  } catch (e) {
+    document.getElementById('livreurReviewsList').innerHTML = '<div class="empty">Erreur: ' + e.message + '</div>';
+  } finally {
+    document.getElementById('livreurReviewsLoading').style.display = 'none';
+  }
+}
+
+async function loadNotifications() {
+  document.getElementById('notifLoading').style.display = 'flex';
+  document.getElementById('notifList').innerHTML = '';
+  try {
+    const [allNotifications, unreadCount] = await Promise.all([
+      api('GET', '/api/v1/client/notifications'),
+      api('GET', '/api/v1/client/notifications/unread/count')
+    ]);
+    notifications = allNotifications || [];
+    updateUnreadBadge(unreadCount && typeof unreadCount.count === 'number' ? unreadCount.count : 0);
+    renderNotifications();
+  } catch (e) {
+    document.getElementById('notifList').innerHTML = '<div class="empty">Erreur notifications: ' + e.message + '</div>';
+  } finally {
+    document.getElementById('notifLoading').style.display = 'none';
+  }
+}
+
+function renderPendingReviews() {
+  const list = document.getElementById('reviewsList');
+  if (!pendingReviews.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">⭐</div>Aucun avis en attente.</div>';
+    return;
+  }
+
+  list.innerHTML = `<div class="review-grid">${pendingReviews.map(review => {
+    const selectedStars = selectedReviewStars[review.orderItemId] || 0;
+    const imgHtml = review.imageUrl
+      ? `<img src="${review.imageUrl}" alt="${review.productName}" onerror="this.parentElement.innerHTML='💊'"/>`
+      : '💊';
+    return `
+      <div class="review-card" id="review-${review.orderItemId}">
+        <div class="review-head">
+          <div class="review-thumb">${imgHtml}</div>
+          <div>
+            <div class="review-title">${review.productName || 'Produit'}</div>
+            <div class="review-sub">${review.pharmacyName || 'Pharmacie inconnue'}</div>
+          </div>
+        </div>
+        <div class="review-meta">
+          <span class="tag tag-blue">Commande #${review.orderId}</span>
+          <span class="tag tag-purple">${formatDate(review.deliveredAt)}</span>
+        </div>
+        <div>
+          <label>Votre note</label>
+          <div class="star-picker">
+            ${[1,2,3,4,5].map(stars => `
+              <button class="star-btn${selectedStars >= stars ? ' active' : ''}" onclick="pickReviewStars(${review.orderItemId}, ${stars})" title="${stars} étoile${stars > 1 ? 's' : ''}">★</button>
+            `).join('')}
+          </div>
+        </div>
+        <div class="review-actions">
+          <div class="review-status" id="review-status-${review.orderItemId}">Choisissez une note entre 1 et 5.</div>
+          <button class="btn btn-success btn-sm" id="review-btn-${review.orderItemId}" onclick="submitReview(${review.orderItemId})" ${selectedStars ? '' : 'disabled'}>Envoyer</button>
+        </div>
+      </div>
+    `;
+  }).join('')}</div>`;
+}
+
+function pickReviewStars(orderItemId, stars) {
+  selectedReviewStars[orderItemId] = stars;
+  renderPendingReviews();
+}
+
+function renderPendingLivreurReviews() {
+  const list = document.getElementById('livreurReviewsList');
+  if (!pendingLivreurReviews.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🛵</div>Aucun avis livreur en attente.</div>';
+    return;
+  }
+
+  list.innerHTML = `<div class="review-grid">${pendingLivreurReviews.map(review => {
+    const selectedStars = selectedLivreurReviewStars[review.orderId] || 0;
+    return `
+      <div class="review-card" id="livreur-review-${review.orderId}">
+        <div class="review-head">
+          <div class="review-thumb">🛵</div>
+          <div>
+            <div class="review-title">${review.livreurName || 'Livreur'}</div>
+            <div class="review-sub">${review.vehicleType || 'Type de véhicule inconnu'}</div>
+          </div>
+        </div>
+        <div class="review-meta">
+          <span class="tag tag-blue">Commande #${review.orderId}</span>
+          ${review.pharmacyName ? `<span class="tag tag-purple">${review.pharmacyName}</span>` : ''}
+          ${review.livreurPhone ? `<span class="tag tag-gray">${review.livreurPhone}</span>` : ''}
+          <span class="tag tag-orange">${formatDate(review.deliveredAt)}</span>
+        </div>
+        <div>
+          <label>Votre note</label>
+          <div class="star-picker">
+            ${[1,2,3,4,5].map(stars => `
+              <button class="star-btn${selectedStars >= stars ? ' active' : ''}" onclick="pickLivreurReviewStars(${review.orderId}, ${stars})" title="${stars} étoile${stars > 1 ? 's' : ''}">★</button>
+            `).join('')}
+          </div>
+        </div>
+        <div class="review-actions">
+          <div class="review-status" id="livreur-review-status-${review.orderId}">Choisissez une note entre 1 et 5.</div>
+          <button class="btn btn-success btn-sm" id="livreur-review-btn-${review.orderId}" onclick="submitLivreurReview(${review.orderId})" ${selectedStars ? '' : 'disabled'}>Envoyer</button>
+        </div>
+      </div>
+    `;
+  }).join('')}</div>`;
+}
+
+function pickLivreurReviewStars(orderId, stars) {
+  selectedLivreurReviewStars[orderId] = stars;
+  renderPendingLivreurReviews();
+}
+
+async function submitReview(orderItemId) {
+  const stars = selectedReviewStars[orderItemId];
+  if (!stars) {
+    showToast('Choisissez une note avant d\'envoyer.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('review-btn-' + orderItemId);
+  const status = document.getElementById('review-status-' + orderItemId);
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Envoi…';
+  }
+  if (status) status.textContent = 'Envoi de votre avis…';
+
+  try {
+    const response = await api('POST', '/api/v1/client/reviews', { orderItemId, stars });
+    pendingReviews = pendingReviews.filter(review => review.orderItemId !== orderItemId);
+    delete selectedReviewStars[orderItemId];
+    renderPendingReviews();
+    showToast(`Avis envoyé: ${response.averageRating.toFixed(1)} / 5 (${response.reviewCount} avis)`, 'success');
+    loadNotifications();
+    if (selectedPharmacy && currentStep === 2) {
+      loadProducts(currentPage);
+    }
+  } catch (e) {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Envoyer';
+    }
+    if (status) status.textContent = 'Erreur: ' + e.message;
+    showToast('Erreur avis: ' + e.message, 'error');
+  }
+}
+
+async function submitLivreurReview(orderId) {
+  const stars = selectedLivreurReviewStars[orderId];
+  if (!stars) {
+    showToast('Choisissez une note avant d\'envoyer.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('livreur-review-btn-' + orderId);
+  const status = document.getElementById('livreur-review-status-' + orderId);
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Envoi…';
+  }
+  if (status) status.textContent = 'Envoi de votre avis…';
+
+  try {
+    const response = await api('POST', '/api/v1/client/livreur-reviews', { orderId, stars });
+    pendingLivreurReviews = pendingLivreurReviews.filter(review => review.orderId !== orderId);
+    delete selectedLivreurReviewStars[orderId];
+    renderPendingLivreurReviews();
+    showToast(`Avis livreur envoyé: ${response.averageRating.toFixed(1)} / 5 (${response.reviewCount} avis)`, 'success');
+    loadNotifications();
+  } catch (e) {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Envoyer';
+    }
+    if (status) status.textContent = 'Erreur: ' + e.message;
+    showToast('Erreur avis livreur: ' + e.message, 'error');
+  }
+}
+
+function renderNotifications() {
+  const list = document.getElementById('notifList');
+  if (!notifications.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🔔</div>Aucune notification client pour le moment.</div>';
+    return;
+  }
+
+  list.innerHTML = `<div class="notification-list">${notifications.map(notification => {
+    const data = notification.data || {};
+    const isReviewRequest = notification.type === 'product_review_request';
+    const relatedOrder = data.orderId ? clientOrders.find(order => Number(order.id) === Number(data.orderId)) : null;
+    const canHandleRevision = !!(relatedOrder && relatedOrder.status === 'AWAITING_CLIENT_ACCEPTANCE' && relatedOrder.activeRevision);
+    return `
+      <div class="notification-card${isReviewRequest ? ' review-request' : ''}" id="notif-${notification.id}">
+        <div class="notification-top">
+          <div>
+            <div class="notification-title">${notification.title || 'Notification'}</div>
+            <div class="section-sub">${formatDate(notification.createdAt)}</div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span class="tag ${isReviewRequest ? 'tag-orange' : 'tag-blue'}">${notification.type || 'notification'}</span>
+            <span class="tag ${notification.isRead ? 'tag-gray' : 'tag-green'}">${notification.isRead ? 'Lue' : 'Non lue'}</span>
+          </div>
+        </div>
+        <div class="notification-body">${notification.body || ''}</div>
+        <div class="notification-meta">
+          ${data.orderId ? `<span class="tag tag-blue">Commande #${data.orderId}</span>` : ''}
+          ${data.orderItemId ? `<span class="tag tag-purple">OrderItem #${data.orderItemId}</span>` : ''}
+          ${data.productId ? `<span class="tag tag-orange">Produit #${data.productId}</span>` : ''}
+          ${data.livreurId ? `<span class="tag tag-orange">Livreur #${data.livreurId}</span>` : ''}
+          ${data.pharmacyId ? `<span class="tag tag-gray">Pharmacie #${data.pharmacyId}</span>` : ''}
+        </div>
+        <div class="notification-payload">
+          ${data.productName ? `<div class="payload-chip"><strong>Produit</strong>${data.productName}</div>` : ''}
+          ${data.livreurName ? `<div class="payload-chip"><strong>Livreur</strong>${data.livreurName}</div>` : ''}
+          ${data.status ? `<div class="payload-chip"><strong>Statut</strong>${data.status}</div>` : ''}
+          ${data.total != null ? `<div class="payload-chip"><strong>Total</strong>${Number(data.total).toFixed(2)} TND</div>` : ''}
+          ${data.createdAt ? `<div class="payload-chip"><strong>Payload date</strong>${formatDate(data.createdAt)}</div>` : ''}
+        </div>
+        <div class="notification-actions">
+          <div class="notification-state">${notification.type === 'livreur_review_request'
+            ? 'Notification attendue pour noter le livreur après DELIVERED.'
+            : isReviewRequest
+              ? 'Notification attendue après DELIVERED.'
+              : 'Notification générique client.'}</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            ${canHandleRevision ? `<button class="btn btn-primary btn-sm" onclick="openOrderChat(${relatedOrder.id}); markNotificationRead(${notification.id});">Voir la révision</button>` : ''}
+            ${notification.isRead
+              ? '<span class="tag tag-gray">Déjà lue</span>'
+              : `<button class="btn btn-outline btn-sm" onclick="markNotificationRead(${notification.id})">Marquer lue</button>`}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('')}</div>`;
+}
+
+function renderOrderRevisionPanel(order) {
+  if (!order || order.status !== 'AWAITING_CLIENT_ACCEPTANCE' || !order.activeRevision) return '';
+  const revision = order.activeRevision;
+  const items = Array.isArray(revision.items) ? revision.items : [];
+  const itemRows = items.length
+    ? items.map(item => `
+        <div class="revision-item-row">
+          <span>${escapeHtml(item.productName || 'Produit')} × ${Number(item.quantity || 0)}</span>
+          <span>${formatCurrency(item.lineTotal)}</span>
+        </div>`).join('')
+    : '<div class="revision-item-row"><span>Aucun article révisé</span><span>—</span></div>';
+
+  return `
+    <div class="revision-panel">
+      <div class="revision-head">
+        <div class="revision-title">Révision #${revision.revisionNumber} en attente</div>
+        ${revision.expiresAt ? `<span class="tag tag-orange">Expire le ${formatDate(revision.expiresAt)}</span>` : ''}
+      </div>
+      ${revision.note ? `<div class="revision-note">${escapeHtml(revision.note)}</div>` : ''}
+      <div class="revision-grid">
+        <div class="revision-metric">
+          <div class="revision-metric-label">Sous-total</div>
+          <div class="revision-metric-value">${formatCurrency(revision.subtotal)}</div>
+        </div>
+        <div class="revision-metric">
+          <div class="revision-metric-label">Livraison</div>
+          <div class="revision-metric-value">${formatCurrency(revision.deliveryPrice)}</div>
+        </div>
+        <div class="revision-metric">
+          <div class="revision-metric-label">Remise</div>
+          <div class="revision-metric-value">${formatCurrency(revision.discountAmount || 0)}</div>
+        </div>
+        <div class="revision-metric">
+          <div class="revision-metric-label">Total</div>
+          <div class="revision-metric-value">${formatCurrency(revision.total)}</div>
+        </div>
+      </div>
+      <div class="revision-items">${itemRows}</div>
+      <div class="revision-actions">
+        <button class="btn btn-outline btn-sm" onclick="openOrderChat(${order.id})">Discuter</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectOrderRevision(${order.id}, ${revision.revisionNumber})">Refuser</button>
+        <button class="btn btn-success btn-sm" onclick="approveOrderRevision(${order.id}, ${revision.revisionNumber})">Approuver</button>
+      </div>
+    </div>`;
+}
+
+async function markNotificationRead(notificationId) {
+  try {
+    await api('PUT', '/api/v1/client/notifications/' + notificationId + '/read');
+    notifications = notifications.map(notification =>
+      notification.id === notificationId ? { ...notification, isRead: true } : notification
+    );
+    renderNotifications();
+    refreshUnreadBadgeFromList();
+  } catch (e) {
+    showToast('Erreur notification: ' + e.message, 'error');
+  }
+}
+
+async function markAllNotificationsRead() {
+  try {
+    await api('PUT', '/api/v1/client/notifications/read-all');
+    notifications = notifications.map(notification => ({ ...notification, isRead: true }));
+    renderNotifications();
+    updateUnreadBadge(0);
+  } catch (e) {
+    showToast('Erreur notification: ' + e.message, 'error');
+  }
+}
+
+function refreshUnreadBadgeFromList() {
+  updateUnreadBadge(notifications.filter(notification => !notification.isRead).length);
+}
+
+function updateUnreadBadge(count) {
+  const badge = document.getElementById('notifUnreadBadge');
+  badge.textContent = `${count} non lue${count > 1 ? 's' : ''}`;
+  badge.className = 'tag ' + (count > 0 ? 'tag-orange' : 'tag-gray');
+}
+
+function renderStars(value) {
+  const rounded = Math.round(Number(value || 0));
+  return Array.from({ length: 5 }, (_, index) => index < rounded ? '★' : '☆').join('');
+}
+
+function formatDate(value) {
+  if (!value) return 'Date inconnue';
+  return new Date(value).toLocaleString('fr-FR', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
 }
 
 function toggleItems(orderId) {
@@ -1004,6 +2538,355 @@ function toggleItems(orderId) {
   const open = el.classList.toggle('open');
   const c = el.children.length;
   btn.textContent = (open ? '▾ ' : '▸ ') + c + ' article' + (c > 1 ? 's' : '');
+}
+
+// ─── ORDER CHAT ─────────────────────────────────────────────────────────────
+function connectChatSocket() {
+  if (!token || !clientProfileId || !window.SockJS || !window.StompJs) {
+    updateChatSocketState(false, 'WS indisponible');
+    return;
+  }
+  if (chatClient && chatClient.active) return;
+
+  chatClient = new window.StompJs.Client({
+    webSocketFactory: () => new window.SockJS('/ws'),
+    connectHeaders: { Authorization: 'Bearer ' + token },
+    reconnectDelay: 5000,
+    debug: () => {},
+    onConnect: () => {
+      chatConnected = true;
+      updateChatSocketState(true, 'WS connecté');
+      chatClient.subscribe(`/queue/chat/client/${clientProfileId}`, frame => {
+        try {
+          const message = JSON.parse(frame.body);
+          handleIncomingChatMessage(message);
+        } catch (error) {
+          console.warn('Chat WS parse failed', error, frame.body);
+        }
+      });
+    },
+    onStompError: () => {
+      chatConnected = false;
+      updateChatSocketState(false, 'WS erreur');
+    },
+    onWebSocketClose: () => {
+      chatConnected = false;
+      updateChatSocketState(false, 'WS fermé');
+    }
+  });
+
+  updateChatSocketState(false, 'Connexion WS…');
+  chatClient.activate();
+}
+
+function disconnectChatSocket() {
+  chatConnected = false;
+  updateChatSocketState(false, 'WS déconnecté');
+  if (chatClient) {
+    try {
+      chatClient.deactivate();
+    } catch (_) {}
+  }
+  chatClient = null;
+}
+
+async function openOrderChat(orderId) {
+  activeChatOrderId = orderId;
+  activeChatThread = null;
+  document.getElementById('chatModalBackdrop').classList.add('show');
+
+  const order = clientOrders.find(item => item.id === orderId);
+  document.getElementById('chatModalSub').textContent = order
+    ? `Commande #${order.id} · ${order.pharmacyName || 'Pharmacie'}`
+    : `Commande #${orderId}`;
+  document.getElementById('chatThreadMeta').textContent = 'Chargement de la conversation…';
+  document.getElementById('chatThreadList').innerHTML = '<div class="chat-empty">Chargement…</div>';
+  document.getElementById('chatInput').value = '';
+  setChatInlineStatus('Chargement…', false);
+  updateChatSocketState(chatConnected, chatConnected ? 'WS connecté' : 'WS déconnecté');
+
+  try {
+    const thread = await api('GET', `/api/v1/chat/orders/${orderId}`);
+    if (activeChatOrderId !== orderId) return;
+    activeChatThread = thread;
+    renderActiveChatThread();
+  } catch (e) {
+    document.getElementById('chatThreadList').innerHTML = `<div class="chat-empty">Erreur: ${escapeHtml(e.message)}</div>`;
+    setChatInlineStatus('Impossible de charger la conversation.', true);
+  }
+}
+
+function closeOrderChat(event) {
+  if (event && event.target && event.target.id !== 'chatModalBackdrop') return;
+  document.getElementById('chatModalBackdrop').classList.remove('show');
+  activeChatOrderId = null;
+  activeChatThread = null;
+  document.getElementById('chatInput').value = '';
+  setChatInlineStatus('Ctrl+Entrée pour envoyer', false);
+}
+
+function handleChatKeydown(event) {
+  if (event.key === 'Enter' && event.ctrlKey) {
+    event.preventDefault();
+    sendOrderChatMessage();
+  }
+}
+
+async function sendOrderChatMessage() {
+  if (!activeChatOrderId) return;
+  const input = document.getElementById('chatInput');
+  const button = document.getElementById('chatSendBtn');
+  const content = (input.value || '').trim();
+  if (!content) {
+    setChatInlineStatus('Le message est vide.', true);
+    return;
+  }
+
+  button.disabled = true;
+  button.innerHTML = '<span class="spinner"></span> Envoi…';
+  setChatInlineStatus('Envoi du message…', false);
+
+  try {
+    const message = await api('POST', `/api/v1/chat/orders/${activeChatOrderId}/messages`, { content });
+    upsertChatMessage(message);
+    input.value = '';
+    setChatInlineStatus('Message envoyé.', false);
+  } catch (e) {
+    setChatInlineStatus('Erreur: ' + e.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Envoyer';
+  }
+}
+
+function handleIncomingChatMessage(message) {
+  if (!message || !message.orderId) return;
+  if (activeChatThread && activeChatThread.orderId === message.orderId) {
+    upsertChatMessage(message);
+    return;
+  }
+  showToast(`Nouveau message sur la commande #${message.orderId}`, 'success');
+}
+
+function upsertChatMessage(message) {
+  if (!activeChatThread || activeChatThread.orderId !== message.orderId) return;
+  const nextMessages = Array.isArray(activeChatThread.messages) ? [...activeChatThread.messages] : [];
+  const index = nextMessages.findIndex(item => item.id === message.id);
+  if (index === -1) nextMessages.push(message);
+  else nextMessages[index] = message;
+  nextMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  activeChatThread.messages = nextMessages;
+  renderActiveChatThread();
+}
+
+function renderActiveChatThread() {
+  if (!activeChatThread) return;
+
+  const metaBits = [];
+  if (activeChatThread.orderStatus) metaBits.push(`Statut: ${activeChatThread.orderStatus}`);
+  if (activeChatThread.activeRevisionNumber != null) metaBits.push(`Révision #${activeChatThread.activeRevisionNumber}`);
+  if (activeChatThread.revisionExpiresAt) metaBits.push(`Expire: ${formatDate(activeChatThread.revisionExpiresAt)}`);
+  document.getElementById('chatThreadMeta').textContent = metaBits.length ? metaBits.join(' • ') : 'Conversation active';
+
+  const messages = Array.isArray(activeChatThread.messages) ? activeChatThread.messages : [];
+  const revisionBox = renderChatRevisionBox();
+  if (!messages.length) {
+    document.getElementById('chatThreadList').innerHTML = `${revisionBox}<div class="chat-empty">Aucun message pour cette commande.</div>`;
+    return;
+  }
+
+  document.getElementById('chatThreadList').innerHTML = revisionBox + messages.map(message => {
+    const mine = message.senderRole === 'client';
+    const review = message.messageType === 'REVIEW_REQUEST';
+    return `
+      <div class="chat-bubble${mine ? ' mine' : ''}${review ? ' review' : ''}">
+        <div class="chat-bubble-head">
+          <span class="chat-bubble-sender">${mine ? 'Client' : 'Pharmacie'}</span>
+          <span>${review ? 'Révision' : 'Message'}</span>
+          <span>${formatDate(message.timestamp)}</span>
+        </div>
+        <div class="chat-bubble-text">${escapeHtml(message.content || '')}</div>
+      </div>`;
+  }).join('');
+
+  const threadEl = document.getElementById('chatThreadList');
+  threadEl.scrollTop = threadEl.scrollHeight;
+}
+
+function setChatInlineStatus(message, isError) {
+  const el = document.getElementById('chatInlineStatus');
+  el.textContent = message;
+  el.className = 'chat-inline-status' + (isError ? ' error' : '');
+}
+
+function updateChatSocketState(connected, label) {
+  const el = document.getElementById('chatSocketState');
+  el.textContent = label;
+  el.className = 'tag ' + (connected ? 'tag-green' : 'tag-gray');
+}
+
+function renderChatRevisionBox() {
+  if (!activeChatThread || activeChatThread.orderStatus !== 'AWAITING_CLIENT_ACCEPTANCE' || activeChatThread.activeRevisionNumber == null) {
+    return '';
+  }
+
+  const order = clientOrders.find(item => Number(item.id) === Number(activeChatThread.orderId));
+  const revision = order && order.activeRevision && Number(order.activeRevision.revisionNumber) === Number(activeChatThread.activeRevisionNumber)
+    ? order.activeRevision
+    : null;
+
+  const summary = revision
+    ? `${formatCurrency(revision.total)}${revision.expiresAt ? ' • expire le ' + formatDate(revision.expiresAt) : ''}`
+    : `Révision #${activeChatThread.activeRevisionNumber}`;
+
+  const itemsHtml = revision && Array.isArray(revision.items) && revision.items.length
+    ? `<div class="revision-items">${revision.items.map(item => `
+        <div class="revision-item-row">
+          <span>${escapeHtml(item.productName || 'Produit')} × ${Number(item.quantity || 0)}</span>
+          <span>${formatCurrency(item.lineTotal)}</span>
+        </div>`).join('')}</div>`
+    : '';
+
+  const totalsHtml = revision
+    ? `
+      <div class="revision-grid">
+        <div class="revision-metric">
+          <div class="revision-metric-label">Sous-total</div>
+          <div class="revision-metric-value">${formatCurrency(revision.subtotal)}</div>
+        </div>
+        <div class="revision-metric">
+          <div class="revision-metric-label">Livraison</div>
+          <div class="revision-metric-value">${formatCurrency(revision.deliveryPrice)}</div>
+        </div>
+        <div class="revision-metric">
+          <div class="revision-metric-label">Remise</div>
+          <div class="revision-metric-value">${formatCurrency(revision.discountAmount || 0)}</div>
+        </div>
+        <div class="revision-metric">
+          <div class="revision-metric-label">Total</div>
+          <div class="revision-metric-value">${formatCurrency(revision.total)}</div>
+        </div>
+      </div>`
+    : '';
+
+  return `
+    <div class="chat-revision-box">
+      <div class="chat-revision-title">Révision client en attente</div>
+      <div class="chat-inline-status">${summary}</div>
+      ${revision && revision.note ? `<div class="revision-note">${escapeHtml(revision.note)}</div>` : ''}
+      ${itemsHtml}
+      ${totalsHtml}
+      <div class="chat-revision-actions">
+        <button class="btn btn-danger btn-sm" onclick="rejectOrderRevision(${activeChatThread.orderId}, ${activeChatThread.activeRevisionNumber})">Refuser la révision</button>
+        <button class="btn btn-success btn-sm" onclick="approveOrderRevision(${activeChatThread.orderId}, ${activeChatThread.activeRevisionNumber})">Approuver la révision</button>
+      </div>
+    </div>`;
+}
+
+async function approveOrderRevision(orderId, revisionNumber) {
+  try {
+    const updated = await api('POST', `/api/v1/client/orders/${orderId}/approve-revision`, { revisionNumber });
+    mergeUpdatedOrder(updated);
+    setChatInlineStatus('Révision approuvée.', false);
+    showToast(`Révision approuvée pour la commande #${orderId}`, 'success');
+    loadNotifications();
+  } catch (e) {
+    setChatInlineStatus('Erreur: ' + e.message, true);
+    showToast('Erreur approbation: ' + e.message, 'error');
+  }
+}
+
+async function rejectOrderRevision(orderId, revisionNumber) {
+  const reason = window.prompt('Motif de refus de la révision', 'Je refuse cette modification.');
+  if (reason === null) return;
+
+  try {
+    const updated = await api('POST', `/api/v1/client/orders/${orderId}/reject-revision`, {
+      revisionNumber,
+      reason: reason.trim() || undefined
+    });
+    mergeUpdatedOrder(updated);
+    setChatInlineStatus('Révision refusée.', false);
+    showToast(`Révision refusée pour la commande #${orderId}`, 'success');
+    loadNotifications();
+  } catch (e) {
+    setChatInlineStatus('Erreur: ' + e.message, true);
+    showToast('Erreur refus: ' + e.message, 'error');
+  }
+}
+
+function mergeUpdatedOrder(updated) {
+  if (!updated || !updated.id) return;
+  const idx = clientOrders.findIndex(order => Number(order.id) === Number(updated.id));
+  if (idx === -1) clientOrders.unshift(updated);
+  else clientOrders[idx] = updated;
+
+  if (activeChatThread && Number(activeChatThread.orderId) === Number(updated.id)) {
+    activeChatThread.orderStatus = updated.status;
+    activeChatThread.activeRevisionNumber = updated.activeRevisionNumber;
+    activeChatThread.revisionExpiresAt = updated.revisionExpiresAt;
+  }
+
+  renderOrdersFromState();
+  if (activeChatThread && Number(activeChatThread.orderId) === Number(updated.id)) {
+    renderActiveChatThread();
+  }
+}
+
+function renderOrdersFromState() {
+  const sorted = [...clientOrders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const listEl = document.getElementById('ordersList');
+  if (!sorted.length) {
+    listEl.innerHTML = '<div class="empty"><div class="empty-icon">📦</div>Aucune commande pour le moment.</div>';
+    return;
+  }
+  listEl.innerHTML = sorted.map(o => {
+    const fmt = v => v != null ? Number(v).toFixed(2) + ' TND' : '—';
+    const fmtDate = d => d ? new Date(d).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+    const itemCount = (o.orderItems || []).length;
+    const itemsHtml = (o.orderItems || []).map(i =>
+      `<div class="item-row"><span>${i.productName || 'Produit'} × ${i.quantity}</span><span>${fmt(i.lineTotal)}</span></div>`
+    ).join('');
+    const revisionHtml = renderOrderRevisionPanel(o);
+    return `
+      <div class="order-card">
+        <div class="order-head">
+          <div class="order-id">Commande #${o.id}</div>
+          <div class="status-badge s-${o.status}">${statusLabels[o.status] || o.status}</div>
+          <div class="order-date">${fmtDate(o.createdAt)}</div>
+        </div>
+        <div class="order-body">
+          <div><div class="ob-label">Pharmacie</div><div class="ob-value">${o.pharmacyName || '—'}</div></div>
+          <div><div class="ob-label">Articles</div><div class="ob-value">${itemCount}</div></div>
+        </div>
+        ${itemCount ? `<div style="margin-bottom:10px;">
+          <button class="items-toggle" onclick="toggleItems(${o.id})">▸ ${itemCount} article${itemCount > 1 ? 's' : ''}</button>
+          <div class="items-list" id="oi-${o.id}">${itemsHtml}</div>
+        </div>` : ''}
+        <div class="order-total-row">
+          <span class="ot-label">Total</span>
+          <span class="ot-value">${fmt(o.total)}</span>
+        </div>
+        ${revisionHtml}
+        <div class="order-actions-row">
+          <button class="btn btn-outline btn-sm" onclick="openOrderChat(${o.id})">Chat</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function formatCurrency(value) {
+  const amount = Number(value || 0);
+  return `${amount.toFixed(2)} TND`;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
@@ -1017,10 +2900,18 @@ function showToast(msg, type) {
 
 // ─── KEYBOARD ────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') doLogin();
+  if (e.key !== 'Enter' || document.getElementById('loginView').style.display === 'none') return;
+  if (document.getElementById('loginForm').style.display !== 'none') {
+    doLogin();
+    return;
+  }
+  if (document.getElementById('registerForm').style.display !== 'none') {
+    doRegisterClient();
+  }
 });
 
 // init first step visible
+switchAuthMode('login');
 goStep(1);
 </script>
 </body>

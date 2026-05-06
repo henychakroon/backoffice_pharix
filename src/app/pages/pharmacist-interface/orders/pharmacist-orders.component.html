@@ -4,7 +4,7 @@
   <div class="page-header">
     <div>
       <div class="page-title">Mes commandes</div>
-      <div class="page-subtitle">{{ allOrders.length }} commandes · {{ countByStatus('PENDING') }} en attente de validation</div>
+      <div class="page-subtitle">{{ allOrders.length }} commandes · {{ countByStatus('PENDING') + countByStatus('AWAITING_CLIENT_ACCEPTANCE') + countByStatus('AWAITING_PAYMENT') }} en attente de traitement</div>
     </div>
     <button class="btn btn-primary btn-sm" (click)="openScanner()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><path d="M20 17v4M20 17h-3M17 21h3"/></svg>
@@ -100,14 +100,20 @@
               <td (click)="$event.stopPropagation()">
                 <div class="action-btns">
                   <ng-container *ngIf="o.status !== 'CANCELLED' && o.status !== 'REFUSED_FROM_PHARMACIEN' && o.status !== 'REFUSED_FROM_LIVREUR' && o.status !== 'DELIVERED'">
-                    <ng-container *ngIf="o.status === 'PENDING'">
-                      <button class="btn btn-success btn-sm" [disabled]="actionLoading === o.id" (click)="acceptOrder(o, $event)" data-tooltip="Accepter">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      </button>
-                      <button class="btn btn-danger btn-sm" [disabled]="actionLoading === o.id" (click)="refuseOrder(o, $event)" data-tooltip="Refuser">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      </button>
-                    </ng-container>
+                    <button *ngIf="canReviewOrder(o.status)"
+                            class="btn btn-primary btn-sm"
+                            [disabled]="actionLoading === o.id"
+                            (click)="openReviewModal(o, $event)">
+                      Revoir
+                    </button>
+
+                    <span *ngIf="o.status === 'AWAITING_CLIENT_ACCEPTANCE'" class="text-xs text-muted">
+                      Révision envoyée au client
+                    </span>
+
+                    <span *ngIf="o.status === 'AWAITING_PAYMENT'" class="text-xs text-muted">
+                      Paiement client en attente
+                    </span>
 
                     <button *ngIf="o.status === 'ACCEPTED_FROM_PHARMACIEN'"
                             class="btn btn-primary btn-sm" [disabled]="actionLoading === o.id"
@@ -137,6 +143,12 @@
                     (click)="openProductsForOrder(o, $event)"
                     data-tooltip="Vérifier les produits commandés">
                     Produits
+                  </button>
+
+                  <button class="btn btn-ghost btn-sm"
+                    (click)="openChat(o, $event)"
+                    data-tooltip="Ouvrir le chat commande">
+                    Chat
                   </button>
 
                   <button *ngIf="hasOrdonnance(o)"
@@ -293,9 +305,22 @@
       <div class="detail-section">
         <div class="detail-label">Montant</div>
         <div style="display:flex;flex-direction:column;gap:4px">
+          <div *ngIf="selectedOrder.discountAmount != null && selectedOrder.discountAmount > 0" style="display:flex;justify-content:space-between"><span class="text-muted">Remise</span><span>-{{ selectedOrder.discountAmount | number:'1.2-2' }} TND</span></div>
           <div style="display:flex;justify-content:space-between"><span class="text-muted">Sous-total</span><span>{{ selectedOrder.subtotal | number:'1.2-2' }} TND</span></div>
           <div style="display:flex;justify-content:space-between"><span class="text-muted">Livraison</span><span>{{ selectedOrder.deliveryPrice | number:'1.2-2' }} TND</span></div>
           <div style="display:flex;justify-content:space-between;margin-top:6px;border-top:1px solid var(--gray-100);padding-top:6px"><span class="fw-600">Total</span><span class="fw-600 text-primary" style="font-size:18px">{{ selectedOrder.total | number:'1.2-2' }} TND</span></div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Paiement</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Méthode</span><span>{{ selectedOrder.paymentMethod || 'CASH' }}</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="text-muted">Statut</span><span>{{ selectedOrder.paymentStatus || 'NOT_REQUIRED' }}</span></div>
+          <div *ngIf="selectedOrder.paymentProviderReference" style="display:flex;justify-content:space-between;gap:12px"><span class="text-muted">Référence provider</span><span style="text-align:right;word-break:break-all">{{ selectedOrder.paymentProviderReference }}</span></div>
+          <div *ngIf="selectedOrder.paymentGatewayOrderId" style="display:flex;justify-content:space-between;gap:12px"><span class="text-muted">Référence gateway</span><span style="text-align:right;word-break:break-all">{{ selectedOrder.paymentGatewayOrderId }}</span></div>
+          <div *ngIf="selectedOrder.finalizedAt" style="display:flex;justify-content:space-between"><span class="text-muted">Finalisé le</span><span>{{ selectedOrder.finalizedAt | date:'dd MMM yyyy HH:mm' }}</span></div>
+          <div *ngIf="selectedOrder.revisionExpiresAt" style="display:flex;justify-content:space-between"><span class="text-muted">Révision expire le</span><span>{{ selectedOrder.revisionExpiresAt | date:'dd MMM yyyy HH:mm' }}</span></div>
         </div>
       </div>
 
@@ -303,16 +328,18 @@
       <div class="drawer-actions">
         <!-- Status-transition actions: hidden for terminal/cancelled orders -->
         <ng-container *ngIf="selectedOrder.status !== 'CANCELLED' && selectedOrder.status !== 'REFUSED_FROM_PHARMACIEN' && selectedOrder.status !== 'REFUSED_FROM_LIVREUR' && selectedOrder.status !== 'DELIVERED'">
-          <ng-container *ngIf="selectedOrder.status === 'PENDING'">
-            <button class="btn btn-success btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="acceptOrder(selectedOrder, $event)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Accepter
-            </button>
-            <button class="btn btn-danger btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="refuseOrder(selectedOrder, $event)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              Refuser
-            </button>
-          </ng-container>
+          <button *ngIf="canReviewOrder(selectedOrder.status)"
+                  class="btn btn-primary btn-sm"
+                  [disabled]="actionLoading === selectedOrder.id"
+                  (click)="openReviewModal(selectedOrder, $event)">
+            Revoir la commande
+          </button>
+          <span *ngIf="selectedOrder.status === 'AWAITING_CLIENT_ACCEPTANCE'" class="text-xs text-muted">
+            La commande attend la réponse du client sur la révision envoyée.
+          </span>
+          <span *ngIf="selectedOrder.status === 'AWAITING_PAYMENT'" class="text-xs text-muted">
+            Le client doit finaliser le paiement avant préparation.
+          </span>
           <button *ngIf="selectedOrder.status === 'ACCEPTED_FROM_PHARMACIEN'" class="btn btn-primary btn-sm" [disabled]="actionLoading === selectedOrder.id" (click)="markReady(selectedOrder, $event)">
             Rendre commande prête
           </button>
@@ -322,6 +349,9 @@
         </ng-container>
         <button class="btn btn-ghost btn-sm" (click)="openProductsForOrder(selectedOrder, $event)">
           Vérifier les produits
+        </button>
+        <button class="btn btn-ghost btn-sm" (click)="openChat(selectedOrder, $event)">
+          Ouvrir le chat
         </button>
         <button *ngIf="hasOrdonnance(selectedOrder)" class="btn btn-ghost btn-sm" (click)="openOrdonnance(selectedOrder, $event)">
           Voir l'ordonnance
@@ -403,6 +433,254 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       Imprimer
     </button>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="reviewModalOrder" (click)="closeReviewModal()"></div>
+<div class="modal review-modal" *ngIf="reviewModalOrder">
+  <div class="modal-header">
+    <div>
+      <div class="modal-title">Revue pharmacien</div>
+      <div class="text-sm text-muted">Commande #{{ reviewModalOrder.id }} · {{ reviewModalOrder.clientName }}</div>
+    </div>
+    <button class="btn btn-ghost btn-icon" (click)="closeReviewModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="review-summary">
+      <div>
+        <div class="review-summary-label">Statut actuel</div>
+        <span class="badge" [ngClass]="statusBadge(reviewModalOrder.status)">{{ statusLabel(reviewModalOrder.status) }}</span>
+      </div>
+      <div>
+        <div class="review-summary-label">Total actuel</div>
+        <div class="fw-600">{{ reviewModalOrder.total | number:'1.2-2' }} TND</div>
+      </div>
+    </div>
+
+    <div class="review-current-order-card">
+      <div class="review-lines-head">
+        <div>
+          <div class="review-summary-label">Commande actuelle</div>
+          <div class="text-sm text-muted">Vérifiez rapidement le contenu avant de valider, réviser ou refuser.</div>
+        </div>
+        <div class="text-sm text-muted">{{ reviewModalOrder.orderItems?.length || 0 }} article(s)</div>
+      </div>
+
+      <div *ngIf="reviewModalOrder.orderItems?.length; else noReviewModalItems">
+        <div class="review-current-order-row" *ngFor="let item of reviewModalOrder.orderItems">
+          <div>
+            <div class="fw-600">{{ item.productName }}</div>
+            <div class="text-xs text-muted">{{ item.unitPrice | number:'1.2-2' }} TND / unité</div>
+          </div>
+          <div class="review-current-order-meta">
+            <span class="text-sm text-muted">x{{ item.quantity }}</span>
+            <span class="fw-600">{{ item.lineTotal | number:'1.2-2' }} TND</span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noReviewModalItems>
+        <div class="review-current-order-empty">Aucune ligne produit disponible pour cette commande.</div>
+      </ng-template>
+
+      <div class="review-current-order-totals">
+        <div class="review-current-order-total-row" *ngIf="reviewModalOrder.discountAmount != null && reviewModalOrder.discountAmount > 0">
+          <span class="text-sm text-muted">Remise</span>
+          <span>-{{ reviewModalOrder.discountAmount | number:'1.2-2' }} TND</span>
+        </div>
+        <div class="review-current-order-total-row">
+          <span class="text-sm text-muted">Sous-total</span>
+          <span>{{ reviewModalOrder.subtotal | number:'1.2-2' }} TND</span>
+        </div>
+        <div class="review-current-order-total-row">
+          <span class="text-sm text-muted">Livraison</span>
+          <span>{{ reviewModalOrder.deliveryPrice | number:'1.2-2' }} TND</span>
+        </div>
+        <div class="review-current-order-total-row review-current-order-total-final">
+          <span>Total actuel</span>
+          <span>{{ reviewModalOrder.total | number:'1.2-2' }} TND</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-mode-tabs">
+      <button class="tab-btn" [class.active]="reviewMode==='ACCEPT_UNCHANGED'" (click)="setReviewMode('ACCEPT_UNCHANGED')">Valider</button>
+      <button class="tab-btn" [class.active]="reviewMode==='REVISE'" (click)="setReviewMode('REVISE')">Réviser</button>
+      <button class="tab-btn" [class.active]="reviewMode==='REFUSE'" (click)="setReviewMode('REFUSE')">Refuser</button>
+    </div>
+
+    <div class="report-form" *ngIf="reviewMode==='ACCEPT_UNCHANGED'">
+      <label class="report-label">Note interne ou client</label>
+      <textarea [(ngModel)]="reviewNote" rows="4" placeholder="Optionnel: précision sur la validation de la commande..."></textarea>
+    </div>
+
+    <div *ngIf="reviewMode==='REVISE'" class="review-form-grid">
+      <div class="report-form">
+        <label class="report-label">Note pour le client</label>
+        <textarea [(ngModel)]="reviewNote" rows="4" placeholder="Expliquez clairement ce qui a été ajusté..."></textarea>
+      </div>
+      <div class="review-inline-fields">
+        <div class="report-form">
+          <label class="report-label">Coupon</label>
+          <input [(ngModel)]="reviewCouponCode" type="text" placeholder="Optionnel">
+        </div>
+        <div class="report-form">
+          <label class="report-label">Expiration (minutes)</label>
+          <input [(ngModel)]="reviewExpiresInMinutes" type="number" min="1" step="1">
+        </div>
+      </div>
+
+      <div class="review-lines-card">
+        <div class="review-lines-head">
+          <div class="review-summary-label">Articles révisés</div>
+          <div class="text-sm text-muted">Sous-total révisé: {{ reviewPreviewTotal() | number:'1.2-2' }} TND</div>
+        </div>
+
+        <div class="review-line" *ngFor="let line of reviewLines">
+          <div>
+            <div class="fw-600">{{ line.productName }}</div>
+            <div class="text-xs text-muted">{{ line.unitPrice | number:'1.2-2' }} TND / unité</div>
+          </div>
+          <label class="review-qty-field">
+            <span class="text-xs text-muted">Qté</span>
+            <input [(ngModel)]="line.quantity" type="number" min="1" step="1">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-form" *ngIf="reviewMode==='REFUSE'">
+      <label class="report-label">Motif de refus</label>
+      <textarea [(ngModel)]="reviewReason" rows="4" placeholder="Expliquez pourquoi la commande est refusée..."></textarea>
+    </div>
+
+    <div class="report-feedback error" *ngIf="reviewError">{{ reviewError }}</div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost btn-sm" (click)="closeReviewModal()">Fermer</button>
+    <button class="btn btn-ghost btn-sm"
+            *ngIf="canSendRevisionViaChat()"
+            [disabled]="reviewSubmitting"
+            (click)="submitReviewDecision(true)">
+      {{ reviewSubmitting ? 'Envoi...' : 'Envoyer via chat' }}
+    </button>
+    <button class="btn btn-primary btn-sm" [disabled]="reviewSubmitting" (click)="submitReviewDecision()">
+      {{ reviewSubmitting ? 'Envoi...' : reviewSubmitLabel() }}
+    </button>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="chatModalOrder" (click)="closeChat()"></div>
+<div class="modal chat-modal" *ngIf="chatModalOrder">
+  <div class="modal-header">
+    <div>
+      <div class="modal-title">Chat commande</div>
+      <div class="text-sm text-muted">Commande #{{ chatModalOrder.id }} · {{ chatModalOrder.clientName }}</div>
+    </div>
+    <button class="btn btn-ghost btn-icon" (click)="closeChat()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="modal-body chat-body">
+    <div class="chat-thread-meta" *ngIf="chatThread">
+      <span class="badge" [ngClass]="statusBadge(chatThread.orderStatus || chatModalOrder.status)">
+        {{ statusLabel(chatThread.orderStatus || chatModalOrder.status) }}
+      </span>
+      <span class="text-xs text-muted" *ngIf="chatThread.revisionExpiresAt">
+        Révision active jusqu'au {{ chatThread.revisionExpiresAt | date:'dd MMM yyyy HH:mm' }}
+      </span>
+      <button class="btn btn-ghost btn-sm" *ngIf="canReviewOrder(chatModalOrder.status)" (click)="openReviewFromChat()">
+        Revoir la commande
+      </button>
+    </div>
+
+    <div class="chat-loading" *ngIf="chatLoading">Chargement de la conversation...</div>
+    <div class="report-feedback error" *ngIf="chatError">{{ chatError }}</div>
+
+    <div class="chat-thread" *ngIf="!chatLoading && chatThread as thread">
+      <div class="chat-revision-card" *ngIf="chatActiveRevision() as revision">
+        <div class="chat-revision-head">
+          <div>
+            <div class="review-summary-label">Panier révisé</div>
+            <div class="text-sm text-muted">Révision #{{ revision.revisionNumber }} proposée au client.</div>
+          </div>
+          <span class="tag tag-orange" *ngIf="revision.expiresAt">Expire le {{ revision.expiresAt | date:'dd MMM yyyy HH:mm' }}</span>
+        </div>
+
+        <div class="chat-revision-note" *ngIf="revision.note">{{ revision.note }}</div>
+
+        <div class="chat-revision-list" *ngIf="revision.items?.length; else noChatRevisionItems">
+          <div class="chat-revision-row" *ngFor="let item of revision.items">
+            <div>
+              <div class="fw-600">{{ item.productName || 'Produit' }}</div>
+              <div class="text-xs text-muted">{{ item.unitPrice | number:'1.2-2' }} TND / unité</div>
+            </div>
+            <div class="chat-revision-meta">
+              <span class="text-sm text-muted">x{{ item.quantity }}</span>
+              <span class="fw-600">{{ item.lineTotal | number:'1.2-2' }} TND</span>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noChatRevisionItems>
+          <div class="chat-revision-empty">Aucune ligne révisée disponible.</div>
+        </ng-template>
+
+        <div class="chat-revision-totals">
+          <div class="chat-revision-total-row" *ngIf="revision.discountAmount != null && revision.discountAmount > 0">
+            <span class="text-sm text-muted">Remise</span>
+            <span>-{{ revision.discountAmount | number:'1.2-2' }} TND</span>
+          </div>
+          <div class="chat-revision-total-row">
+            <span class="text-sm text-muted">Sous-total</span>
+            <span>{{ revision.subtotal | number:'1.2-2' }} TND</span>
+          </div>
+          <div class="chat-revision-total-row">
+            <span class="text-sm text-muted">Livraison</span>
+            <span>{{ revision.deliveryPrice | number:'1.2-2' }} TND</span>
+          </div>
+          <div class="chat-revision-total-row chat-revision-total-final">
+            <span>Total révisé</span>
+            <span>{{ revision.total | number:'1.2-2' }} TND</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-empty" *ngIf="thread.messages.length === 0">
+        Aucun message pour cette commande. Utilisez le champ ci-dessous pour démarrer la conversation.
+      </div>
+
+      <div class="chat-message"
+           *ngFor="let message of thread.messages"
+           [class.chat-message-mine]="isChatMine(message)"
+           [class.chat-message-review]="message.messageType === 'REVIEW_REQUEST'">
+        <div class="chat-message-head">
+          <span class="chat-sender">{{ isChatMine(message) ? 'Pharmacie' : 'Client' }}</span>
+          <span class="chat-type">{{ chatMessageLabel(message) }}</span>
+          <span class="chat-time">{{ message.timestamp | date:'dd MMM HH:mm' }}</span>
+        </div>
+        <div class="chat-content">{{ message.content }}</div>
+      </div>
+    </div>
+
+    <div class="chat-composer" *ngIf="!chatLoading">
+      <textarea [(ngModel)]="chatInput"
+                rows="3"
+                maxlength="1000"
+                placeholder="Écrire un message au client..."
+                (keydown.control.enter)="sendChatMessage()"></textarea>
+      <div class="chat-composer-actions">
+        <span class="text-xs text-muted">Ctrl+Entrée pour envoyer</span>
+        <button class="btn btn-primary btn-sm"
+                [disabled]="chatSending || !chatInput.trim()"
+                (click)="sendChatMessage()">
+          {{ chatSending ? 'Envoi...' : 'Envoyer' }}
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -500,13 +778,32 @@
             <span class="text-sm">Traitement(s) en cours</span>
             <span class="badge" [ngClass]="conditionBadgeClass(p.hasOngoingTreatment)">{{ conditionLabel(p.hasOngoingTreatment) }}</span>
           </div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <span class="text-sm">Liste des traitements</span>
+            <span class="text-sm" style="text-align:right;max-width:55%">{{ p.ongoingTreatments?.length ? p.ongoingTreatments?.join(', ') : 'Aucune précision' }}</span>
+          </div>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
             <span class="text-sm">Antécédents allergiques</span>
             <span class="badge" [ngClass]="conditionBadgeClass(p.hasAllergicHistory)">{{ conditionLabel(p.hasAllergicHistory) }}</span>
           </div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <span class="text-sm">Allergies déclarées</span>
+            <span class="text-sm" style="text-align:right;max-width:55%">{{ p.allergies?.length ? p.allergies?.join(', ') : 'Aucune précision' }}</span>
+          </div>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
             <span class="text-sm">Mobilité réduite</span>
             <span class="badge" [ngClass]="conditionBadgeClass(p.hasReducedMobility)">{{ conditionLabel(p.hasReducedMobility) }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span class="text-sm">Ordonnance du profil client</span>
+            <ng-container *ngIf="p.ordonnanceUrl; else noProfileOrdonnance">
+              <button class="btn btn-ghost btn-sm" (click)="openClientProfileOrdonnance(conditionsModalOrder, $event)">
+                Voir l'ordonnance profil
+              </button>
+            </ng-container>
+            <ng-template #noProfileOrdonnance>
+              <span class="text-sm text-muted">Aucune</span>
+            </ng-template>
           </div>
         </div>
       </div>
@@ -580,13 +877,13 @@
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div class="scan-result-title">Livreur #{{ scannedLivreurId }} identifié</div>
-        <div class="text-sm text-muted">{{ scannedLivreurOrders.length }} commande(s) prête(s) à livrer</div>
+        <div class="text-sm text-muted">{{ scannedLivreurOrders.length }} commande(s) à remettre</div>
       </div>
 
       <!-- Empty state -->
       <div class="scan-empty" *ngIf="scannedLivreurOrders.length === 0">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gray-300)"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-        <p class="text-muted" style="text-align:center;font-size:13px;margin-top:12px">Aucune commande <strong>Prête</strong> assignée à ce livreur pour votre pharmacie.</p>
+        <p class="text-muted" style="text-align:center;font-size:13px;margin-top:12px">Aucune commande <strong>en attente de remise</strong> pour ce livreur dans votre pharmacie.</p>
       </div>
 
       <!-- Orders list -->
@@ -620,7 +917,7 @@
               <ng-container *ngIf="confirmingOrderId === o.id">Confirmation...</ng-container>
               <ng-container *ngIf="confirmingOrderId !== o.id">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                Confirmer livraison
+                Confirmer la remise
               </ng-container>
             </button>
           </div>

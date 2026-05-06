@@ -57,6 +57,15 @@ export interface AdminUser {
 export interface OrderDTO {
   id: number;
   status: string;
+  paymentMethod?: string | null;
+  paymentStatus?: string | null;
+  paymentGatewayOrderId?: string | null;
+  paymentProviderReference?: string | null;
+  activeRevisionNumber?: number | null;
+  revisionExpiresAt?: string | null;
+  activeRevision?: OrderRevisionDTO | null;
+  finalizedAt?: string | null;
+  cancellationReason?: string | null;
   description?: string;
   ordonnanceUrl?: string;
   ordonnanceMimeType?: string;
@@ -83,6 +92,8 @@ export interface OrderDTO {
   subtotal: number;
   deliveryPrice: number;
   total: number;
+  discountAmount?: number | null;
+  couponCode?: string | null;
 
   createdAt: string;
   updatedAt?: string;
@@ -97,6 +108,32 @@ export interface OrderItemDTO {
   lineTotal: number;
 }
 
+export interface OrderRevisionDTO {
+  id: number;
+  revisionNumber: number;
+  sourceType?: string | null;
+  proposedByRole?: string | null;
+  note?: string | null;
+  subtotal: number;
+  deliveryPrice: number;
+  discountAmount?: number | null;
+  couponCode?: string | null;
+  total: number;
+  expiresAt?: string | null;
+  acceptedAt?: string | null;
+  rejectedAt?: string | null;
+  createdAt?: string | null;
+  items: OrderRevisionItemDTO[];
+}
+
+export interface OrderRevisionItemDTO {
+  productId?: number | null;
+  productName?: string | null;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
 export interface LivreurAdmin {
   id: number;
   userId: number;
@@ -106,6 +143,8 @@ export interface LivreurAdmin {
   online: boolean;
   zoneId?: number;
   zoneName?: string;
+  averageRating: number;
+  reviewCount: number;
 }
 
 export interface Category {
@@ -128,6 +167,12 @@ export interface RevenueConfig {
   nightDeliveryPrice: number;
   nightStartHour: number;
   nightEndHour: number;
+  referralRewardPercent: number;
+  referralRewardMinSubtotal: number;
+  referralRewardMaxDiscount: number;
+  referralRewardValidityDays: number;
+  referralRewardMaxUses: number;
+  referralRewardThreshold: number;
 }
 
 export interface AdvertisementBanner {
@@ -142,6 +187,41 @@ export interface AdvertisementBanner {
   ownerName: string;
   zoneId: number | null;
   zoneName: string | null;
+}
+
+export type AdminCouponType = 'PERCENT' | 'FIXED';
+export type AdminCouponScope = 'PRODUCT' | 'CATEGORY' | 'PHARMACY_WIDE';
+export type AdminCouponApprovalStatus = 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
+
+export interface AdminCouponRefItem {
+  id: number;
+  name: string;
+}
+
+export interface AdminCoupon {
+  id: number;
+  code: string;
+  pharmacyId: number;
+  pharmacyName?: string;
+  type: AdminCouponType;
+  value: number;
+  scope: AdminCouponScope;
+  products?: AdminCouponRefItem[];
+  categories?: AdminCouponRefItem[];
+  minSubtotal?: number | null;
+  maxDiscount?: number | null;
+  validFrom: string;
+  validTo: string;
+  maxRedemptions?: number | null;
+  maxRedemptionsPerClient?: number | null;
+  active: boolean;
+  approvalStatus?: AdminCouponApprovalStatus | null;
+  approvalNote?: string | null;
+  approvalReviewedBy?: string | null;
+  approvalReviewedAt?: string | null;
+  createdAt: string;
+  redemptionCount?: number;
+  totalDiscountGiven?: number;
 }
 
 export interface AdminReport {
@@ -438,5 +518,17 @@ getMonthlyDashboard(year: number, month: number): Observable<MonthlyDashboard> {
 
   rejectBanner(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/banner/${id}`);
+  }
+
+  getCoupons(): Observable<AdminCoupon[]> {
+    return this.http.get<AdminCoupon[]>(`${this.BASE}/coupons`);
+  }
+
+  approveCoupon(id: number, note?: string): Observable<AdminCoupon> {
+    return this.http.patch<AdminCoupon>(`${this.BASE}/coupons/${id}/approve`, { note: note ?? null });
+  }
+
+  rejectCoupon(id: number, note?: string): Observable<AdminCoupon> {
+    return this.http.patch<AdminCoupon>(`${this.BASE}/coupons/${id}/reject`, { note: note ?? null });
   }
 }

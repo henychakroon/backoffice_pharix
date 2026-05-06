@@ -158,6 +158,22 @@
   color: var(--gray-800);
 }
 
+.agent-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--gray-600);
+  flex-wrap: wrap;
+}
+
+.agent-rating-stars {
+  color: #f59e0b;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
 /* Active order banner */
 .active-order {
   display: flex;

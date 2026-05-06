@@ -123,7 +123,14 @@
   &.badge-success { background: rgba(34, 197, 94, 0.12); color: #166534; }
   &.badge-warn    { background: rgba(234, 179, 8, 0.12); color: #92400e; }
   &.badge-danger  { background: rgba(239, 68, 68, 0.12); color: #991b1b; }
+  &.badge-info    { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
   &.badge-muted   { background: var(--gray-100, #f1f5f9); color: var(--gray-600, #475569); }
+}
+
+.approval-note {
+  margin-top: 6px;
+  font-size: 12px;
+  max-width: 260px;
 }
 
 .btn {
@@ -205,7 +212,7 @@
     font-size: 13px;
     color: var(--gray-600, #475569);
 
-    input, select {
+    input, select, textarea {
       padding: 8px 10px;
       border: 1px solid var(--gray-200, #e2e8f0);
       border-radius: 6px;
@@ -213,6 +220,12 @@
       background: #fff;
       &:focus { outline: 2px solid rgba(13, 148, 136, 0.25); border-color: var(--primary, #0d9488); }
       &:read-only, &:disabled { background: var(--gray-50, #f8fafc); cursor: not-allowed; }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 96px;
+      font-family: inherit;
     }
 
     &.field-checkbox {
@@ -229,6 +242,14 @@
     justify-content: flex-end;
     gap: 10px;
     margin-top: 6px;
+  }
+
+  .notify-grid {
+    margin-top: 16px;
+  }
+
+  .field-full {
+    grid-column: 1 / -1;
   }
 }
 
@@ -279,9 +300,41 @@
     margin-top: 8px;
     font-size: 12px;
   }
+
+  .picker-loading {
+    padding: 14px 8px;
+    font-size: 13px;
+  }
+}
+
+.notify-summary {
+  margin-bottom: 16px;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(13, 148, 136, 0.08);
+
+  p {
+    margin: 8px 0 0;
+    font-size: 13px;
+  }
+}
+
+.notify-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .picker-item {
+    border: 1px solid var(--gray-200, #e2e8f0);
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: #fff;
+  }
 }
 
 @media (max-width: 700px) {
   .modal .form-grid { grid-template-columns: 1fr; }
   .coupon-table { display: block; overflow-x: auto; }
+  .notify-mode { flex-direction: column; }
 }

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Test — Livreur App</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -444,6 +445,97 @@
       .login-card { padding: 28px 20px; }
       .order-info { grid-template-columns: 1fr; }
     }
+
+    /* ── Pickup choice modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.25);
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 6px;
+    }
+    .modal-sub {
+      font-size: 13px;
+      color: var(--gray-400);
+      margin-bottom: 18px;
+    }
+    .modal-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-choice {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      width: 100%;
+      text-align: left;
+    }
+    .modal-choice:hover {
+      border-color: var(--primary);
+      background: #f5f9ff;
+    }
+    .modal-choice-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+    .modal-choice-sub {
+      font-size: 12px;
+      color: var(--gray-600);
+    }
+    .modal-close-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+    .qr-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      border: 1.5px dashed #d0d8f0;
+      border-radius: 12px;
+      background: #f8faff;
+      margin-top: 8px;
+    }
+    .qr-display canvas { border-radius: 8px; }
+    .qr-display-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+    .qr-display-sub {
+      font-size: 12px;
+      color: var(--gray-400);
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -509,12 +601,51 @@
 
 <div id="toast"></div>
 
+<!-- Pickup choice modal -->
+<div class="modal-backdrop" id="pickupModal" onclick="closePickupModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div id="pickupChoiceView">
+      <div class="modal-title">Confirmer la prise en charge</div>
+      <div class="modal-sub">Commande #<span id="pickupOrderId"></span></div>
+      <div class="modal-choices">
+        <button class="modal-choice" onclick="confirmSimulatePickup()">
+          <span class="modal-choice-title">⚡ Simuler le scan</span>
+          <span class="modal-choice-sub">Appelle l'API directement (test rapide).</span>
+        </button>
+        <button class="modal-choice" onclick="showLivreurQR()">
+          <span class="modal-choice-title">📱 Afficher mon QR livreur</span>
+          <span class="modal-choice-sub">Le pharmacien scanne ce QR depuis son interface pour valider.</span>
+        </button>
+      </div>
+      <div class="modal-close-row">
+        <button class="btn btn-outline btn-sm" onclick="closePickupModal()">Annuler</button>
+      </div>
+    </div>
+
+    <div id="pickupQRView" style="display:none">
+      <div class="modal-title">📱 QR livreur</div>
+      <div class="modal-sub">ID livreur: <strong id="qrLivreurId"></strong> — à scanner depuis la page pharmacien.</div>
+      <div class="qr-display">
+        <div id="qrDisplayCanvas"></div>
+        <div class="qr-display-label">Livreur #<span id="qrDisplayId"></span></div>
+        <div class="qr-display-sub">Une fois scanné, le pharmacien confirme la commande pour passer en livraison.</div>
+      </div>
+      <div class="modal-close-row" style="gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="backToPickupChoice()">← Retour</button>
+        <button class="btn btn-outline btn-sm" onclick="closePickupModal()">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   // ── State ──────────────────────────────────────────────────────────────────
   let token = null;
+  let livreurId = null;
   let orders = [];
   let refreshTimer = null;
   let countdown = 15;
+  let pendingPickupOrderId = null;
 
   const statusLabels = {
     PENDING:                  'En attente',
@@ -594,6 +725,7 @@
 
       token = data.access_token;
       const profile = data.profile || {};
+      livreurId = profile.id ?? data.userId ?? null;
       const name = profile.fullName || profile.ownerName || email;
 
       document.getElementById('livreurName').textContent = name;
@@ -611,6 +743,7 @@
 
   function logout() {
     token = null;
+    livreurId = null;
     orders = [];
     clearInterval(refreshTimer);
     refreshTimer = null;
@@ -823,9 +956,34 @@
   }
 
   // ── Scan pickup ────────────────────────────────────────────────────────────
-  async function scanPickup(id) {
+  function scanPickup(id) {
+    pendingPickupOrderId = id;
+    document.getElementById('pickupOrderId').textContent = id;
+    document.getElementById('pickupChoiceView').style.display = 'block';
+    document.getElementById('pickupQRView').style.display = 'none';
+    document.getElementById('pickupModal').classList.add('show');
+  }
+
+  function closePickupModal(event) {
+    if (event && event.target.id !== 'pickupModal') return;
+    document.getElementById('pickupModal').classList.remove('show');
+    document.getElementById('qrDisplayCanvas').innerHTML = '';
+    pendingPickupOrderId = null;
+  }
+
+  function backToPickupChoice() {
+    document.getElementById('pickupQRView').style.display = 'none';
+    document.getElementById('pickupChoiceView').style.display = 'block';
+    document.getElementById('qrDisplayCanvas').innerHTML = '';
+  }
+
+  async function confirmSimulatePickup() {
+    const id = pendingPickupOrderId;
+    if (!id) return;
+    closePickupModal();
+
     const card = document.getElementById('card-' + id);
-    const btn = card.querySelector('[onclick="scanPickup(' + id + ')"]');
+    const btn = card ? card.querySelector('[onclick="scanPickup(' + id + ')"]') : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; }
 
     try {
@@ -836,6 +994,31 @@
       showToast('Erreur scan: ' + e.message, 'error');
       if (btn) { btn.disabled = false; btn.textContent = '📷 Simuler scan pickup'; }
     }
+  }
+
+  function showLivreurQR() {
+    if (!livreurId) {
+      showToast('ID livreur introuvable — reconnectez-vous.', 'error');
+      return;
+    }
+    if (typeof QRCode === 'undefined') {
+      showToast('Bibliothèque QR non chargée.', 'error');
+      return;
+    }
+    document.getElementById('pickupChoiceView').style.display = 'none';
+    document.getElementById('pickupQRView').style.display = 'block';
+    document.getElementById('qrLivreurId').textContent = livreurId;
+    document.getElementById('qrDisplayId').textContent = livreurId;
+    const container = document.getElementById('qrDisplayCanvas');
+    container.innerHTML = '';
+    new QRCode(container, {
+      text: String(livreurId),
+      width: 220,
+      height: 220,
+      colorDark: '#1a1a2e',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
   }
 
   // ── Auto-refresh ───────────────────────────────────────────────────────────

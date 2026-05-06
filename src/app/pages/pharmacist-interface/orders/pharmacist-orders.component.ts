@@ -1,14 +1,14 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { PharmacistService, CreateReportPayload, OrdonnanceAccess, ClientHealthProfile } from '../../../services/pharmacist.service';
+import { PharmacistService, CreateReportPayload, OrdonnanceAccess, ClientHealthProfile, PharmacienReviewDecisionRequest, OrderChatThread, OrderChatMessage } from '../../../services/pharmacist.service';
 import { AuthService } from '../../../services/auth.service';
-import { OrderDTO } from '../../../services/admin.service';
+import { OrderDTO, OrderRevisionDTO } from '../../../services/admin.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { from, Subscription } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import * as QRCode from 'qrcode';
 import jsQR from 'jsqr';
-import { WebSocketService, PharmacienOrderEvent } from '../../../services/websocket.service';
+import { WebSocketService, PharmacienOrderEvent, ChatMessageEvent } from '../../../services/websocket.service';
 
 @Component({
   selector: 'app-pharmacist-orders',
@@ -43,15 +43,17 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
 
   readonly orderStatusSections: string[] = [
     'PENDING',
+    'AWAITING_CLIENT_ACCEPTANCE',
+    'AWAITING_PAYMENT',
     'ACCEPTED_FROM_PHARMACIEN',
     'REFUSED_FROM_PHARMACIEN',
+    'ACCEPTANCE_EXPIRED',
     'READY_FOR_DELIVERY',
     'DISPATCH_FAILED',
     'ASSIGNED',
     'ASSIGNED_FROM_ADMIN',
     'ACCEPTED_FROM_LIVREUR',
     'REFUSED_FROM_LIVREUR',
-    'PICKED_UP',
     'DELIVERING',
     'DELIVERED',
     'CANCELLED'
@@ -59,15 +61,16 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
 
   readonly lifecycleGroups: Array<{ id: string; label: string; statuses: string[] }> = [
     { id: 'all', label: 'Tout', statuses: this.orderStatusSections },
-    { id: 'pending', label: 'A traiter', statuses: ['PENDING'] },
+    { id: 'pending', label: 'A traiter', statuses: ['PENDING', 'AWAITING_CLIENT_ACCEPTANCE', 'AWAITING_PAYMENT'] },
     { id: 'prep', label: 'Preparation', statuses: ['ACCEPTED_FROM_PHARMACIEN', 'READY_FOR_DELIVERY'] },
-    { id: 'delivery', label: 'Livraison', statuses: ['ASSIGNED', 'ASSIGNED_FROM_ADMIN', 'ACCEPTED_FROM_LIVREUR', 'PICKED_UP', 'DELIVERING', 'DISPATCH_FAILED'] },
-    { id: 'terminal', label: 'Terminees', statuses: ['REFUSED_FROM_PHARMACIEN', 'REFUSED_FROM_LIVREUR', 'DELIVERED', 'CANCELLED'] }
+    { id: 'delivery', label: 'Livraison', statuses: ['ASSIGNED', 'ASSIGNED_FROM_ADMIN', 'ACCEPTED_FROM_LIVREUR', 'DELIVERING', 'DISPATCH_FAILED'] },
+    { id: 'terminal', label: 'Terminees', statuses: ['REFUSED_FROM_PHARMACIEN', 'REFUSED_FROM_LIVREUR', 'ACCEPTANCE_EXPIRED', 'DELIVERED', 'CANCELLED'] }
   ];
 
   private readonly terminalStatuses = new Set<string>([
     'REFUSED_FROM_PHARMACIEN',
     'REFUSED_FROM_LIVREUR',
+    'ACCEPTANCE_EXPIRED',
     'DELIVERED',
     'CANCELLED'
   ]);
@@ -105,6 +108,26 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   reportError = '';
   reportSuccess = '';
 
+  // Review modal
+  reviewModalOrder: OrderDTO | null = null;
+  reviewMode: 'ACCEPT_UNCHANGED' | 'REVISE' | 'REFUSE' = 'ACCEPT_UNCHANGED';
+  reviewLines: Array<{ productId: number; productName: string; quantity: number; unitPrice: number; lineTotal: number }> = [];
+  reviewCouponCode = '';
+  reviewNote = '';
+  reviewReason = '';
+  reviewExpiresInMinutes = 30;
+  reviewSubmitting = false;
+  reviewError = '';
+  private reopenChatAfterReview = false;
+
+  // Chat modal
+  chatModalOrder: OrderDTO | null = null;
+  chatThread: OrderChatThread | null = null;
+  chatLoading = false;
+  chatSending = false;
+  chatError = '';
+  chatInput = '';
+
   // QR Scanner
   @ViewChild('scannerVideo') scannerVideoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('scannerCanvas') scannerCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -126,6 +149,7 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   private highlightTimer: any = null;
 
   private wsSub?: Subscription;
+  private chatWsSub?: Subscription;
 
   constructor(
     private pharmacistService: PharmacistService,
@@ -165,6 +189,9 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     // Subscribe to real-time order events via WebSocket
     this.wsSub = this.ws.pharmacienOrderEvents$.subscribe((event: PharmacienOrderEvent) => {
       this.ngZone.run(() => this.handleOrderEvent(event));
+    });
+    this.chatWsSub = this.ws.chatMessages$.subscribe((event: ChatMessageEvent) => {
+      this.ngZone.run(() => this.upsertChatMessage(event));
     });
 
     this.recomputeSectionData();
@@ -328,18 +355,24 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     return this.allOrders.filter(o => o.status === s).length;
   }
 
+  canReviewOrder(status: string): boolean {
+    return status === 'PENDING' || status === 'AWAITING_CLIENT_ACCEPTANCE';
+  }
+
   statusBadge(s: string): string {
     const m: Record<string, string> = {
       PENDING:                  'badge-warning',
+      AWAITING_CLIENT_ACCEPTANCE: 'badge-warning',
+      AWAITING_PAYMENT:         'badge-warning',
       ACCEPTED_FROM_PHARMACIEN: 'badge-info',
       REFUSED_FROM_PHARMACIEN:  'badge-danger',
+      ACCEPTANCE_EXPIRED:       'badge-danger',
       READY_FOR_DELIVERY:       'badge-accent',
       DISPATCH_FAILED:          'badge-dispatch-failed',
       ASSIGNED:                 'badge-primary',
       ASSIGNED_FROM_ADMIN:      'badge-primary',
       ACCEPTED_FROM_LIVREUR:    'badge-primary',
       REFUSED_FROM_LIVREUR:     'badge-danger',
-      PICKED_UP:                'badge-info',
       DELIVERING:               'badge-info',
       DELIVERED:                'badge-success',
       CANCELLED:                'badge-danger'
@@ -350,15 +383,17 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   statusLabel(s: string): string {
     const l: Record<string, string> = {
       PENDING:                  'En attente',
+      AWAITING_CLIENT_ACCEPTANCE: 'En attente client',
+      AWAITING_PAYMENT:         'En attente paiement',
       ACCEPTED_FROM_PHARMACIEN: 'Acceptée',
       REFUSED_FROM_PHARMACIEN:  'Refusée',
+      ACCEPTANCE_EXPIRED:       'Validation expirée',
       READY_FOR_DELIVERY:       'Prête',
       DISPATCH_FAILED:          'Echec dispatch',
       ASSIGNED:                 'Assigné',
       ASSIGNED_FROM_ADMIN:      'Assigné (admin)',
       ACCEPTED_FROM_LIVREUR:    'Pris en charge',
       REFUSED_FROM_LIVREUR:     'Refusé (livreur)',
-      PICKED_UP:                'Récupérée',
       DELIVERING:               'En livraison',
       DELIVERED:                'Livrée',
       CANCELLED:                'Annulée'
@@ -402,6 +437,113 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
       next: updated => { this.replaceOrder(updated); this.actionLoading = null; },
       error: () => { this.actionLoading = null; }
     });
+  }
+
+  openReviewModal(order: OrderDTO, event?: Event): void {
+    event?.stopPropagation();
+    this.reviewModalOrder = order;
+    this.reviewMode = order.status === 'AWAITING_CLIENT_ACCEPTANCE' ? 'REVISE' : 'ACCEPT_UNCHANGED';
+    this.reviewLines = (order.orderItems ?? []).map(item => ({
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      lineTotal: item.lineTotal
+    }));
+    this.reviewCouponCode = '';
+    this.reviewNote = '';
+    this.reviewReason = '';
+    this.reviewExpiresInMinutes = 30;
+    this.reviewSubmitting = false;
+    this.reviewError = '';
+    this.reopenChatAfterReview = false;
+  }
+
+  closeReviewModal(): void {
+    this.reviewModalOrder = null;
+    this.reviewMode = 'ACCEPT_UNCHANGED';
+    this.reviewLines = [];
+    this.reviewCouponCode = '';
+    this.reviewNote = '';
+    this.reviewReason = '';
+    this.reviewExpiresInMinutes = 30;
+    this.reviewSubmitting = false;
+    this.reviewError = '';
+    this.reopenChatAfterReview = false;
+  }
+
+  setReviewMode(mode: 'ACCEPT_UNCHANGED' | 'REVISE' | 'REFUSE'): void {
+    this.reviewMode = mode;
+    this.reviewError = '';
+  }
+
+  submitReviewDecision(sendViaChat = false): void {
+    const order = this.reviewModalOrder;
+    if (!order) return;
+
+    const payload: PharmacienReviewDecisionRequest = {
+      decision: this.reviewMode,
+      note: this.reviewNote.trim() || undefined
+    };
+
+    if (this.reviewMode === 'REVISE') {
+      const items = this.reviewLines
+        .map(line => ({ productId: line.productId, quantity: Math.max(1, Number(line.quantity || 0)) }))
+        .filter(line => line.quantity > 0);
+
+      if (!items.length) {
+        this.reviewError = 'Ajoutez au moins un article dans la révision.';
+        return;
+      }
+
+      payload.items = items;
+      payload.couponCode = this.reviewCouponCode.trim() || null;
+      payload.expiresInMinutes = this.reviewExpiresInMinutes > 0 ? this.reviewExpiresInMinutes : 30;
+      if (sendViaChat) {
+        payload.sendViaChat = true;
+        payload.chatMessage = this.reviewNote.trim() || undefined;
+      }
+    }
+
+    if (this.reviewMode === 'REFUSE') {
+      if (!this.reviewReason.trim()) {
+        this.reviewError = 'Le motif de refus est obligatoire.';
+        return;
+      }
+      payload.reason = this.reviewReason.trim();
+    }
+
+    this.reviewSubmitting = true;
+    this.reviewError = '';
+    this.reopenChatAfterReview = sendViaChat;
+    this.actionLoading = order.id;
+    this.pharmacistService.reviewDecision(order.id, payload).subscribe({
+      next: updated => {
+        this.replaceOrder(updated);
+        this.actionLoading = null;
+        this.reviewSubmitting = false;
+        const reopenChat = this.reopenChatAfterReview;
+        this.closeReviewModal();
+        if (reopenChat) {
+          this.openChat(updated);
+        }
+      },
+      error: err => {
+        this.actionLoading = null;
+        this.reviewSubmitting = false;
+        this.reviewError = err?.error?.error || err?.error?.message || 'Impossible d\'enregistrer la décision pharmacien.';
+      }
+    });
+  }
+
+  reviewSubmitLabel(): string {
+    if (this.reviewMode === 'ACCEPT_UNCHANGED') return 'Valider telle quelle';
+    if (this.reviewMode === 'REVISE') return 'Envoyer la révision';
+    return 'Refuser la commande';
+  }
+
+  reviewPreviewTotal(): number {
+    return this.reviewLines.reduce((sum, line) => sum + (Number(line.quantity || 0) * line.unitPrice), 0);
   }
 
   // ── QR Code ──
@@ -478,6 +620,36 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     this.conditionsError = '';
   }
 
+  openClientProfileOrdonnance(order: OrderDTO | null, event: Event): void {
+    event.stopPropagation();
+    if (!order?.id) return;
+
+    this.conditionsError = '';
+    const popup = window.open('about:blank', '_blank');
+    if (popup) {
+      try {
+        popup.opener = null;
+      } catch {}
+      popup.document.write('<p style="font-family:Arial,sans-serif;padding:16px">Chargement de l\'ordonnance profil...</p>');
+    }
+
+    this.pharmacistService.getClientProfileOrdonnanceAccess(order.id).subscribe({
+      next: (access: OrdonnanceAccess) => {
+        if (popup) {
+          popup.location.href = access.url;
+        } else {
+          window.open(access.url, '_blank', 'noopener');
+        }
+      },
+      error: (err) => {
+        if (popup) {
+          popup.close();
+        }
+        this.conditionsError = err?.error?.error || err?.error?.message || 'Impossible de charger l\'ordonnance profil.';
+      }
+    });
+  }
+
   conditionLabel(value: boolean | null | undefined): string {
     if (value === true) return 'Oui';
     if (value === false) return 'Non';
@@ -492,7 +664,16 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
 
   hasAnyCondition(p: ClientHealthProfile | null): boolean {
     if (!p) return false;
-    return !!(p.hasHealthProblems || p.hasPathologicalHistory || p.hasOngoingTreatment || p.hasAllergicHistory || p.hasReducedMobility);
+    return !!(
+      p.hasHealthProblems ||
+      p.hasPathologicalHistory ||
+      p.hasOngoingTreatment ||
+      (p.ongoingTreatments && p.ongoingTreatments.length) ||
+      p.hasAllergicHistory ||
+      (p.allergies && p.allergies.length) ||
+      p.hasReducedMobility ||
+      p.ordonnanceUrl
+    );
   }
 
   closeOrdonnance(): void {
@@ -615,6 +796,7 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.stopScanner();
     this.wsSub?.unsubscribe();
+    this.chatWsSub?.unsubscribe();
     if (this.highlightTimer) clearTimeout(this.highlightTimer);
   }
 
@@ -796,6 +978,83 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
 
   // ── Helpers ──
 
+  openChat(order: OrderDTO, event?: Event): void {
+    event?.stopPropagation();
+    this.chatModalOrder = order;
+    this.chatThread = null;
+    this.chatInput = '';
+    this.chatError = '';
+    this.chatLoading = true;
+    this.pharmacistService.getOrderChat(order.id).subscribe({
+      next: thread => {
+        this.chatThread = thread;
+        this.chatLoading = false;
+      },
+      error: err => {
+        this.chatLoading = false;
+        this.chatError = err?.error?.error || err?.error?.message || 'Impossible de charger la conversation.';
+      }
+    });
+  }
+
+  closeChat(): void {
+    this.chatModalOrder = null;
+    this.chatThread = null;
+    this.chatInput = '';
+    this.chatLoading = false;
+    this.chatSending = false;
+    this.chatError = '';
+  }
+
+  sendChatMessage(): void {
+    const order = this.chatModalOrder;
+    const content = this.chatInput.trim();
+    if (!order || !content) return;
+
+    this.chatSending = true;
+    this.chatError = '';
+    this.pharmacistService.sendOrderChatMessage(order.id, content).subscribe({
+      next: message => {
+        this.upsertChatMessage(message);
+        this.chatInput = '';
+        this.chatSending = false;
+      },
+      error: err => {
+        this.chatSending = false;
+        this.chatError = err?.error?.error || err?.error?.message || 'Impossible d\'envoyer le message.';
+      }
+    });
+  }
+
+  openReviewFromChat(): void {
+    if (!this.chatModalOrder) return;
+    this.openReviewModal(this.chatModalOrder);
+  }
+
+  canSendRevisionViaChat(): boolean {
+    return this.reviewMode === 'REVISE' && !!this.reviewModalOrder;
+  }
+
+  isChatMine(message: OrderChatMessage): boolean {
+    return message.senderRole === 'pharmacien';
+  }
+
+  chatMessageLabel(message: OrderChatMessage): string {
+    return message.messageType === 'REVIEW_REQUEST' ? 'Révision' : 'Message';
+  }
+
+  chatActiveRevision(): OrderRevisionDTO | null {
+    const revision = this.chatModalOrder?.activeRevision ?? null;
+    if (!revision) return null;
+
+    const activeRevisionNumber = this.chatThread?.activeRevisionNumber;
+    if (activeRevisionNumber != null && revision.revisionNumber !== activeRevisionNumber) {
+      return null;
+    }
+
+    return revision;
+  }
+
   isHighlighted(orderId: number): boolean {
     return this.highlightedOrderId === orderId;
   }
@@ -830,7 +1089,30 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     const idx = this.allOrders.findIndex(o => o.id === updated.id);
     if (idx !== -1) this.allOrders[idx] = updated;
     if (this.selectedOrder?.id === updated.id) this.selectedOrder = updated;
+    if (this.chatModalOrder?.id === updated.id) this.chatModalOrder = updated;
     this.recomputeSectionData();
+  }
+
+  private upsertChatMessage(message: OrderChatMessage | ChatMessageEvent): void {
+    if (!this.chatThread || !this.chatModalOrder) return;
+    if (message.orderId !== this.chatThread.orderId) return;
+
+    const normalized: OrderChatMessage = { ...message };
+    const existingIndex = this.chatThread.messages.findIndex(item => item.id === normalized.id);
+    if (existingIndex === -1) {
+      this.chatThread = {
+        ...this.chatThread,
+        messages: [...this.chatThread.messages, normalized]
+      };
+      return;
+    }
+
+    const nextMessages = [...this.chatThread.messages];
+    nextMessages[existingIndex] = normalized;
+    this.chatThread = {
+      ...this.chatThread,
+      messages: nextMessages
+    };
   }
 
   private recomputeSectionData(): void {

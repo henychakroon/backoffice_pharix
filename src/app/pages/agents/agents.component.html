@@ -57,6 +57,14 @@
         <div class="agent-info">
           <div class="agent-name">{{ a.email }}</div>
           <div class="text-xs text-muted">ID {{ a.id }} &bull; {{ a.zoneName || 'Aucune zone' }}</div>
+          <div class="agent-rating" *ngIf="a.reviewCount > 0; else noLivreurReview">
+            <span class="agent-rating-stars">{{ ratingStars(a.averageRating) }}</span>
+            <span>{{ a.averageRating | number:'1.1-1' }} / 5</span>
+            <span class="text-muted">({{ a.reviewCount }} avis)</span>
+          </div>
+          <ng-template #noLivreurReview>
+            <div class="agent-rating text-muted">Aucun avis livreur</div>
+          </ng-template>
         </div>
         <span class="badge" [ngClass]="a.online ? 'badge-success' : 'badge-gray'">
           <span class="pulse-dot" *ngIf="a.online"></span>
@@ -80,6 +88,10 @@
         <div class="agent-stat">
           <div class="agent-stat-val" style="font-size:12px">{{ a.zoneName || '—' }}</div>
           <div class="agent-stat-lbl">Zone</div>
+        </div>
+        <div class="agent-stat">
+          <div class="agent-stat-val">{{ a.reviewCount > 0 ? (a.averageRating | number:'1.1-1') : '—' }}</div>
+          <div class="agent-stat-lbl">Note moyenne</div>
         </div>
       </div>
 

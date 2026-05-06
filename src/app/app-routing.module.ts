@@ -14,6 +14,7 @@ import { SettingsComponent }   from './pages/settings/settings.component';
 import { ZonesComponent }      from './pages/zones/zones.component';
 import { UsersComponent }      from './pages/users/users.component';
 import { ReportsComponent }    from './pages/reports/reports.component';
+import { CouponsComponent }    from './pages/coupons/coupons.component';
 import { PharmacistDashboardComponent } from './pages/pharmacist-interface/dashboard/pharmacist-dashboard.component';
 import { PharmacistNearbyPharmaciesComponent } from './pages/pharmacist-interface/nearby-pharmacies/pharmacist-nearby-pharmacies.component';
 import { PharmacistOrdersComponent }    from './pages/pharmacist-interface/orders/pharmacist-orders.component';
@@ -23,9 +24,11 @@ import { PharmacistBannersComponent }   from './pages/pharmacist-interface/banne
 import { PharmacistCouponsComponent }   from './pages/pharmacist-interface/coupons/pharmacist-coupons.component';
 import { AuthGuard }           from './guards/auth.guard';
 import { MonthlyDashboardComponent } from './pages/monthly-dashboard/monthly-dashboard.component';
+import { PaymentResultComponent } from './pages/payment-result/payment-result.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'payment-result', component: PaymentResultComponent },
   {
     path: '',
     component: LayoutComponent,
@@ -36,6 +39,7 @@ const routes: Routes = [
       { path: 'orders',     component: OrdersComponent     },
       { path: 'users',      component: UsersComponent      },
       { path: 'reports',    component: ReportsComponent    },
+      { path: 'coupons',    component: CouponsComponent    },
       { path: 'clients',    component: ClientsComponent    },
       { path: 'pharmacies', component: PharmaciesComponent },
       { path: 'agents',     component: AgentsComponent     },

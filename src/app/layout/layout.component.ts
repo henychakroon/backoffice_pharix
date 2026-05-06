@@ -35,6 +35,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   pharmacienNotifsLoading = false;
 
   toasts: OrderToast[] = [];
+  toastIndex = 0;
   private toastUidCounter = 0;
 
   private wsSub?: Subscription;
@@ -76,6 +77,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       group: 'Operations',
       items: [
         { label: 'Reports',           icon: 'flag',        route: '/reports'    },
+        { label: 'Coupons',           icon: 'tag',         route: '/coupons'    },
         { label: 'Analytics',         icon: 'bar-chart-2', route: '/analytics'  },
         { label: 'Settings',          icon: 'settings',    route: '/settings'   },
       ]
@@ -279,6 +281,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     toast.leaving = true;
     setTimeout(() => {
       this.toasts = this.toasts.filter(t => t.uid !== uid);
+      this.clampToastIndex();
       if (this.toasts.length === 0) this.stopSound();
     }, 350);
   }
@@ -290,6 +293,28 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   trackToast(_: number, t: OrderToast): number { return t.uid; }
+
+  get currentToast(): OrderToast | null {
+    return this.toasts[this.toastIndex] ?? null;
+  }
+
+  prevToast(): void {
+    if (this.toasts.length === 0) return;
+    this.toastIndex = (this.toastIndex - 1 + this.toasts.length) % this.toasts.length;
+  }
+
+  nextToast(): void {
+    if (this.toasts.length === 0) return;
+    this.toastIndex = (this.toastIndex + 1) % this.toasts.length;
+  }
+
+  private clampToastIndex(): void {
+    if (this.toasts.length === 0) {
+      this.toastIndex = 0;
+    } else if (this.toastIndex >= this.toasts.length) {
+      this.toastIndex = this.toasts.length - 1;
+    }
+  }
 
   private playNewOrderSound(): void {
     if (this.soundInterval) return; // already looping
@@ -441,12 +466,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
   statusLabelFr(status: string): string {
     const map: Record<string, string> = {
       PENDING: 'Nouvelle commande',
+      AWAITING_CLIENT_ACCEPTANCE: 'Attente client',
+      AWAITING_PAYMENT: 'Attente paiement',
       ACCEPTED_FROM_PHARMACIEN: 'Acceptée',
+      ACCEPTANCE_EXPIRED: 'Validation expirée',
       READY_FOR_DELIVERY: 'Prête',
       ASSIGNED: 'Livreur assigné',
       ASSIGNED_FROM_ADMIN: 'Assigné (admin)',
       ACCEPTED_FROM_LIVREUR: 'Livreur en route',
-      PICKED_UP: 'Récupérée',
       DELIVERING: 'En livraison',
       DELIVERED: 'Livrée',
       DISPATCH_FAILED: 'Aucun livreur',

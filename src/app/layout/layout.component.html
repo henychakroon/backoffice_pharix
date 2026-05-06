@@ -95,6 +95,39 @@
       </div>
 
       <div class="topbar-actions">
+        <!-- Pharmacien pending-order roulette -->
+        <div class="order-roulette" *ngIf="auth.isPharmacien() && currentToast as toast">
+          <button class="roulette-arrow"
+                  (click)="prevToast()"
+                  [disabled]="toasts.length < 2"
+                  aria-label="Précédent">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+
+          <div class="roulette-card" [class.roulette-card-leaving]="toast.leaving">
+            <div class="roulette-bell">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            </div>
+            <div class="roulette-body" (click)="viewToastOrder(toast)">
+              <div class="roulette-title">Commande #{{ toast.orderId }}</div>
+              <div class="roulette-sub">{{ toast.clientName }}</div>
+            </div>
+            <span class="roulette-counter" *ngIf="toasts.length > 1">
+              {{ toastIndex + 1 }}/{{ toasts.length }}
+            </span>
+            <button class="roulette-close" (click)="dismissToast(toast.uid)" aria-label="Fermer">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <button class="roulette-arrow"
+                  (click)="nextToast()"
+                  [disabled]="toasts.length < 2"
+                  aria-label="Suivant">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
         <!-- Admin Notifications -->
         <div class="notif-wrapper" *ngIf="auth.isAdmin()">
           <button class="btn btn-ghost btn-icon topbar-btn" data-tooltip="Notifications" (click)="toggleNotifPanel()">
@@ -188,23 +221,3 @@
   </div>
 </div>
 
-<!-- ══════ ORDER TOAST NOTIFICATIONS ══════ -->
-<div class="toast-container" *ngIf="auth.isPharmacien()">
-  <div class="order-toast"
-       [class.order-toast-leaving]="toast.leaving"
-       *ngFor="let toast of toasts; trackBy: trackToast">
-    <div class="toast-bell">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-    </div>
-    <div class="toast-body">
-      <div class="toast-title">Nouvelle commande #{{ toast.orderId }}</div>
-      <div class="toast-sub">{{ toast.clientName }}</div>
-    </div>
-    <div class="toast-actions">
-      <button class="btn btn-primary btn-sm" (click)="viewToastOrder(toast)">Voir</button>
-      <button class="toast-close" (click)="dismissToast(toast.uid)" aria-label="Fermer">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-  </div>
-</div>
