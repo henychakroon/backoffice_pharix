@@ -208,6 +208,13 @@ export interface OrdonnanceAccess {
   fileName?: string | null;
 }
 
+export interface ClientOrdonnanceHistoryItem {
+  orderId: number;
+  fileName?: string | null;
+  mimeType?: string | null;
+  createdAt?: string | null;
+}
+
 export interface PharmacienBanner {
   id: number;
   title: string;
@@ -232,10 +239,13 @@ export interface ClientHealthProfile {
   hasPathologicalHistory?: boolean | null;
   hasOngoingTreatment?: boolean | null;
   ongoingTreatments?: string[] | null;
+  bloodTypes?: string[] | null;
+  socialSecurity?: string[] | null;
   hasAllergicHistory?: boolean | null;
   allergies?: string[] | null;
   hasReducedMobility?: boolean | null;
   ordonnanceUrl?: string | null;
+  ordonnanceHistory?: ClientOrdonnanceHistoryItem[] | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }

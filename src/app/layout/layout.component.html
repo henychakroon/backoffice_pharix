@@ -145,14 +145,16 @@
               Aucune notification
             </div>
             <div class="notif-item"
-                 [class.notif-item-urgent]="order.dispatchFailed || order.status === 'DISPATCH_FAILED'"
+                 [class.notif-item-urgent]="isDispatchFailedAdminEvent(order)"
+                 [class.notif-item-cancelled]="isLivreurCancelledAdminEvent(order)"
                  *ngFor="let order of recentOrders"
                  (click)="goToOrder(order.orderId)">
               <div class="notif-item-title">
-                <span *ngIf="order.dispatchFailed || order.status === 'DISPATCH_FAILED'" class="notif-urgent-icon">⚠</span>
+                <span *ngIf="isDispatchFailedAdminEvent(order)" class="notif-urgent-icon">⚠</span>
+                <span *ngIf="isLivreurCancelledAdminEvent(order)" class="notif-cancelled-icon">✕</span>
                 #{{ order.orderId }} — {{ order.clientName }}
               </div>
-              <div class="notif-item-sub">{{ order.pharmacyName }} · {{ order.status }}</div>
+              <div class="notif-item-sub">{{ adminNotificationSubtitle(order) }}</div>
             </div>
           </div>
         </div>
@@ -179,18 +181,18 @@
             </div>
             <div class="notif-panel-list">
               <div class="notif-item"
-                   [class.notif-item-urgent]="notif.data?.status === 'PENDING'"
-                   [class.notif-item-warn]="notif.data?.status === 'DISPATCH_FAILED'"
+                   [class.notif-item-urgent]="notif.data.status === 'PENDING'"
+                   [class.notif-item-warn]="notif.data.status === 'DISPATCH_FAILED'"
                    [class.notif-item-read]="notif.isRead"
                    *ngFor="let notif of pharmacienNotifications"
-                   (click)="goToPharmacienOrder(notif.data?.orderId!)">
+                   (click)="goToPharmacienOrder(notif.data.orderId!)">
                 <div class="notif-item-body">
                   <div class="notif-item-title">
-                    <span *ngIf="notif.data?.status === 'PENDING'" class="notif-urgent-icon">🔔</span>
-                    <span *ngIf="notif.data?.status === 'DISPATCH_FAILED'" class="notif-urgent-icon">⚠</span>
-                    #{{ notif.data?.orderId }} — {{ notif.data?.clientName }}
+                    <span *ngIf="notif.data.status === 'PENDING'" class="notif-urgent-icon">🔔</span>
+                    <span *ngIf="notif.data.status === 'DISPATCH_FAILED'" class="notif-urgent-icon">⚠</span>
+                    #{{ notif.data.orderId }} — {{ notif.data.clientName }}
                   </div>
-                  <div class="notif-item-sub">{{ statusLabelFr(notif.data?.status ?? '') }}</div>
+                  <div class="notif-item-sub">{{ statusLabelFr(notif.data.status ?? '') }}</div>
                 </div>
                 <button class="notif-mark-read-btn"
                         *ngIf="!notif.isRead"

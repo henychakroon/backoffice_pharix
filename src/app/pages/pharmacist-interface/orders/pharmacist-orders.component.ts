@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { PharmacistService, CreateReportPayload, OrdonnanceAccess, ClientHealthProfile, PharmacienReviewDecisionRequest, OrderChatThread, OrderChatMessage } from '../../../services/pharmacist.service';
+import { PharmacistService, CreateReportPayload, OrdonnanceAccess, ClientHealthProfile, ClientOrdonnanceHistoryItem, PharmacienReviewDecisionRequest, OrderChatThread, OrderChatMessage, PharmacistProductItem } from '../../../services/pharmacist.service';
 import { AuthService } from '../../../services/auth.service';
 import { OrderDTO, OrderRevisionDTO } from '../../../services/admin.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -16,6 +16,13 @@ import { WebSocketService, PharmacienOrderEvent, ChatMessageEvent } from '../../
   styleUrls: ['./pharmacist-orders.component.scss']
 })
 export class PharmacistOrdersComponent implements OnInit, OnDestroy {
+  chatAlerts: Array<{
+    orderId: number;
+    clientName: string;
+    content: string;
+    timestamp: string;
+    unreadCount: number;
+  }> = [];
   allOrders: OrderDTO[] = [];
   loading = true;
   searchTerm = '';
@@ -112,6 +119,12 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   reviewModalOrder: OrderDTO | null = null;
   reviewMode: 'ACCEPT_UNCHANGED' | 'REVISE' | 'REFUSE' = 'ACCEPT_UNCHANGED';
   reviewLines: Array<{ productId: number; productName: string; quantity: number; unitPrice: number; lineTotal: number }> = [];
+  reviewProductSearch = '';
+  reviewProductResults: PharmacistProductItem[] = [];
+  reviewProductLoading = false;
+  reviewProductError = '';
+  private reviewProductSearchTimer: any = null;
+  private reviewProductSearchRequestId = 0;
   reviewCouponCode = '';
   reviewNote = '';
   reviewReason = '';
@@ -191,7 +204,7 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
       this.ngZone.run(() => this.handleOrderEvent(event));
     });
     this.chatWsSub = this.ws.chatMessages$.subscribe((event: ChatMessageEvent) => {
-      this.ngZone.run(() => this.upsertChatMessage(event));
+      this.ngZone.run(() => this.handleIncomingChatEvent(event));
     });
 
     this.recomputeSectionData();
@@ -451,6 +464,11 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
       lineTotal: item.lineTotal
     }));
     this.reviewCouponCode = '';
+    this.reviewProductSearch = '';
+    this.reviewProductResults = [];
+    this.reviewProductLoading = false;
+    this.reviewProductError = '';
+    this.clearReviewProductSearchTimer();
     this.reviewNote = '';
     this.reviewReason = '';
     this.reviewExpiresInMinutes = 30;
@@ -464,6 +482,11 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     this.reviewMode = 'ACCEPT_UNCHANGED';
     this.reviewLines = [];
     this.reviewCouponCode = '';
+    this.reviewProductSearch = '';
+    this.reviewProductResults = [];
+    this.reviewProductLoading = false;
+    this.reviewProductError = '';
+    this.clearReviewProductSearchTimer();
     this.reviewNote = '';
     this.reviewReason = '';
     this.reviewExpiresInMinutes = 30;
@@ -475,6 +498,99 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   setReviewMode(mode: 'ACCEPT_UNCHANGED' | 'REVISE' | 'REFUSE'): void {
     this.reviewMode = mode;
     this.reviewError = '';
+  }
+
+  onReviewProductSearchChange(value: string): void {
+    this.reviewProductSearch = value;
+    this.reviewProductError = '';
+    this.clearReviewProductSearchTimer();
+
+    const search = value.trim();
+    if (search.length < 2) {
+      this.reviewProductResults = [];
+      this.reviewProductLoading = false;
+      return;
+    }
+
+    this.reviewProductLoading = true;
+    this.reviewProductSearchTimer = setTimeout(() => {
+      this.runReviewProductSearch(search);
+    }, 250);
+  }
+
+  searchReviewProducts(): void {
+    const search = this.reviewProductSearch.trim();
+    this.reviewProductError = '';
+    this.clearReviewProductSearchTimer();
+
+    if (search.length < 2) {
+      this.reviewProductError = 'Saisissez au moins 2 caractères pour rechercher un produit.';
+      this.reviewProductResults = [];
+      this.reviewProductLoading = false;
+      return;
+    }
+
+    this.reviewProductLoading = true;
+    this.runReviewProductSearch(search);
+  }
+
+  private runReviewProductSearch(search: string): void {
+    const requestId = ++this.reviewProductSearchRequestId;
+    this.pharmacistService.getProducts({ search, available: true, page: 0, size: 8 }).subscribe({
+      next: page => {
+        if (requestId !== this.reviewProductSearchRequestId) {
+          return;
+        }
+        this.reviewProductLoading = false;
+        this.reviewProductResults = page.content ?? [];
+        if (!this.reviewProductResults.length) {
+          this.reviewProductError = 'Aucun produit disponible ne correspond à cette recherche.';
+        }
+      },
+      error: err => {
+        if (requestId !== this.reviewProductSearchRequestId) {
+          return;
+        }
+        this.reviewProductLoading = false;
+        this.reviewProductResults = [];
+        this.reviewProductError = err?.error?.error || err?.error?.message || 'Impossible de rechercher les produits du catalogue.';
+      }
+    });
+  }
+
+  private clearReviewProductSearchTimer(): void {
+    if (this.reviewProductSearchTimer) {
+      clearTimeout(this.reviewProductSearchTimer);
+      this.reviewProductSearchTimer = null;
+    }
+  }
+
+  addProductToReview(product: PharmacistProductItem): void {
+    const existing = this.reviewLines.find(line => line.productId === product.productId);
+    if (existing) {
+      existing.quantity = Math.max(1, Number(existing.quantity || 0)) + 1;
+      return;
+    }
+
+    const unitPrice = Number(product.referencePrice ?? 0);
+    this.reviewLines = [
+      ...this.reviewLines,
+      {
+        productId: product.productId,
+        productName: product.productName,
+        quantity: 1,
+        unitPrice,
+        lineTotal: unitPrice
+      }
+    ];
+  }
+
+  removeReviewLine(productId: number): void {
+    this.reviewLines = this.reviewLines.filter(line => line.productId !== productId);
+  }
+
+  reviewHasProduct(productId: number): boolean {
+    return this.reviewLines.some(line => line.productId === productId);
   }
 
   submitReviewDecision(sendViaChat = false): void {
@@ -650,6 +766,36 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     });
   }
 
+  openOrdonnanceHistoryItem(item: ClientOrdonnanceHistoryItem, event: Event): void {
+    event.stopPropagation();
+    if (!item?.orderId) return;
+
+    this.conditionsError = '';
+    const popup = window.open('about:blank', '_blank');
+    if (popup) {
+      try {
+        popup.opener = null;
+      } catch {}
+      popup.document.write('<p style="font-family:Arial,sans-serif;padding:16px">Chargement de l\'ordonnance...</p>');
+    }
+
+    this.pharmacistService.getOrdonnanceAccess(item.orderId).subscribe({
+      next: (access: OrdonnanceAccess) => {
+        if (popup) {
+          popup.location.href = access.url;
+        } else {
+          window.open(access.url, '_blank', 'noopener');
+        }
+      },
+      error: (err) => {
+        if (popup) {
+          popup.close();
+        }
+        this.conditionsError = err?.error?.error || err?.error?.message || 'Impossible de charger l\'historique des ordonnances.';
+      }
+    });
+  }
+
   conditionLabel(value: boolean | null | undefined): string {
     if (value === true) return 'Oui';
     if (value === false) return 'Non';
@@ -797,6 +943,7 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     this.stopScanner();
     this.wsSub?.unsubscribe();
     this.chatWsSub?.unsubscribe();
+    this.clearReviewProductSearchTimer();
     if (this.highlightTimer) clearTimeout(this.highlightTimer);
   }
 
@@ -980,6 +1127,7 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
 
   openChat(order: OrderDTO, event?: Event): void {
     event?.stopPropagation();
+    this.clearChatAlert(order.id);
     this.chatModalOrder = order;
     this.chatThread = null;
     this.chatInput = '';
@@ -1004,6 +1152,22 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     this.chatLoading = false;
     this.chatSending = false;
     this.chatError = '';
+  }
+
+  hasChatAlerts(): boolean {
+    return this.chatAlerts.length > 0;
+  }
+
+  openChatAlert(alert: { orderId: number }, event?: Event): void {
+    event?.stopPropagation();
+    const order = this.allOrders.find(item => item.id === alert.orderId);
+    if (!order) return;
+    this.openChat(order);
+  }
+
+  dismissChatAlert(orderId: number, event: Event): void {
+    event.stopPropagation();
+    this.clearChatAlert(orderId);
   }
 
   sendChatMessage(): void {
@@ -1093,6 +1257,16 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
     this.recomputeSectionData();
   }
 
+  private handleIncomingChatEvent(message: ChatMessageEvent): void {
+    if (message.senderRole !== 'client') {
+      this.upsertChatMessage(message);
+      return;
+    }
+
+    this.recordChatAlert(message);
+    this.upsertChatMessage(message);
+  }
+
   private upsertChatMessage(message: OrderChatMessage | ChatMessageEvent): void {
     if (!this.chatThread || !this.chatModalOrder) return;
     if (message.orderId !== this.chatThread.orderId) return;
@@ -1113,6 +1287,47 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
       ...this.chatThread,
       messages: nextMessages
     };
+  }
+
+  private recordChatAlert(message: ChatMessageEvent): void {
+    if (this.chatModalOrder?.id === message.orderId) {
+      return;
+    }
+
+    const order = this.allOrders.find(item => item.id === message.orderId);
+    const clientName = order?.clientName || 'Client';
+    const preview = (message.content || '').trim() || 'Nouveau message client';
+    const existingIndex = this.chatAlerts.findIndex(item => item.orderId === message.orderId);
+
+    if (existingIndex === -1) {
+      this.chatAlerts = [
+        {
+          orderId: message.orderId,
+          clientName,
+          content: preview,
+          timestamp: message.timestamp,
+          unreadCount: 1
+        },
+        ...this.chatAlerts
+      ].slice(0, 4);
+      return;
+    }
+
+    const nextAlerts = [...this.chatAlerts];
+    const current = nextAlerts[existingIndex];
+    nextAlerts.splice(existingIndex, 1);
+    nextAlerts.unshift({
+      ...current,
+      clientName,
+      content: preview,
+      timestamp: message.timestamp,
+      unreadCount: current.unreadCount + 1
+    });
+    this.chatAlerts = nextAlerts;
+  }
+
+  private clearChatAlert(orderId: number): void {
+    this.chatAlerts = this.chatAlerts.filter(item => item.orderId !== orderId);
   }
 
   private recomputeSectionData(): void {

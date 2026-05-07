@@ -16,6 +16,9 @@ export interface AdminOrderEvent {
   createdAt: string;
   updatedAt?: string;
   dispatchFailed?: boolean;
+  cancellationReason?: string | null;
+  cancelledByRole?: string | null;
+  cancelledByLivreur?: boolean;
 }
 
 /** Same shape as AdminOrderDTO — reused for pharmacien topic */

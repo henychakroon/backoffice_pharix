@@ -1015,6 +1015,20 @@
         </div>
 
         <div class="checkout-card">
+          <div class="checkout-title">Mode de paiement</div>
+          <div class="field" style="margin-bottom:10px;">
+            <label>Choix du paiement</label>
+            <select id="paymentMethodInput" onchange="onPaymentMethodChanged()">
+              <option value="CASH">Paiement à la livraison</option>
+              <option value="ONLINE">Paiement en ligne (ClickToPay / simulation)</option>
+            </select>
+          </div>
+          <div id="paymentMethodHelp" style="font-size:12px;color:var(--gray-500);line-height:1.45;">
+            La commande suivra le flux COD classique et pourra être préparée dès validation du pharmacien.
+          </div>
+        </div>
+
+        <div class="checkout-card">
           <div class="checkout-title">Coupon récompense</div>
           <div class="coupon-box">
             <input type="text" id="couponCodeInput" placeholder="Ex: RWD12345" oninput="onCouponInputChanged()" />
@@ -1222,6 +1236,16 @@
         </div>
 
         <div class="field">
+          <label>Groupes sanguins</label>
+          <textarea id="profileBloodTypes" rows="2" placeholder="Un groupe sanguin par ligne"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Sécurité sociale</label>
+          <textarea id="profileSocialSecurity" rows="3" placeholder="Une information par ligne"></textarea>
+        </div>
+
+        <div class="field">
           <label>Allergies</label>
           <textarea id="profileAllergies" rows="3" placeholder="Une allergie par ligne"></textarea>
         </div>
@@ -1308,12 +1332,14 @@ let notifications = [];
 let referralSummary = null;
 let rewardCoupons = [];
 let selectedCouponCode = '';
+let selectedPaymentMethod = 'CASH';
 let chatClient = null;
 let chatConnected = false;
 let activeChatOrderId = null;
 let activeChatThread = null;
 let clientProfileData = null;
 let clientProfileOrdonnanceAvailable = false;
+let paymentActionState = {};
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 async function api(method, path, body) {
@@ -1555,6 +1581,8 @@ function populateClientProfileForm(profile) {
   document.getElementById('profileHasAllergicHistory').value = booleanSelectValue(data.hasAllergicHistory);
   document.getElementById('profileHasReducedMobility').value = booleanSelectValue(data.hasReducedMobility);
   document.getElementById('profileOngoingTreatments').value = Array.isArray(data.ongoingTreatments) ? data.ongoingTreatments.join('\n') : '';
+  document.getElementById('profileBloodTypes').value = Array.isArray(data.bloodTypes) ? data.bloodTypes.join('\n') : '';
+  document.getElementById('profileSocialSecurity').value = Array.isArray(data.socialSecurity) ? data.socialSecurity.join('\n') : '';
   document.getElementById('profileAllergies').value = Array.isArray(data.allergies) ? data.allergies.join('\n') : '';
   document.getElementById('profileOrdonnance').value = '';
 
@@ -1621,6 +1649,8 @@ async function saveClientProfile() {
       hasAllergicHistory: parseBooleanField('profileHasAllergicHistory'),
       hasReducedMobility: parseBooleanField('profileHasReducedMobility'),
       ongoingTreatments: parseLines('profileOngoingTreatments'),
+      bloodTypes: parseLines('profileBloodTypes'),
+      socialSecurity: parseLines('profileSocialSecurity'),
       allergies: parseLines('profileAllergies')
     };
 
@@ -2005,11 +2035,13 @@ async function placeOrder() {
     const order = await api('POST', '/api/v1/client/orders/create', {
       pharmacienId: selectedPharmacy.id,
       couponCode: selectedCouponCode || undefined,
+      paymentMethod: selectedPaymentMethod,
       description: document.getElementById('orderNote').value.trim() || undefined,
       items: items.map(({ product, qty }) => ({ productId: product.productId, quantity: qty }))
     });
-    document.getElementById('successSub').textContent =
-      `Commande #${order.id} envoyée à ${selectedPharmacy.pharmacyName}. En attente de confirmation.`;
+    document.getElementById('successSub').textContent = selectedPaymentMethod === 'ONLINE'
+      ? `Commande #${order.id} envoyée à ${selectedPharmacy.pharmacyName}. Après validation du pharmacien, vous pourrez initialiser ou simuler le paiement en ligne depuis Mes commandes.`
+      : `Commande #${order.id} envoyée à ${selectedPharmacy.pharmacyName}. En attente de confirmation.`;
     cart = {};
     selectedCouponCode = '';
     renderCart();
@@ -2027,7 +2059,131 @@ function newOrder() {
   selectedCouponCode = '';
   document.getElementById('prodSearch').value = '';
   document.getElementById('pharmSearch').value = '';
+  selectedPaymentMethod = 'CASH';
+  syncPaymentMethodControls();
   goStep(1);
+}
+
+function onPaymentMethodChanged() {
+  selectedPaymentMethod = document.getElementById('paymentMethodInput').value || 'CASH';
+  syncPaymentMethodControls();
+}
+
+function syncPaymentMethodControls() {
+  const input = document.getElementById('paymentMethodInput');
+  const help = document.getElementById('paymentMethodHelp');
+  if (input) input.value = selectedPaymentMethod;
+  if (help) {
+    help.textContent = selectedPaymentMethod === 'ONLINE'
+      ? 'Le pharmacien doit d\'abord valider la commande. Ensuite, utilisez Mes commandes pour initialiser ClickToPay, confirmer manuellement ou simuler un paiement réussi.'
+      : 'La commande suivra le flux COD classique et pourra être préparée dès validation du pharmacien.';
+  }
+}
+
+function paymentStateFor(orderId) {
+  if (!paymentActionState[orderId]) paymentActionState[orderId] = {};
+  return paymentActionState[orderId];
+}
+
+function clearPaymentState(orderId) {
+  delete paymentActionState[orderId];
+}
+
+function canInitializeOnlinePayment(order) {
+  return !!order && order.paymentMethod === 'ONLINE' && order.status === 'AWAITING_PAYMENT';
+}
+
+async function initializeOrderPayment(orderId) {
+  const state = paymentStateFor(orderId);
+  state.initializing = true;
+  state.error = '';
+  state.message = '';
+  renderOrdersFromState();
+
+  try {
+    const response = await api('POST', `/api/v1/client/orders/${orderId}/payments/initialize`);
+    const order = clientOrders.find(item => Number(item.id) === Number(orderId));
+    if (order) {
+      order.paymentStatus = response.paymentStatus || order.paymentStatus;
+      order.paymentProviderReference = response.providerReference || order.paymentProviderReference;
+      order.paymentGatewayOrderId = order.paymentGatewayOrderId || response.providerReference || null;
+    }
+    state.redirectUrl = response.redirectUrl || '';
+    state.providerReference = response.providerReference || '';
+    state.message = response.redirectUrl
+      ? 'Paiement initialisé. Le lien ClickToPay est prêt.'
+      : 'Paiement initialisé.';
+    showToast(`Paiement initialisé pour la commande #${orderId}`, 'success');
+  } catch (e) {
+    state.error = 'Erreur initialisation: ' + e.message;
+    showToast(state.error, 'error');
+  } finally {
+    state.initializing = false;
+    renderOrdersFromState();
+  }
+}
+
+function openPaymentRedirect(orderId) {
+  const state = paymentStateFor(orderId);
+  const url = state.redirectUrl || '';
+  if (!url) {
+    showToast('Aucun lien de paiement disponible. Initialisez d\'abord le paiement.', 'error');
+    return;
+  }
+  window.open(url, '_blank', 'noopener');
+}
+
+async function confirmOrderPayment(orderId) {
+  const order = clientOrders.find(item => Number(item.id) === Number(orderId));
+  const state = paymentStateFor(orderId);
+  const providerReference = order?.paymentProviderReference || state.providerReference || '';
+  const gatewayOrderId = order?.paymentGatewayOrderId || providerReference || '';
+
+  if (!providerReference && !gatewayOrderId) {
+    showToast('Initialisez d\'abord le paiement pour récupérer une référence.', 'error');
+    return;
+  }
+
+  state.confirming = true;
+  state.error = '';
+  state.message = '';
+  renderOrdersFromState();
+
+  try {
+    const updated = await api('POST', `/api/v1/client/orders/${orderId}/payments/confirm`, {
+      success: true,
+      providerReference: providerReference || undefined,
+      gatewayOrderId: gatewayOrderId || undefined
+    });
+    clearPaymentState(orderId);
+    mergeUpdatedOrder(updated);
+    showToast(`Paiement confirmé pour la commande #${orderId}`, 'success');
+  } catch (e) {
+    state.error = 'Erreur confirmation: ' + e.message;
+    showToast(state.error, 'error');
+    state.confirming = false;
+    renderOrdersFromState();
+  }
+}
+
+async function simulateOrderPaymentSuccess(orderId) {
+  const state = paymentStateFor(orderId);
+  state.simulating = true;
+  state.error = '';
+  state.message = '';
+  renderOrdersFromState();
+
+  try {
+    const updated = await api('POST', `/api/v1/client/orders/${orderId}/payments/simulate-success`);
+    clearPaymentState(orderId);
+    mergeUpdatedOrder(updated);
+    showToast(`Paiement simulé avec succès pour la commande #${orderId}`, 'success');
+  } catch (e) {
+    state.error = 'Erreur simulation: ' + e.message;
+    showToast(state.error, 'error');
+    state.simulating = false;
+    renderOrdersFromState();
+  }
 }
 
 function onCouponInputChanged() {
@@ -2841,6 +2997,7 @@ function renderOrdersFromState() {
     return;
   }
   listEl.innerHTML = sorted.map(o => {
+    const paymentState = paymentStateFor(o.id);
     const fmt = v => v != null ? Number(v).toFixed(2) + ' TND' : '—';
     const fmtDate = d => d ? new Date(d).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
     const itemCount = (o.orderItems || []).length;
@@ -2848,6 +3005,46 @@ function renderOrdersFromState() {
       `<div class="item-row"><span>${i.productName || 'Produit'} × ${i.quantity}</span><span>${fmt(i.lineTotal)}</span></div>`
     ).join('');
     const revisionHtml = renderOrderRevisionPanel(o);
+    const canInitPayment = canInitializeOnlinePayment(o);
+    const paymentPanel = o.paymentMethod === 'ONLINE'
+      ? `
+        <div style="margin-top:12px;border-top:1px solid var(--gray-100);padding-top:10px;display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--gray-600);">
+            <span>Méthode</span>
+            <strong>${o.paymentMethod || 'ONLINE'}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--gray-600);">
+            <span>Statut paiement</span>
+            <strong>${o.paymentStatus || 'PENDING'}</strong>
+          </div>
+          ${o.paymentProviderReference ? `<div style="font-size:12px;color:var(--gray-500);word-break:break-all;">Référence provider: ${escapeHtml(o.paymentProviderReference)}</div>` : ''}
+          ${o.paymentGatewayOrderId ? `<div style="font-size:12px;color:var(--gray-500);word-break:break-all;">Référence gateway: ${escapeHtml(o.paymentGatewayOrderId)}</div>` : ''}
+          ${paymentState.message ? `<div style="font-size:12px;color:var(--success-dark);">${escapeHtml(paymentState.message)}</div>` : ''}
+          ${paymentState.error ? `<div style="font-size:12px;color:var(--danger);">${escapeHtml(paymentState.error)}</div>` : ''}
+          ${canInitPayment ? `
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" onclick="initializeOrderPayment(${o.id})" ${paymentState.initializing ? 'disabled' : ''}>
+                ${paymentState.initializing ? 'Initialisation...' : 'Initialiser paiement'}
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="openPaymentRedirect(${o.id})" ${paymentState.redirectUrl ? '' : 'disabled'}>
+                Ouvrir ClickToPay
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="confirmOrderPayment(${o.id})" ${paymentState.confirming ? 'disabled' : ''}>
+                ${paymentState.confirming ? 'Confirmation...' : 'Confirmer manuellement'}
+              </button>
+              <button class="btn btn-success btn-sm" onclick="simulateOrderPaymentSuccess(${o.id})" ${paymentState.simulating ? 'disabled' : ''}>
+                ${paymentState.simulating ? 'Simulation...' : 'Simuler paiement réussi'}
+              </button>
+            </div>
+          ` : ''}
+        </div>`
+      : (o.paymentMethod
+          ? `
+        <div style="margin-top:12px;border-top:1px solid var(--gray-100);padding-top:10px;display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--gray-600);">
+          <span>Méthode de paiement</span>
+          <strong>${o.paymentMethod}</strong>
+        </div>`
+          : '');
     return `
       <div class="order-card">
         <div class="order-head">
@@ -2867,6 +3064,7 @@ function renderOrdersFromState() {
           <span class="ot-label">Total</span>
           <span class="ot-value">${fmt(o.total)}</span>
         </div>
+        ${paymentPanel}
         ${revisionHtml}
         <div class="order-actions-row">
           <button class="btn btn-outline btn-sm" onclick="openOrderChat(${o.id})">Chat</button>
@@ -2912,6 +3110,7 @@ document.addEventListener('keydown', e => {
 
 // init first step visible
 switchAuthMode('login');
+syncPaymentMethodControls();
 goStep(1);
 </script>
 </body>

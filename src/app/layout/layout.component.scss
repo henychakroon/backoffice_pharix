@@ -96,10 +96,25 @@
   color: var(--warning);
 }
 
+.notif-cancelled-icon {
+  margin-right: 4px;
+  font-size: 13px;
+  color: var(--danger, #e53e3e);
+}
+
 .notif-item-warn {
   border-left: 3px solid var(--danger, #e53e3e);
   background: #fff5f5;
   &:hover { background: #ffe8e8; }
+}
+
+.notif-item-cancelled {
+  border-left: 3px solid var(--danger, #e53e3e);
+  background: #fff2f2;
+
+  &:hover {
+    background: #ffe3e3;
+  }
 }
 
 .notif-panel-list {

@@ -17,11 +17,31 @@
 
   <!-- Filter bar -->
   <div class="filter-bar" *ngIf="!loading">
-    <div class="input-wrap" style="flex:1;max-width:320px">
-      <span class="input-icon">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </span>
-      <input type="text" placeholder="Rechercher par ID ou client..." [ngModel]="searchTerm" (ngModelChange)="onSearchTermChange($event)">
+    <div class="orders-toolbar">
+      <div class="input-wrap orders-search-wrap" style="flex:1;max-width:320px">
+        <span class="input-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" placeholder="Rechercher par ID ou client..." [ngModel]="searchTerm" (ngModelChange)="onSearchTermChange($event)">
+      </div>
+
+      <div class="chat-alert-strip" *ngIf="hasChatAlerts()">
+        <button class="chat-alert-card"
+                type="button"
+                *ngFor="let alert of chatAlerts"
+                (click)="openChatAlert(alert, $event)">
+          <div class="chat-alert-card-head">
+            <span class="chat-alert-badge">Message client</span>
+            <span class="chat-alert-time">{{ alert.timestamp | date:'HH:mm' }}</span>
+          </div>
+          <div class="chat-alert-client">{{ alert.clientName }} · Cmd #{{ alert.orderId }}</div>
+          <div class="chat-alert-content">{{ alert.content }}</div>
+          <div class="chat-alert-card-foot">
+            <span class="chat-alert-unread">{{ alert.unreadCount }} non lu{{ alert.unreadCount > 1 ? 's' : '' }}</span>
+            <span class="chat-alert-dismiss" (click)="dismissChatAlert(alert.orderId, $event)">Ignorer</span>
+          </div>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -535,7 +555,37 @@
       <div class="review-lines-card">
         <div class="review-lines-head">
           <div class="review-summary-label">Articles révisés</div>
-          <div class="text-sm text-muted">Sous-total révisé: {{ reviewPreviewTotal() | number:'1.2-2' }} TND</div>
+          <div class="text-sm text-muted">Sous-total estimé: {{ reviewPreviewTotal() | number:'1.2-2' }} TND</div>
+        </div>
+
+        <div class="review-catalog-search">
+           <input [(ngModel)]="reviewProductSearch"
+             (ngModelChange)="onReviewProductSearchChange($event)"
+                 type="text"
+                 placeholder="Rechercher un produit du catalogue..."
+                 (keydown.enter)="$event.preventDefault(); searchReviewProducts()">
+          <button class="btn btn-ghost btn-sm" type="button" [disabled]="reviewProductLoading" (click)="searchReviewProducts()">
+            {{ reviewProductLoading ? 'Recherche...' : 'Ajouter depuis le catalogue' }}
+          </button>
+        </div>
+
+        <div class="review-catalog-hint">Le total final sera recalculé par le serveur selon le prix réel de la pharmacie et les remises applicables.</div>
+
+        <div class="report-feedback error" *ngIf="reviewProductError">{{ reviewProductError }}</div>
+
+        <div class="review-catalog-results" *ngIf="reviewProductResults.length">
+          <div class="review-catalog-item" *ngFor="let product of reviewProductResults">
+            <div>
+              <div class="fw-600">{{ product.productName }}</div>
+              <div class="text-xs text-muted">{{ product.categoryName }} · {{ product.referencePrice ?? 0 | number:'1.2-2' }} TND</div>
+            </div>
+            <button class="btn btn-ghost btn-sm"
+                    type="button"
+                    [disabled]="reviewHasProduct(product.productId)"
+                    (click)="addProductToReview(product)">
+              {{ reviewHasProduct(product.productId) ? 'Déjà ajouté' : 'Ajouter' }}
+            </button>
+          </div>
         </div>
 
         <div class="review-line" *ngFor="let line of reviewLines">
@@ -543,10 +593,15 @@
             <div class="fw-600">{{ line.productName }}</div>
             <div class="text-xs text-muted">{{ line.unitPrice | number:'1.2-2' }} TND / unité</div>
           </div>
-          <label class="review-qty-field">
-            <span class="text-xs text-muted">Qté</span>
-            <input [(ngModel)]="line.quantity" type="number" min="1" step="1">
-          </label>
+          <div class="review-line-actions">
+            <label class="review-qty-field">
+              <span class="text-xs text-muted">Qté</span>
+              <input [(ngModel)]="line.quantity" type="number" min="1" step="1">
+            </label>
+            <button class="btn btn-ghost btn-sm review-remove-btn" type="button" (click)="removeReviewLine(line.productId)">
+              Retirer
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -782,6 +837,14 @@
             <span class="text-sm">Liste des traitements</span>
             <span class="text-sm" style="text-align:right;max-width:55%">{{ p.ongoingTreatments?.length ? p.ongoingTreatments?.join(', ') : 'Aucune précision' }}</span>
           </div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <span class="text-sm">Groupes sanguins</span>
+            <span class="text-sm" style="text-align:right;max-width:55%">{{ p.bloodTypes?.length ? p.bloodTypes?.join(', ') : 'Aucune précision' }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <span class="text-sm">Sécurité sociale</span>
+            <span class="text-sm" style="text-align:right;max-width:55%">{{ p.socialSecurity?.length ? p.socialSecurity?.join(', ') : 'Aucune précision' }}</span>
+          </div>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
             <span class="text-sm">Antécédents allergiques</span>
             <span class="badge" [ngClass]="conditionBadgeClass(p.hasAllergicHistory)">{{ conditionLabel(p.hasAllergicHistory) }}</span>
@@ -804,6 +867,27 @@
             <ng-template #noProfileOrdonnance>
               <span class="text-sm text-muted">Aucune</span>
             </ng-template>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Historique des ordonnances</div>
+        <div *ngIf="!p.ordonnanceHistory?.length" class="text-sm text-muted">
+          Aucune ordonnance antérieure trouvée pour ce client dans cette pharmacie.
+        </div>
+        <div class="review-catalog-results" *ngIf="p.ordonnanceHistory?.length">
+          <div class="review-catalog-item" *ngFor="let item of p.ordonnanceHistory">
+            <div>
+              <div class="fw-600">Commande #{{ item.orderId }}</div>
+              <div class="text-xs text-muted">
+                {{ item.createdAt ? (item.createdAt | date:'dd MMM yyyy HH:mm') : 'Date inconnue' }}
+                <span *ngIf="item.fileName"> · {{ item.fileName }}</span>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" type="button" (click)="openOrdonnanceHistoryItem(item, $event)">
+              Voir
+            </button>
           </div>
         </div>
       </div>

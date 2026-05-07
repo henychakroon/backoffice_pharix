@@ -16,6 +16,10 @@
   background: var(--warning-light) !important;
 }
 
+.order-cancelled-livreur td {
+  background: #fff4f4 !important;
+}
+
 /* ── Status Tabs ── */
 .status-tabs {
   display: flex;
@@ -67,8 +71,81 @@
   &.primary { background: var(--primary-light); color: var(--primary); }
 }
 
+.cancellation-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  text-align: left;
+  transition: var(--transition);
+
+  &:hover {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+  }
+
+  &.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+}
+
+.summary-label {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.summary-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
 /* ── Table row ── */
 .order-row { cursor: pointer; }
+
+.status-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.badge-outline {
+  background: transparent;
+  border: 1px solid currentColor;
+}
+
+.badge-cancelled-livreur {
+  color: var(--danger);
+}
+
+.badge-cancelled-other {
+  color: var(--gray-600);
+}
+
+.cancellation-filter {
+  min-width: 190px;
+  max-width: 220px;
+}
+
+.cancellation-filter select {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 12px;
+  color: var(--gray-700);
+}
 
 /* ── Table Footer / Pagination ── */
 .table-footer {

@@ -13,16 +13,35 @@
 
   <!-- Status tabs -->
   <div class="status-tabs" *ngIf="!loading">
-    <button class="tab-btn" [class.active]="statusFilter==='all'"             (click)="statusFilter='all'">Tout <span class="tab-count">{{ allOrders.length }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='PENDING'"         (click)="statusFilter='PENDING'">En attente <span class="tab-count warn">{{ countByStatus('PENDING') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='AWAITING_CLIENT_ACCEPTANCE'" (click)="statusFilter='AWAITING_CLIENT_ACCEPTANCE'">Attente client <span class="tab-count warn">{{ countByStatus('AWAITING_CLIENT_ACCEPTANCE') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='AWAITING_PAYMENT'" (click)="statusFilter='AWAITING_PAYMENT'">Attente paiement <span class="tab-count warn">{{ countByStatus('AWAITING_PAYMENT') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='ASSIGNED'"        (click)="statusFilter='ASSIGNED'">Assigne <span class="tab-count primary">{{ countByStatus('ASSIGNED') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='DELIVERING'"      (click)="statusFilter='DELIVERING'">En livraison <span class="tab-count info">{{ countByStatus('DELIVERING') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='DELIVERED'"       (click)="statusFilter='DELIVERED'">Livre <span class="tab-count success">{{ countByStatus('DELIVERED') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='CANCELLED'"       (click)="statusFilter='CANCELLED'">Annule <span class="tab-count danger">{{ countByStatus('CANCELLED') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='ACCEPTANCE_EXPIRED'" (click)="statusFilter='ACCEPTANCE_EXPIRED'">Expirées <span class="tab-count danger">{{ countByStatus('ACCEPTANCE_EXPIRED') }}</span></button>
-    <button class="tab-btn" [class.active]="statusFilter==='DISPATCH_FAILED'" (click)="statusFilter='DISPATCH_FAILED'">⚠ Echec dispatch <span class="tab-count warn">{{ countByStatus('DISPATCH_FAILED') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='all'"             (click)="setStatusFilter('all')">Tout <span class="tab-count">{{ allOrders.length }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='PENDING'"         (click)="setStatusFilter('PENDING')">En attente <span class="tab-count warn">{{ countByStatus('PENDING') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='AWAITING_CLIENT_ACCEPTANCE'" (click)="setStatusFilter('AWAITING_CLIENT_ACCEPTANCE')">Attente client <span class="tab-count warn">{{ countByStatus('AWAITING_CLIENT_ACCEPTANCE') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='AWAITING_PAYMENT'" (click)="setStatusFilter('AWAITING_PAYMENT')">Attente paiement <span class="tab-count warn">{{ countByStatus('AWAITING_PAYMENT') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='ASSIGNED'"        (click)="setStatusFilter('ASSIGNED')">Assigne <span class="tab-count primary">{{ countByStatus('ASSIGNED') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='DELIVERING'"      (click)="setStatusFilter('DELIVERING')">En livraison <span class="tab-count info">{{ countByStatus('DELIVERING') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='DELIVERED'"       (click)="setStatusFilter('DELIVERED')">Livre <span class="tab-count success">{{ countByStatus('DELIVERED') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='CANCELLED'"       (click)="setStatusFilter('CANCELLED')">Annule <span class="tab-count danger">{{ countByStatus('CANCELLED') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='ACCEPTANCE_EXPIRED'" (click)="setStatusFilter('ACCEPTANCE_EXPIRED')">Expirées <span class="tab-count danger">{{ countByStatus('ACCEPTANCE_EXPIRED') }}</span></button>
+    <button class="tab-btn" [class.active]="statusFilter==='DISPATCH_FAILED'" (click)="setStatusFilter('DISPATCH_FAILED')">⚠ Echec dispatch <span class="tab-count warn">{{ countByStatus('DISPATCH_FAILED') }}</span></button>
+  </div>
+
+  <div class="cancellation-summary" *ngIf="!loading">
+    <button class="summary-card" [class.active]="cancelledByRoleFilter==='all'" (click)="setCancelledByRoleFilter('all')">
+      <span class="summary-label">Toutes les annulations</span>
+      <span class="summary-value">{{ cancellationSummaryCount('CLIENT') + cancellationSummaryCount('PHARMACIEN') + cancellationSummaryCount('LIVREUR') + cancellationSummaryCount('ADMIN') + cancellationSummaryCount('SYSTEM') + cancellationSummaryCount('UNKNOWN') }}</span>
+    </button>
+    <button class="summary-card" [class.active]="cancelledByRoleFilter==='LIVREUR'" (click)="setCancelledByRoleFilter('LIVREUR')">
+      <span class="summary-label">Annulées par livreur</span>
+      <span class="summary-value">{{ cancellationSummaryCount('LIVREUR') }}</span>
+    </button>
+    <button class="summary-card" [class.active]="cancelledByRoleFilter==='CLIENT'" (click)="setCancelledByRoleFilter('CLIENT')">
+      <span class="summary-label">Annulées par client</span>
+      <span class="summary-value">{{ cancellationSummaryCount('CLIENT') }}</span>
+    </button>
+    <button class="summary-card" [class.active]="cancelledByRoleFilter==='PHARMACIEN'" (click)="setCancelledByRoleFilter('PHARMACIEN')">
+      <span class="summary-label">Annulées par pharmacien</span>
+      <span class="summary-value">{{ cancellationSummaryCount('PHARMACIEN') }}</span>
+    </button>
   </div>
 
   <!-- Filter bar -->
@@ -32,6 +51,16 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </span>
       <input type="text" placeholder="Rechercher par ID, client, pharmacie..." [(ngModel)]="searchTerm">
+    </div>
+    <div class="input-wrap cancellation-filter" *ngIf="statusFilter === 'CANCELLED' || cancelledByRoleFilter !== 'all'">
+      <select [ngModel]="cancelledByRoleFilter" (ngModelChange)="setCancelledByRoleFilter($event)">
+        <option value="all">Tous les acteurs</option>
+        <option value="LIVREUR">Livreur</option>
+        <option value="CLIENT">Client</option>
+        <option value="PHARMACIEN">Pharmacien</option>
+        <option value="ADMIN">Admin</option>
+        <option value="SYSTEM">Système</option>
+      </select>
     </div>
   </div>
 
@@ -56,6 +85,7 @@
               class="order-row"
               [class.order-highlighted]="o.id === highlightedId"
               [class.order-dispatch-failed]="o.status === 'DISPATCH_FAILED'"
+              [class.order-cancelled-livreur]="o.status === 'CANCELLED' && o.cancelledByRole === 'LIVREUR'"
               (click)="openDetail(o)">
             <td>
               <span class="fw-600 text-primary">#{{ o.id }}</span>
@@ -88,7 +118,14 @@
               </ng-template>
             </td>
             <td class="fw-600">{{ o.total | currency:'TND':'symbol':'1.2-2' }}</td>
-            <td><span class="badge" [ngClass]="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
+            <td>
+              <div class="status-stack">
+                <span class="badge" [ngClass]="statusBadge(o.status)">{{ statusLabelForOrder(o) }}</span>
+                <span *ngIf="cancellationBadgeClass(o)" class="badge badge-outline" [ngClass]="cancellationBadgeClass(o)">
+                  {{ cancellationRoleLabel(o.cancelledByRole) }}
+                </span>
+              </div>
+            </td>
             <td (click)="$event.stopPropagation()">
               <div style="display:flex;gap:4px">
                 <button class="btn btn-ghost btn-icon btn-sm" data-tooltip="Voir" (click)="openDetail(o)">
@@ -129,7 +166,12 @@
       </button>
     </div>
     <div class="drawer-body">
-      <span class="badge" style="margin-bottom:16px" [ngClass]="statusBadge(selectedOrder.status)">{{ statusLabel(selectedOrder.status) }}</span>
+      <div class="status-stack" style="margin-bottom:16px">
+        <span class="badge" [ngClass]="statusBadge(selectedOrder.status)">{{ statusLabelForOrder(selectedOrder) }}</span>
+        <span *ngIf="cancellationBadgeClass(selectedOrder)" class="badge badge-outline" [ngClass]="cancellationBadgeClass(selectedOrder)">
+          {{ cancellationRoleLabel(selectedOrder.cancelledByRole) }}
+        </span>
+      </div>
 
       <div class="detail-section">
         <div class="detail-label">Client</div>
@@ -189,6 +231,7 @@
           <div *ngIf="selectedOrder.paymentGatewayOrderId" style="display:flex;justify-content:space-between;gap:12px"><span class="text-muted">Référence gateway</span><span style="text-align:right;word-break:break-all">{{ selectedOrder.paymentGatewayOrderId }}</span></div>
           <div *ngIf="selectedOrder.finalizedAt" style="display:flex;justify-content:space-between"><span class="text-muted">Finalisé le</span><span>{{ selectedOrder.finalizedAt | date:'dd MMM yyyy HH:mm' }}</span></div>
           <div *ngIf="selectedOrder.revisionExpiresAt" style="display:flex;justify-content:space-between"><span class="text-muted">Révision expire le</span><span>{{ selectedOrder.revisionExpiresAt | date:'dd MMM yyyy HH:mm' }}</span></div>
+          <div *ngIf="selectedOrder.cancelledByRole" style="display:flex;justify-content:space-between;gap:12px"><span class="text-muted">Annulée par</span><span style="text-align:right">{{ cancellationRoleLabel(selectedOrder.cancelledByRole) }}</span></div>
           <div *ngIf="selectedOrder.cancellationReason" style="display:flex;justify-content:space-between;gap:12px"><span class="text-muted">Motif</span><span style="text-align:right">{{ selectedOrder.cancellationReason }}</span></div>
         </div>
       </div>

@@ -410,6 +410,24 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.router.navigate(['/orders'], { queryParams: { highlight: orderId } });
   }
 
+  isDispatchFailedAdminEvent(order: AdminOrderEvent): boolean {
+    return !!(order.dispatchFailed || order.status === 'DISPATCH_FAILED');
+  }
+
+  isLivreurCancelledAdminEvent(order: AdminOrderEvent): boolean {
+    return !!(order.cancelledByLivreur || (order.status === 'CANCELLED' && order.cancelledByRole === 'LIVREUR'));
+  }
+
+  adminNotificationSubtitle(order: AdminOrderEvent): string {
+    if (this.isLivreurCancelledAdminEvent(order)) {
+      return order.cancellationReason
+        ? `Annulée par le livreur · ${order.cancellationReason}`
+        : 'Annulée par le livreur';
+    }
+
+    return `${order.pharmacyName} · ${this.statusLabelFr(order.status)}`;
+  }
+
   // ── Pharmacien notification helpers ──────────────────────────────────────
 
   loadPharmacienNotifications(): void {

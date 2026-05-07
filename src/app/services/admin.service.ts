@@ -66,6 +66,7 @@ export interface OrderDTO {
   activeRevision?: OrderRevisionDTO | null;
   finalizedAt?: string | null;
   cancellationReason?: string | null;
+  cancelledByRole?: string | null;
   description?: string;
   ordonnanceUrl?: string;
   ordonnanceMimeType?: string;
@@ -244,6 +245,11 @@ export interface TopPharmacyDash {
   ownerName: string;
   active: boolean;
   orderCount: number;
+}
+
+export interface OrderCancellationSummary {
+  cancelledByRole: string;
+  count: number;
 }
 
 export interface DayStat {
@@ -464,8 +470,16 @@ getMonthlyDashboard(year: number, month: number): Observable<MonthlyDashboard> {
   }
 
   // Orders
-  getOrders(): Observable<OrderDTO[]> {
-    return this.http.get<OrderDTO[]>(`${this.BASE}/orders`);
+  getOrders(status?: string, cancelledByRole?: string): Observable<OrderDTO[]> {
+    const params = new URLSearchParams();
+    if (status && status !== 'all') params.set('status', status);
+    if (cancelledByRole && cancelledByRole !== 'all') params.set('cancelledByRole', cancelledByRole);
+    const query = params.toString();
+    return this.http.get<OrderDTO[]>(`${this.BASE}/orders${query ? `?${query}` : ''}`);
+  }
+
+  getOrderCancellationSummary(): Observable<OrderCancellationSummary[]> {
+    return this.http.get<OrderCancellationSummary[]>(`${this.BASE}/orders/cancellation-summary`);
   }
 
   getLivreurs(): Observable<LivreurAdmin[]> {
