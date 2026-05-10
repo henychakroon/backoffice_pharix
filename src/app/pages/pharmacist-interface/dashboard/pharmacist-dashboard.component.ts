@@ -4,6 +4,7 @@ import { PharmacistService, PharmacienDashboard } from '../../../services/pharma
 import { AuthService } from '../../../services/auth.service';
 import { OrderDTO } from '../../../services/admin.service';
 import { forkJoin } from 'rxjs';
+import { getOrderStatusBadge, getOrderStatusLabel } from '../../../shared/order-status';
 
 @Component({
   selector: 'app-pharmacist-dashboard',
@@ -109,33 +110,11 @@ export class PharmacistDashboardComponent implements OnInit {
   }
 
   statusBadge(status: string): string {
-    const badges: Record<string, string> = {
-      PENDING: 'badge-warning',
-      ASSIGNED: 'badge-primary',
-      ACCEPTED: 'badge-info',
-      DELIVERING: 'badge-info',
-      DELIVERED: 'badge-success',
-      REFUSED: 'badge-danger',
-      CANCELLED: 'badge-danger',
-      READY_FOR_DELIVERY: 'badge-accent'
-    };
-
-    return badges[status] ?? 'badge-gray';
+    return getOrderStatusBadge(status, 'pharmacist');
   }
 
   statusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      PENDING: 'En attente',
-      ASSIGNED: 'Assigné',
-      ACCEPTED: 'Acceptée',
-      DELIVERING: 'En livraison',
-      DELIVERED: 'Livrée',
-      REFUSED: 'Refusée',
-      CANCELLED: 'Annulée',
-      READY_FOR_DELIVERY: 'Prête'
-    };
-
-    return labels[status] ?? status;
+    return getOrderStatusLabel(status, 'pharmacist');
   }
 
   private applyPendingOrderUpdate(updated: OrderDTO): void {

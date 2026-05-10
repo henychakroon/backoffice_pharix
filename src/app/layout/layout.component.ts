@@ -4,6 +4,7 @@ import { filter, Subscription } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { WebSocketService, AdminOrderEvent, PharmacienOrderEvent } from '../services/websocket.service';
 import { PharmacistService, PharmacienNotification } from '../services/pharmacist.service';
+import { getOrderStatusLabel, isLivreurCancelledOrder } from '../shared/order-status';
 
 interface OrderToast {
   uid: number;
@@ -415,7 +416,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   isLivreurCancelledAdminEvent(order: AdminOrderEvent): boolean {
-    return !!(order.cancelledByLivreur || (order.status === 'CANCELLED' && order.cancelledByRole === 'LIVREUR'));
+    return isLivreurCancelledOrder(order);
   }
 
   adminNotificationSubtitle(order: AdminOrderEvent): string {
@@ -482,23 +483,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   statusLabelFr(status: string): string {
-    const map: Record<string, string> = {
-      PENDING: 'Nouvelle commande',
-      AWAITING_CLIENT_ACCEPTANCE: 'Attente client',
-      AWAITING_PAYMENT: 'Attente paiement',
-      ACCEPTED_FROM_PHARMACIEN: 'Acceptée',
-      ACCEPTANCE_EXPIRED: 'Validation expirée',
-      READY_FOR_DELIVERY: 'Prête',
-      ASSIGNED: 'Livreur assigné',
-      ASSIGNED_FROM_ADMIN: 'Assigné (admin)',
-      ACCEPTED_FROM_LIVREUR: 'Livreur en route',
-      DELIVERING: 'En livraison',
-      DELIVERED: 'Livrée',
-      DISPATCH_FAILED: 'Aucun livreur',
-      REFUSED_FROM_PHARMACIEN: 'Refusée',
-      CANCELLED: 'Annulée',
-    };
-    return map[status] ?? status;
+    return getOrderStatusLabel(status, 'notification');
   }
 
   toggle() { this.sidebarCollapsed = !this.sidebarCollapsed; }

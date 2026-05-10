@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService, AdminDashboard } from '../../services/admin.service';
+import { getOrderStatusBadge, getOrderStatusLabel } from '../../shared/order-status';
 
 @Component({
   selector: 'app-dashboard',
@@ -107,38 +108,10 @@ this.stats[5].value = this.fmtRevenue(data.monthlyRevenue);
   }
 
   statusBadge(status: string): string {
-    const map: Record<string, string> = {
-      DELIVERED:               'badge-success',
-      DELIVERING:              'badge-info',
-      PENDING:                 'badge-warning',
-      ACCEPTED_FROM_PHARMACIEN:'badge-primary',
-      ACCEPTED_FROM_LIVREUR:   'badge-primary',
-      ASSIGNED:                'badge-primary',
-      ASSIGNED_FROM_ADMIN:     'badge-primary',
-      READY_FOR_DELIVERY:      'badge-primary',
-      CANCELLED:               'badge-danger',
-      REFUSED_FROM_PHARMACIEN: 'badge-danger',
-      REFUSED_FROM_LIVREUR:    'badge-danger',
-      DISPATCH_FAILED:         'badge-danger',
-    };
-    return map[status] ?? 'badge-gray';
+    return getOrderStatusBadge(status);
   }
 
   statusLabel(status: string): string {
-    const map: Record<string, string> = {
-      PENDING:                  'En attente',
-      ACCEPTED_FROM_PHARMACIEN: 'Acceptée',
-      REFUSED_FROM_PHARMACIEN:  'Refusée',
-      READY_FOR_DELIVERY:       'Prête',
-      ASSIGNED:                 'Assignée',
-      ASSIGNED_FROM_ADMIN:      'Assignée (admin)',
-      ACCEPTED_FROM_LIVREUR:    'Livreur en route',
-      REFUSED_FROM_LIVREUR:     'Refusée livreur',
-      DELIVERING:               'En livraison',
-      DELIVERED:                'Livrée',
-      CANCELLED:                'Annulée',
-      DISPATCH_FAILED:          'Dispatch échoué',
-    };
-    return map[status] ?? status;
+    return getOrderStatusLabel(status);
   }
 }

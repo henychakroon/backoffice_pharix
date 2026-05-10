@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AdminService, OrderDTO, LivreurAdmin, OrderCancellationSummary } from '../../services/admin.service';
 import { WebSocketService, AdminOrderEvent } from '../../services/websocket.service';
+import { formatCancelledOrderLabel, getCancellationRoleLabel, getOrderStatusBadge, getOrderStatusLabel } from '../../shared/order-status';
 
 @Component({
   selector: 'app-orders',
@@ -134,20 +135,12 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   cancellationRoleLabel(role?: string | null): string {
-    const map: Record<string, string> = {
-      LIVREUR: 'Livreur',
-      CLIENT: 'Client',
-      PHARMACIEN: 'Pharmacien',
-      ADMIN: 'Admin',
-      SYSTEM: 'Système',
-      UNKNOWN: 'Inconnu'
-    };
-    return map[role ?? 'UNKNOWN'] ?? role ?? 'Inconnu';
+    return getCancellationRoleLabel(role);
   }
 
   statusLabelForOrder(order: OrderDTO): string {
     if (order.status === 'CANCELLED' && order.cancelledByRole) {
-      return `Annulée par ${this.cancellationRoleLabel(order.cancelledByRole).toLowerCase()}`;
+      return formatCancelledOrderLabel(order.cancelledByRole);
     }
     return this.statusLabel(order.status);
   }
@@ -164,49 +157,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   statusBadge(s: string) {
-    const m: Record<string, string> = {
-      PENDING: 'badge-warning',
-      AWAITING_CLIENT_ACCEPTANCE: 'badge-warning',
-      AWAITING_PAYMENT: 'badge-warning',
-      ASSIGNED: 'badge-primary',
-      ASSIGNED_FROM_ADMIN: 'badge-primary',
-      ACCEPTED: 'badge-info',
-      DELIVERING: 'badge-info',
-      DELIVERED: 'badge-success',
-      REFUSED: 'badge-danger',
-      CANCELLED: 'badge-danger',
-      READY_FOR_DELIVERY: 'badge-primary',
-      ACCEPTANCE_EXPIRED: 'badge-danger',
-      DISPATCH_FAILED: 'badge-dispatch-failed',
-      ACCEPTED_FROM_PHARMACIEN: 'badge-info',
-      REFUSED_FROM_PHARMACIEN: 'badge-danger',
-      ACCEPTED_FROM_LIVREUR: 'badge-primary',
-      REFUSED_FROM_LIVREUR: 'badge-danger'
-    };
-    return m[s] ?? 'badge-gray';
+    return getOrderStatusBadge(s);
   }
 
   statusLabel(s: string) {
-    const l: Record<string, string> = {
-      PENDING: 'En attente',
-      AWAITING_CLIENT_ACCEPTANCE: 'En attente client',
-      AWAITING_PAYMENT: 'En attente paiement',
-      ASSIGNED: 'Assigne',
-      ASSIGNED_FROM_ADMIN: 'Assigne (admin)',
-      ACCEPTED: 'Accepte',
-      DELIVERING: 'En livraison',
-      DELIVERED: 'Livre',
-      REFUSED: 'Refuse',
-      CANCELLED: 'Annule',
-      READY_FOR_DELIVERY: 'Pret',
-      ACCEPTANCE_EXPIRED: 'Validation expiree',
-      DISPATCH_FAILED: 'Echec dispatch',
-      ACCEPTED_FROM_PHARMACIEN: 'Acceptee',
-      REFUSED_FROM_PHARMACIEN: 'Refusee',
-      ACCEPTED_FROM_LIVREUR: 'Livreur OK',
-      REFUSED_FROM_LIVREUR: 'Livreur refuse'
-    };
-    return l[s] ?? s;
+    return getOrderStatusLabel(s);
   }
 
   openDetail(o: OrderDTO) { this.selectedOrder = o; }

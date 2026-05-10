@@ -9,6 +9,7 @@ import { concatMap } from 'rxjs/operators';
 import * as QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import { WebSocketService, PharmacienOrderEvent, ChatMessageEvent } from '../../../services/websocket.service';
+import { getOrderStatusBadge, getOrderStatusLabel } from '../../../shared/order-status';
 
 @Component({
   selector: 'app-pharmacist-orders',
@@ -373,45 +374,11 @@ export class PharmacistOrdersComponent implements OnInit, OnDestroy {
   }
 
   statusBadge(s: string): string {
-    const m: Record<string, string> = {
-      PENDING:                  'badge-warning',
-      AWAITING_CLIENT_ACCEPTANCE: 'badge-warning',
-      AWAITING_PAYMENT:         'badge-warning',
-      ACCEPTED_FROM_PHARMACIEN: 'badge-info',
-      REFUSED_FROM_PHARMACIEN:  'badge-danger',
-      ACCEPTANCE_EXPIRED:       'badge-danger',
-      READY_FOR_DELIVERY:       'badge-accent',
-      DISPATCH_FAILED:          'badge-dispatch-failed',
-      ASSIGNED:                 'badge-primary',
-      ASSIGNED_FROM_ADMIN:      'badge-primary',
-      ACCEPTED_FROM_LIVREUR:    'badge-primary',
-      REFUSED_FROM_LIVREUR:     'badge-danger',
-      DELIVERING:               'badge-info',
-      DELIVERED:                'badge-success',
-      CANCELLED:                'badge-danger'
-    };
-    return m[s] ?? 'badge-gray';
+    return getOrderStatusBadge(s, 'pharmacist');
   }
 
   statusLabel(s: string): string {
-    const l: Record<string, string> = {
-      PENDING:                  'En attente',
-      AWAITING_CLIENT_ACCEPTANCE: 'En attente client',
-      AWAITING_PAYMENT:         'En attente paiement',
-      ACCEPTED_FROM_PHARMACIEN: 'Acceptée',
-      REFUSED_FROM_PHARMACIEN:  'Refusée',
-      ACCEPTANCE_EXPIRED:       'Validation expirée',
-      READY_FOR_DELIVERY:       'Prête',
-      DISPATCH_FAILED:          'Echec dispatch',
-      ASSIGNED:                 'Assigné',
-      ASSIGNED_FROM_ADMIN:      'Assigné (admin)',
-      ACCEPTED_FROM_LIVREUR:    'Pris en charge',
-      REFUSED_FROM_LIVREUR:     'Refusé (livreur)',
-      DELIVERING:               'En livraison',
-      DELIVERED:                'Livrée',
-      CANCELLED:                'Annulée'
-    };
-    return l[s] ?? s;
+    return getOrderStatusLabel(s, 'pharmacist');
   }
 
   // ── Actions ──

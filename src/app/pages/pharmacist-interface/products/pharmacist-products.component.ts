@@ -12,6 +12,7 @@ import {
   PharmacistProductSubCategoryOption,
   PharmacistService
 } from '../../../services/pharmacist.service';
+import { getOrderStatusLabel } from '../../../shared/order-status';
 
 type AvailabilityFilter = 'all' | 'available' | 'unavailable';
 type FeedbackType = 'success' | 'error';
@@ -186,22 +187,7 @@ export class PharmacistProductsComponent implements OnInit, OnDestroy {
   }
 
   get contextOrderStatusLabel(): string {
-    const labels: Record<string, string> = {
-      PENDING: 'En attente',
-      ACCEPTED_FROM_PHARMACIEN: 'Acceptée',
-      REFUSED_FROM_PHARMACIEN: 'Refusée',
-      READY_FOR_DELIVERY: 'Prête',
-      DISPATCH_FAILED: 'Echec dispatch',
-      ASSIGNED: 'Assignée',
-      ASSIGNED_FROM_ADMIN: 'Assignée (admin)',
-      ACCEPTED_FROM_LIVREUR: 'Pris en charge',
-      REFUSED_FROM_LIVREUR: 'Refusée (livreur)',
-      DELIVERING: 'En livraison',
-      DELIVERED: 'Livrée',
-      CANCELLED: 'Annulée'
-    };
-
-    return labels[this.orderStatus] || this.orderStatus || 'Commande';
+    return getOrderStatusLabel(this.orderStatus, 'pharmacist') || this.orderStatus || 'Commande';
   }
 
   isOrderTermReviewed(term: string): boolean {
